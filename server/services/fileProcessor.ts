@@ -160,7 +160,7 @@ export class FileProcessor {
 
       for (let i = 0; i < sheets.length; i++) {
         const sheet = sheets[i];
-        await storage.updateProcessingStatus(templateId, "ai_processing", "in_progress", `Processing sheet ${i + 1}/${sheets.length}: ${sheet.sheetName}`, 60 + (i * 20) / sheets.length);
+        await storage.updateProcessingStatus(templateId, "ai_processing", "in_progress", `Processing sheet ${i + 1}/${sheets.length}: ${sheet.sheetName}`, Math.round(60 + (i * 20) / sheets.length));
 
         // Process data in chunks for AI
         const chunks = this.chunkDataForAI(sheet.extractedData);

@@ -227,19 +227,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 // Background processing function
 async function processTemplateAsync(templateId: number) {
   try {
+    console.log(`Starting processing for template ${templateId}`);
+    
     const template = await storage.getTemplate(templateId);
     if (!template) {
       throw new Error("Template not found");
     }
 
+    // Update extraction status to in progress
+    await storage.updateProcessingStatus(templateId, "extraction", "in_progress", "Starting sheet extraction", 10);
     await storage.updateTemplateStatus(templateId, "processing");
+
+    console.log(`Processing file: ${template.filePath}`);
 
     // Process file and extract data
     const result = await FileProcessor.processFile(template.filePath, templateId);
     
     if (!result.success) {
+      console.error(`File processing failed: ${result.error}`);
+      await storage.updateProcessingStatus(templateId, "extraction", "failed", result.error);
       throw new Error(result.error);
     }
+
+    console.log(`Extracted ${result.sheets?.length} sheets`);
 
     // Store extracted sheets
     if (result.sheets) {
@@ -254,11 +264,18 @@ async function processTemplateAsync(templateId: number) {
       }
     }
 
+    // Update extraction as complete
+    await storage.updateProcessingStatus(templateId, "extraction", "completed", `Extracted ${result.sheets?.length || 0} sheets`, 100);
+
     // Generate schemas with AI
+    await storage.updateProcessingStatus(templateId, "ai_processing", "in_progress", "Generating schemas with AI", 0);
     await FileProcessor.generateSchemas(templateId);
+
+    await storage.updateTemplateStatus(templateId, "completed");
 
   } catch (error) {
     console.error("Template processing failed:", error);
     await storage.updateTemplateStatus(templateId, "failed");
+    await storage.updateProcessingStatus(templateId, "extraction", "failed", error instanceof Error ? error.message : "Unknown error");
   }
 }
