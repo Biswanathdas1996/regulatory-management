@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { Progress } from "@/components/ui/progress";
 
 interface ExcelViewerProps {
   templateId: number;
@@ -59,6 +60,18 @@ export function ExcelViewer({
   const [cellValues, setCellValues] = useState<
     Record<string, Record<string, string>>
   >({});
+  const [generationProgress, setGenerationProgress] = useState<{
+    sessionId: string | null;
+    currentChunk: number;
+    totalChunks: number;
+    status: 'idle' | 'processing' | 'completed' | 'error';
+    message?: string;
+  }>({
+    sessionId: null,
+    currentChunk: 0,
+    totalChunks: 0,
+    status: 'idle'
+  });
   const { toast } = useToast();
 
   // Fetch Excel data from the API
@@ -70,6 +83,47 @@ export function ExcelViewer({
     queryKey: [`/api/templates/${templateId}/excel-data`],
     enabled: !!templateId,
   });
+
+  // Poll for generation progress
+  useEffect(() => {
+    if (!generationProgress.sessionId || generationProgress.status === 'completed' || generationProgress.status === 'error') {
+      return;
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/generation-progress/${generationProgress.sessionId}`);
+        if (response.ok) {
+          const progress = await response.json();
+          setGenerationProgress({
+            sessionId: generationProgress.sessionId,
+            currentChunk: progress.currentChunk,
+            totalChunks: progress.totalChunks,
+            status: progress.status,
+            message: progress.message
+          });
+          
+          if (progress.status === 'completed') {
+            queryClient.invalidateQueries({ queryKey: ['/api/templates', templateId, 'validation-rules'] });
+            toast({ 
+              title: "Success", 
+              description: progress.message || `Successfully generated validation rules` 
+            });
+          } else if (progress.status === 'error') {
+            toast({ 
+              title: "Error", 
+              description: progress.message || 'Failed to generate validation rules', 
+              variant: "destructive" 
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error polling progress:', error);
+      }
+    }, 1000); // Poll every second
+
+    return () => clearInterval(interval);
+  }, [generationProgress.sessionId, generationProgress.status, templateId, toast]);
 
   // Generate validation rules mutation
   const generateRulesMutation = useMutation({
@@ -105,10 +159,13 @@ export function ExcelViewer({
       return response.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/templates', templateId, 'validation-rules'] });
-      toast({ 
-        title: "Success", 
-        description: `Generated ${data.rulesCount} validation rules for ${sheetsData?.[activeSheet].sheetName}` 
+      // Initialize progress tracking
+      setGenerationProgress({
+        sessionId: data.sessionId,
+        currentChunk: 0,
+        totalChunks: data.totalChunks,
+        status: 'processing',
+        message: data.message
       });
     },
     onError: (error: Error) => {
@@ -360,15 +417,31 @@ export function ExcelViewer({
               variant="outline"
               size="sm"
               onClick={() => generateRulesMutation.mutate()}
-              disabled={generateRulesMutation.isPending}
+              disabled={generateRulesMutation.isPending || generationProgress.status === 'processing'}
             >
               <Sparkles className="h-4 w-4 mr-1" />
-              {generateRulesMutation.isPending ? 'Generating...' : 'Generate validation rules'}
+              {generateRulesMutation.isPending || generationProgress.status === 'processing' ? 'Generating...' : 'Generate validation rules'}
             </Button>
           )}
         </div>
       </CardHeader>
       <CardContent>
+        {generationProgress.status === 'processing' && (
+          <div className="mb-4 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
+                {generationProgress.message || 'Generating validation rules...'}
+              </span>
+              <span className="text-muted-foreground">
+                {generationProgress.currentChunk}/{generationProgress.totalChunks} chunks
+              </span>
+            </div>
+            <Progress 
+              value={(generationProgress.currentChunk / generationProgress.totalChunks) * 100} 
+              className="h-2"
+            />
+          </div>
+        )}
         {sheetsData.length === 1 ? (
           // Single sheet - show directly without tabs
           <div className="border rounded-lg">{renderSheet(sheetsData[0])}</div>

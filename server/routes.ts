@@ -18,6 +18,16 @@ interface MulterRequest extends Request {
   files?: any;
 }
 
+// Store generation progress
+const generationProgress = new Map<string, {
+  templateId: number;
+  sheetId: number;
+  currentChunk: number;
+  totalChunks: number;
+  status: 'processing' | 'completed' | 'error';
+  message?: string;
+}>();
+
 // Configure multer for file uploads
 const uploadStorage = multer.diskStorage({
   destination: (req: any, file: any, cb: any) => {
@@ -509,6 +519,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get generation progress
+  app.get("/api/generation-progress/:sessionId", async (req, res) => {
+    const sessionId = req.params.sessionId;
+    const progress = generationProgress.get(sessionId);
+    
+    if (!progress) {
+      return res.status(404).json({ error: "Progress not found" });
+    }
+    
+    res.json(progress);
+    
+    // Clean up completed or errored progress after 5 minutes
+    if (progress.status === 'completed' || progress.status === 'error') {
+      setTimeout(() => {
+        generationProgress.delete(sessionId);
+      }, 5 * 60 * 1000);
+    }
+  });
+
   // Generate validation rules for a specific sheet using AI
   app.post("/api/templates/:templateId/sheets/:sheetId/generate-rules", async (req, res) => {
     try {
@@ -525,22 +554,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalRows = sheetData.data.length;
       const chunksToProcess = Math.min(Math.ceil(totalRows / CHUNK_SIZE), MAX_CHUNKS);
       
-      console.log(`Processing ${chunksToProcess} chunks for sheet ${sheetName} with ${totalRows} rows`);
+      // Generate unique session ID for progress tracking
+      const sessionId = `${templateId}-${sheetId}-${Date.now()}`;
       
-      const genai = await import('@google/genai');
-      const genAI = new genai.GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      // Initialize progress tracking
+      generationProgress.set(sessionId, {
+        templateId,
+        sheetId,
+        currentChunk: 0,
+        totalChunks: chunksToProcess,
+        status: 'processing',
+        message: `Starting to process ${chunksToProcess} chunks for sheet ${sheetName}`
+      });
       
-      // Map to store unique rules by field and ruleType
-      const uniqueRulesMap = new Map<string, any>();
+      // Send sessionId to frontend immediately
+      res.json({ 
+        sessionId,
+        totalChunks: chunksToProcess,
+        message: "Rule generation started"
+      });
       
-      // Process data in chunks
-      for (let i = 0; i < chunksToProcess; i++) {
-        const startIdx = i * CHUNK_SIZE;
-        const endIdx = Math.min(startIdx + CHUNK_SIZE, totalRows);
-        const chunkData = sheetData.data.slice(startIdx, endIdx);
-        
-        // Skip if chunk is empty
-        if (chunkData.length === 0) continue;
+      // Continue processing in background
+      (async () => {
+        try {
+          console.log(`Processing ${chunksToProcess} chunks for sheet ${sheetName} with ${totalRows} rows`);
+          
+          const genai = await import('@google/genai');
+          const genAI = new genai.GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+          
+          // Map to store unique rules by field and ruleType
+          const uniqueRulesMap = new Map<string, any>();
+      
+          // Process data in chunks
+          for (let i = 0; i < chunksToProcess; i++) {
+            const startIdx = i * CHUNK_SIZE;
+            const endIdx = Math.min(startIdx + CHUNK_SIZE, totalRows);
+            const chunkData = sheetData.data.slice(startIdx, endIdx);
+            
+            // Update progress
+            generationProgress.set(sessionId, {
+              templateId,
+              sheetId,
+              currentChunk: i + 1,
+              totalChunks: chunksToProcess,
+              status: 'processing',
+              message: `Processing chunk ${i + 1} of ${chunksToProcess} (rows ${startIdx + 1} to ${endIdx})`
+            });
+            
+            // Skip if chunk is empty
+            if (chunkData.length === 0) continue;
         
         const analysisPrompt = `
 Analyze this Excel sheet data chunk and generate validation rules.
@@ -617,37 +679,58 @@ Only return the JSON array, no additional text.
           // Continue with next chunk
         }
       }
-      
-      // Convert map to array
-      const generatedRules = Array.from(uniqueRulesMap.values());
-      
-      if (generatedRules.length === 0) {
-        return res.status(400).json({ error: "No validation rules could be generated from the data" });
-      }
-      
-      // Save the generated rules to database
-      const rulesToCreate = generatedRules.map((rule: any) => ({
-        templateId,
-        sheetId,
-        ruleType: rule.ruleType,
-        field: rule.field,
-        condition: rule.condition,
-        errorMessage: rule.errorMessage,
-        severity: rule.severity || 'error'
-      }));
-      
-      await storage.createValidationRules(rulesToCreate);
-      
-      res.json({ 
-        success: true,
-        rulesCount: rulesToCreate.length,
-        rules: rulesToCreate,
-        metadata: {
-          totalRows,
-          chunksProcessed: chunksToProcess,
-          chunkSize: CHUNK_SIZE
+          
+          // Convert map to array
+          const generatedRules = Array.from(uniqueRulesMap.values());
+          
+          if (generatedRules.length === 0) {
+            generationProgress.set(sessionId, {
+              templateId,
+              sheetId,
+              currentChunk: chunksToProcess,
+              totalChunks: chunksToProcess,
+              status: 'error',
+              message: "No validation rules could be generated from the data"
+            });
+            return;
+          }
+          
+          // Save the generated rules to database
+          const rulesToCreate = generatedRules.map((rule: any) => ({
+            templateId,
+            sheetId,
+            ruleType: rule.ruleType,
+            field: rule.field,
+            condition: rule.condition,
+            errorMessage: rule.errorMessage,
+            severity: rule.severity || 'error'
+          }));
+          
+          await storage.createValidationRules(rulesToCreate);
+          
+          // Update progress to completed
+          generationProgress.set(sessionId, {
+            templateId,
+            sheetId,
+            currentChunk: chunksToProcess,
+            totalChunks: chunksToProcess,
+            status: 'completed',
+            message: `Successfully generated ${rulesToCreate.length} validation rules`
+          });
+          
+        } catch (error) {
+          console.error("Generate validation rules error:", error);
+          generationProgress.set(sessionId, {
+            templateId,
+            sheetId,
+            currentChunk: 0,
+            totalChunks: chunksToProcess,
+            status: 'error',
+            message: error instanceof Error ? error.message : "Failed to generate validation rules"
+          });
         }
-      });
+      })();
+      
     } catch (error) {
       console.error("Generate validation rules error:", error);
       res.status(500).json({ error: "Failed to generate validation rules" });
