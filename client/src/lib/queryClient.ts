@@ -8,32 +8,18 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
+  method: string,
   url: string,
-  options?: RequestInit
-): Promise<any> {
-  const token = localStorage.getItem("token");
-  
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options?.headers as Record<string, string> || {})
-  };
-  
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
+  data?: unknown | undefined,
+): Promise<Response> {
   const res = await fetch(url, {
-    ...options,
-    headers,
+    method,
+    headers: data ? { "Content-Type": "application/json" } : {},
+    body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
 
   await throwIfResNotOk(res);
-  
-  if (res.headers.get('Content-Type')?.includes('application/json')) {
-    return await res.json();
-  }
-  
   return res;
 }
 
@@ -43,15 +29,7 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const token = localStorage.getItem("token");
-    
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-    
     const res = await fetch(queryKey.join("/") as string, {
-      headers,
       credentials: "include",
     });
 
@@ -77,12 +55,3 @@ export const queryClient = new QueryClient({
     },
   },
 });
-
-// Add global error handler for unhandled promise rejections
-if (typeof window !== 'undefined') {
-  window.addEventListener('unhandledrejection', (event) => {
-    console.error('Unhandled promise rejection:', event.reason);
-    // Prevent the default behavior to avoid console spam
-    event.preventDefault();
-  });
-}

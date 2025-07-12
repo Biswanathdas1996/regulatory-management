@@ -25,7 +25,7 @@ import {
   type InsertValidationResult
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, count, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -66,22 +66,12 @@ export interface IStorage {
   getSubmission(id: number): Promise<Submission | undefined>;
   getSubmissions(userId?: number, templateId?: number): Promise<Submission[]>;
   updateSubmissionStatus(id: number, status: string, errors?: number, warnings?: number): Promise<void>;
-  getAllSubmissionsWithDetails(): Promise<any[]>;
-  getUserSubmissionsWithDetails(userId: number): Promise<any[]>;
-  updateSubmissionApproval(submissionId: number, action: string, adminId: number, comments?: string, assignToUserId?: number): Promise<void>;
   
   // Validation result methods
   createValidationResult(result: InsertValidationResult): Promise<ValidationResult>;
   createValidationResults(results: InsertValidationResult[]): Promise<ValidationResult[]>;
   getValidationResults(submissionId: number): Promise<ValidationResult[]>;
   deleteValidationResults(submissionId: number): Promise<void>;
-  
-  // User methods
-  getUsers(): Promise<User[]>;
-  
-  // Stats methods
-  getAdminStats(): Promise<any>;
-  getUserStats(userId: number): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -332,170 +322,6 @@ export class DatabaseStorage implements IStorage {
 
   async deleteValidationResults(submissionId: number): Promise<void> {
     await db.delete(validationResults).where(eq(validationResults.submissionId, submissionId));
-  }
-
-  // Get all submissions with details for admin panel
-  async getAllSubmissionsWithDetails(): Promise<any[]> {
-    const result = await db
-      .select({
-        id: submissions.id,
-        fileName: submissions.fileName,
-        fileSize: submissions.fileSize,
-        status: submissions.status,
-        validationErrors: submissions.validationErrors,
-        validationWarnings: submissions.validationWarnings,
-        submittedAt: submissions.submittedAt,
-        validatedAt: submissions.validatedAt,
-        reportingPeriod: submissions.reportingPeriod,
-        approvalStatus: submissions.approvalStatus,
-        approvedBy: submissions.approvedBy,
-        approvedAt: submissions.approvedAt,
-        assignedTo: submissions.assignedTo,
-        approvalComments: submissions.approvalComments,
-        templateId: submissions.templateId,
-        templateName: templates.name,
-        userId: submissions.userId,
-        username: users.username,
-        userEmail: users.email
-      })
-      .from(submissions)
-      .leftJoin(templates, eq(submissions.templateId, templates.id))
-      .leftJoin(users, eq(submissions.userId, users.id))
-      .orderBy(submissions.submittedAt);
-    
-    return result;
-  }
-
-  // Get user-specific submissions with details
-  async getUserSubmissionsWithDetails(userId: number): Promise<any[]> {
-    const result = await db
-      .select({
-        id: submissions.id,
-        fileName: submissions.fileName,
-        fileSize: submissions.fileSize,
-        status: submissions.status,
-        validationErrors: submissions.validationErrors,
-        validationWarnings: submissions.validationWarnings,
-        submittedAt: submissions.submittedAt,
-        validatedAt: submissions.validatedAt,
-        reportingPeriod: submissions.reportingPeriod,
-        approvalStatus: submissions.approvalStatus,
-        approvedBy: submissions.approvedBy,
-        approvedAt: submissions.approvedAt,
-        assignedTo: submissions.assignedTo,
-        approvalComments: submissions.approvalComments,
-        templateId: submissions.templateId,
-        templateName: templates.name,
-        version: submissions.version
-      })
-      .from(submissions)
-      .leftJoin(templates, eq(submissions.templateId, templates.id))
-      .where(eq(submissions.userId, userId))
-      .orderBy(submissions.submittedAt);
-    
-    return result;
-  }
-
-  // Update submission approval status
-  async updateSubmissionApproval(submissionId: number, action: string, adminId: number, comments?: string, assignToUserId?: number): Promise<void> {
-    const updates: any = {
-      approvalStatus: action,
-      approvedBy: adminId,
-      approvedAt: new Date(),
-      approvalComments: comments
-    };
-
-    if (assignToUserId !== undefined) {
-      updates.assignedTo = assignToUserId;
-    }
-
-    await db
-      .update(submissions)
-      .set(updates)
-      .where(eq(submissions.id, submissionId));
-  }
-
-  // Get all users
-  async getUsers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(users.username);
-  }
-
-  // Get admin statistics
-  async getAdminStats(): Promise<any> {
-    const [totalSubmissions] = await db
-      .select({ count: count() })
-      .from(submissions);
-    
-    const [pendingSubmissions] = await db
-      .select({ count: count() })
-      .from(submissions)
-      .where(eq(submissions.approvalStatus, 'pending'));
-    
-    const [approvedSubmissions] = await db
-      .select({ count: count() })
-      .from(submissions)
-      .where(eq(submissions.approvalStatus, 'approved'));
-    
-    const [rejectedSubmissions] = await db
-      .select({ count: count() })
-      .from(submissions)
-      .where(eq(submissions.approvalStatus, 'rejected'));
-    
-    const [totalTemplates] = await db
-      .select({ count: count() })
-      .from(templates);
-    
-    const [totalUsers] = await db
-      .select({ count: count() })
-      .from(users);
-
-    return {
-      totalSubmissions: totalSubmissions?.count || 0,
-      pendingSubmissions: pendingSubmissions?.count || 0,
-      approvedSubmissions: approvedSubmissions?.count || 0,
-      rejectedSubmissions: rejectedSubmissions?.count || 0,
-      totalTemplates: totalTemplates?.count || 0,
-      totalUsers: totalUsers?.count || 0
-    };
-  }
-
-  // Get user statistics
-  async getUserStats(userId: number): Promise<any> {
-    const [totalSubmissions] = await db
-      .select({ count: count() })
-      .from(submissions)
-      .where(eq(submissions.userId, userId));
-    
-    const [pendingSubmissions] = await db
-      .select({ count: count() })
-      .from(submissions)
-      .where(and(
-        eq(submissions.userId, userId),
-        eq(submissions.approvalStatus, 'pending')
-      ));
-    
-    const [approvedSubmissions] = await db
-      .select({ count: count() })
-      .from(submissions)
-      .where(and(
-        eq(submissions.userId, userId),
-        eq(submissions.approvalStatus, 'approved')
-      ));
-    
-    const [rejectedSubmissions] = await db
-      .select({ count: count() })
-      .from(submissions)
-      .where(and(
-        eq(submissions.userId, userId),
-        eq(submissions.approvalStatus, 'rejected')
-      ));
-
-    return {
-      totalSubmissions: totalSubmissions?.count || 0,
-      pendingSubmissions: pendingSubmissions?.count || 0,
-      approvedSubmissions: approvedSubmissions?.count || 0,
-      rejectedSubmissions: rejectedSubmissions?.count || 0
-    };
   }
 }
 

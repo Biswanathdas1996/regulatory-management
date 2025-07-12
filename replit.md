@@ -8,39 +8,6 @@ This is a full-stack web application for financial template validation. The syst
 
 The application validates submissions against predefined rules with 100% accuracy, flagging violations or confirming success.
 
-## Recent Changes (January 14, 2025)
-
-### Fixed Template Navigation and Authentication Issues
-- Fixed "Go to Template Manager" button in admin panel that wasn't working
-- Created dedicated Templates page (/templates) with comprehensive template management
-- Added proper navigation between admin panel, dashboard, and templates
-- Fixed authentication system with proper Bearer token handling
-- Updated API request functions to include authentication headers
-- Fixed database schema by running migrations to ensure all columns exist
-- Added comprehensive error handling for unhandled promise rejections
-- Verified admin and user authentication endpoints are working correctly
-
-### Backend API Integration for Admin Panel and User Dashboard
-- Added new API endpoints for admin operations:
-  - GET /api/users - Get all users (admin only)
-  - GET /api/admin/submissions - Get all submissions with details
-  - GET /api/admin/stats - Get admin dashboard statistics
-  - POST /api/admin/submissions/:id/approval - Approve/reject/reassign submissions
-- Added new API endpoints for user operations:
-  - GET /api/user/submissions - Get user's own submissions with details
-  - GET /api/user/stats - Get user dashboard statistics
-- Implemented authentication middleware (requireAuth, requireAdmin) for protected routes
-- Updated submission upload endpoint to use authenticated user ID
-- Enhanced storage interface with new methods:
-  - getAllSubmissionsWithDetails() - Get submissions with template and user details
-  - getUserSubmissionsWithDetails() - Get user-specific submissions
-  - updateSubmissionApproval() - Update submission approval status
-  - getUsers() - Get all users
-  - getAdminStats() - Get admin statistics
-  - getUserStats() - Get user statistics
-- Fixed InsertUser schema to include role field
-- Fixed database query issues with proper where clause construction
-
 ## Recent Changes (January 13, 2025)
 
 ### Enhanced User Submission Interface
