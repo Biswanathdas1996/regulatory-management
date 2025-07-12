@@ -207,6 +207,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Trigger processing for a template (for manual processing)
+  app.post("/api/templates/:id/process", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Check if template exists
+      const template = await storage.getTemplate(id);
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+
+      // Start processing in background
+      processTemplateAsync(id).catch(error => {
+        console.error(`Background processing failed for template ${id}:`, error);
+      });
+
+      res.json({ 
+        message: "Processing started", 
+        templateId: id 
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to start processing" });
+    }
+  });
+
   // Get template types
   app.get("/api/template-types", (req, res) => {
     const types = [

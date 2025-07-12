@@ -132,29 +132,37 @@ export function ProcessingStatus({ templateId }: ProcessingStatusProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {sortedStatuses.map((status: any) => (
-            <div key={status.id} className="flex items-center">
-              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 ${getStatusColor(status.status)}`}>
-                {getStatusIcon(status.status)}
+          {sortedStatuses.length > 0 ? (
+            sortedStatuses.map((status: any) => (
+              <div key={status.id} className="flex items-center">
+                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 ${getStatusColor(status.status)}`}>
+                  {getStatusIcon(status.status)}
+                </div>
+                <div className="flex-1">
+                  <p className={`text-sm font-medium ${status.status === "completed" ? "text-gray-900" : status.status === "failed" ? "text-red-600" : "text-gray-900"}`}>
+                    {getStepLabel(status.step)} {status.status === "completed" ? "Complete" : status.status === "failed" ? "Failed" : ""}
+                  </p>
+                  <p className={`text-xs ${status.status === "completed" ? "text-gray-500" : status.status === "failed" ? "text-red-500" : "text-gray-500"}`}>
+                    {getStepDescription(status.step, status.status, status.message)}
+                  </p>
+                  {status.progress > 0 && status.status === "in_progress" && (
+                    <div className="mt-1 w-full bg-gray-200 rounded-full h-1">
+                      <div 
+                        className="bg-blue-600 h-1 rounded-full transition-all duration-300" 
+                        style={{ width: `${status.progress}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="flex-1">
-                <p className={`text-sm font-medium ${status.status === "completed" ? "text-gray-900" : status.status === "failed" ? "text-red-600" : "text-gray-900"}`}>
-                  {getStepLabel(status.step)} {status.status === "completed" ? "Complete" : status.status === "failed" ? "Failed" : ""}
-                </p>
-                <p className={`text-xs ${status.status === "completed" ? "text-gray-500" : status.status === "failed" ? "text-red-500" : "text-gray-500"}`}>
-                  {getStepDescription(status.step, status.status, status.message)}
-                </p>
-                {status.progress > 0 && status.status === "in_progress" && (
-                  <div className="mt-1 w-full bg-gray-200 rounded-full h-1">
-                    <div 
-                      className="bg-blue-600 h-1 rounded-full transition-all duration-300" 
-                      style={{ width: `${status.progress}%` }}
-                    />
-                  </div>
-                )}
-              </div>
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 text-sm">No processing status available yet.</p>
+              <p className="text-gray-400 text-xs mt-2">Processing will start automatically when a template is uploaded.</p>
             </div>
-          ))}
+          )}
         </div>
       </CardContent>
     </Card>
