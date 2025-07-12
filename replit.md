@@ -10,6 +10,21 @@ The application validates submissions against predefined rules with 100% accurac
 
 ## Recent Changes (January 13, 2025)
 
+### Enhanced User Submission Interface
+- Added reporting period selection field to user submission form
+- Implemented automatic template download link that appears when template is selected
+- Updated database schema to include reporting period in submissions table
+- Created robust validation results display showing:
+  - Detailed validation report with clear pass/fail status
+  - Violations grouped by severity (errors vs warnings)
+  - Exact location of violations with field references
+  - Actual values that failed validation
+  - Expected conditions for each rule
+  - Clear visual hierarchy with color-coded sections
+  - Actionable next steps for users
+
+## Recent Changes (January 13, 2025)
+
 ### Enhanced Validation Rules Management
 - Added a visual Validation Rules Manager component on template detail pages
 - Implemented CRUD operations for validation rules with pagination

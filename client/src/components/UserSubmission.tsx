@@ -31,6 +31,8 @@ interface ValidationResult {
   message: string;
   severity: string;
   createdAt: string;
+  value?: string;
+  errorMessage?: string;
 }
 
 export function UserSubmission() {
@@ -364,71 +366,191 @@ export function UserSubmission() {
         </CardContent>
       </Card>
 
-      {/* Validation Results */}
+
+
+      {/* Enhanced Validation Results */}
       {validationResults.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Validation Results</CardTitle>
-            <div className="flex items-center space-x-4 mt-2">
-              <Badge variant={stats.errors > 0 ? "destructive" : "default"}>
-                {stats.errors} Errors
+        <Card className="border-2 shadow-lg">
+          <CardHeader className={`${
+            stats.errors > 0 ? "bg-red-50 border-b border-red-200" : 
+            stats.warnings > 0 ? "bg-yellow-50 border-b border-yellow-200" : 
+            "bg-green-50 border-b border-green-200"
+          }`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl font-bold">
+                  Detailed Validation Report
+                </CardTitle>
+                <p className="text-sm text-gray-600 mt-1">
+                  Submission ID: #{submissionId}
+                </p>
+              </div>
+              <div className={`text-3xl font-bold ${
+                stats.errors > 0 ? "text-red-600" : 
+                stats.warnings > 0 ? "text-yellow-600" : 
+                "text-green-600"
+              }`}>
+                {stats.errors === 0 && stats.warnings === 0 ? "✓ PASSED" : 
+                 stats.errors > 0 ? "✗ FAILED" : "⚠ WARNING"}
+              </div>
+            </div>
+            
+            {/* Summary Badges */}
+            <div className="flex flex-wrap gap-3 mt-4">
+              <Badge variant={stats.errors > 0 ? "destructive" : "outline"} className="px-4 py-2 text-base">
+                <XCircle className="w-5 h-5 mr-2" />
+                {stats.errors} Critical Errors
               </Badge>
-              <Badge variant="secondary">
+              <Badge variant={stats.warnings > 0 ? "secondary" : "outline"} className="px-4 py-2 text-base">
+                <AlertCircle className="w-5 h-5 mr-2" />
                 {stats.warnings} Warnings
               </Badge>
-              <Badge variant="outline">
+              <Badge variant="outline" className="px-4 py-2 text-base border-green-500 text-green-700">
+                <CheckCircle className="w-5 h-5 mr-2" />
                 {stats.passed} Passed
               </Badge>
-              <Badge>
-                {stats.total} Total Checks
+              <Badge className="px-4 py-2 text-base">
+                Total: {stats.total} Validations
               </Badge>
             </div>
           </CardHeader>
-          <CardContent>
+          
+          <CardContent className="p-0">
             {stats.errors === 0 && stats.warnings === 0 ? (
-              <Alert className="border-green-200 bg-green-50">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
-                  All validation checks passed successfully! Your submission is valid.
-                </AlertDescription>
-              </Alert>
+              <div className="p-8 text-center">
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-green-700 mb-2">Perfect Submission!</h3>
+                <p className="text-gray-600">
+                  All {stats.total} validation checks passed successfully. Your data meets all requirements.
+                </p>
+              </div>
             ) : (
-              <div className="space-y-3">
-                {validationResults
-                  .filter(r => r.result === 'failed')
-                  .map((result) => (
-                    <Alert
-                      key={result.id}
-                      className={
-                        result.severity === 'error' 
-                          ? "border-red-200 bg-red-50" 
-                          : "border-yellow-200 bg-yellow-50"
-                      }
-                    >
-                      <div className="flex items-start">
-                        {result.severity === 'error' ? (
-                          <XCircle className="h-4 w-4 text-red-600 mt-0.5" />
-                        ) : (
-                          <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
-                        )}
-                        <div className="ml-3 flex-1">
-                          <p className={`font-medium ${
-                            result.severity === 'error' ? 'text-red-800' : 'text-yellow-800'
-                          }`}>
-                            {result.field} - {result.ruleType}
-                          </p>
-                          <p className={`text-sm mt-1 ${
-                            result.severity === 'error' ? 'text-red-700' : 'text-yellow-700'
-                          }`}>
-                            {result.message}
-                          </p>
-                          <p className="text-xs mt-1 text-gray-600">
-                            Condition: {result.condition}
-                          </p>
-                        </div>
+              <div>
+                {/* Violations by Type */}
+                <div className="p-6">
+                  {/* Critical Errors Section */}
+                  {stats.errors > 0 && (
+                    <div className="mb-8">
+                      <h3 className="text-lg font-bold text-red-700 mb-4 flex items-center">
+                        <XCircle className="w-6 h-6 mr-2" />
+                        Critical Errors ({stats.errors}) - Must be fixed
+                      </h3>
+                      <div className="grid gap-4">
+                        {validationResults
+                          .filter(r => r.result === 'failed' && r.severity === 'error')
+                          .map((result) => (
+                            <div key={result.id} className="bg-red-50 border-2 border-red-300 rounded-lg p-5 hover:shadow-md transition-shadow">
+                              <div className="flex items-start gap-4">
+                                <XCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="font-mono text-base bg-red-200 px-3 py-1 rounded-md text-red-800 font-bold">
+                                      {result.field}
+                                    </span>
+                                    <Badge variant="destructive" className="text-sm">
+                                      {result.ruleType.toUpperCase()}
+                                    </Badge>
+                                  </div>
+                                  
+                                  <p className="text-red-800 font-semibold text-lg mb-3">
+                                    {result.errorMessage || result.message}
+                                  </p>
+                                  
+                                  <div className="bg-white p-3 rounded-md border border-red-200 space-y-2">
+                                    {result.value !== undefined && (
+                                      <div className="flex items-start">
+                                        <span className="font-medium text-gray-700 min-w-[120px]">Current Value:</span>
+                                        <code className="bg-red-100 px-2 py-1 rounded text-red-700 font-mono text-sm">
+                                          {result.value === '' ? '<empty>' : result.value || '<null>'}
+                                        </code>
+                                      </div>
+                                    )}
+                                    <div className="flex items-start">
+                                      <span className="font-medium text-gray-700 min-w-[120px]">Expected:</span>
+                                      <span className="text-gray-800">{result.condition}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                       </div>
-                    </Alert>
-                  ))}
+                    </div>
+                  )}
+
+                  {/* Warnings Section */}
+                  {stats.warnings > 0 && (
+                    <div className="mb-8">
+                      <h3 className="text-lg font-bold text-yellow-700 mb-4 flex items-center">
+                        <AlertCircle className="w-6 h-6 mr-2" />
+                        Warnings ({stats.warnings}) - Should be reviewed
+                      </h3>
+                      <div className="grid gap-4">
+                        {validationResults
+                          .filter(r => r.result === 'failed' && r.severity === 'warning')
+                          .map((result) => (
+                            <div key={result.id} className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-5 hover:shadow-md transition-shadow">
+                              <div className="flex items-start gap-4">
+                                <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="font-mono text-base bg-yellow-200 px-3 py-1 rounded-md text-yellow-800 font-bold">
+                                      {result.field}
+                                    </span>
+                                    <Badge variant="secondary" className="text-sm">
+                                      {result.ruleType.toUpperCase()}
+                                    </Badge>
+                                  </div>
+                                  
+                                  <p className="text-yellow-800 font-semibold text-lg mb-3">
+                                    {result.errorMessage || result.message}
+                                  </p>
+                                  
+                                  <div className="bg-white p-3 rounded-md border border-yellow-200 space-y-2">
+                                    {result.value !== undefined && (
+                                      <div className="flex items-start">
+                                        <span className="font-medium text-gray-700 min-w-[120px]">Current Value:</span>
+                                        <code className="bg-yellow-100 px-2 py-1 rounded text-yellow-700 font-mono text-sm">
+                                          {result.value === '' ? '<empty>' : result.value || '<null>'}
+                                        </code>
+                                      </div>
+                                    )}
+                                    <div className="flex items-start">
+                                      <span className="font-medium text-gray-700 min-w-[120px]">Expected:</span>
+                                      <span className="text-gray-800">{result.condition}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Summary Actions */}
+                  <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+                    <h4 className="font-semibold text-gray-800 mb-2">Next Steps:</h4>
+                    <ul className="space-y-1 text-gray-700">
+                      {stats.errors > 0 && (
+                        <li className="flex items-start">
+                          <span className="text-red-600 mr-2">•</span>
+                          Fix all critical errors before resubmitting
+                        </li>
+                      )}
+                      {stats.warnings > 0 && (
+                        <li className="flex items-start">
+                          <span className="text-yellow-600 mr-2">•</span>
+                          Review warnings to ensure data accuracy
+                        </li>
+                      )}
+                      <li className="flex items-start">
+                        <span className="text-blue-600 mr-2">•</span>
+                        Download the template again if needed
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             )}
           </CardContent>
