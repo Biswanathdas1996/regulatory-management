@@ -32,6 +32,12 @@ The application validates submissions against predefined rules with 100% accurac
 - AI analyzes sheet data patterns to automatically suggest validation rules
 - Supports automatic detection of required fields, data formats, ranges, and custom validations
 - Generated rules are saved to database with sheet-specific targeting
+- Implemented chunked processing for large datasets:
+  - Processes data in 50-row chunks to handle large context sizes
+  - Processes up to 5 chunks (250 rows) per generation request
+  - Automatically deduplicates rules across chunks
+  - Merges range validation rules to find overall min/max values
+  - Returns metadata about chunks processed
 
 ## User Preferences
 

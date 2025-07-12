@@ -520,16 +520,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Sheet data and name are required" });
       }
 
-      // Prepare a simplified data sample for AI analysis
-      const sampleData = sheetData.data.slice(0, 20); // Take first 20 rows as sample
+      const CHUNK_SIZE = 50; // Process 50 rows at a time
+      const MAX_CHUNKS = 5; // Process up to 5 chunks (250 rows total)
+      const totalRows = sheetData.data.length;
+      const chunksToProcess = Math.min(Math.ceil(totalRows / CHUNK_SIZE), MAX_CHUNKS);
       
-      // Use Gemini AI to analyze the sheet and generate validation rules
-      const analysisPrompt = `
-Analyze this Excel sheet data and generate validation rules.
+      console.log(`Processing ${chunksToProcess} chunks for sheet ${sheetName} with ${totalRows} rows`);
+      
+      const genai = await import('@google/genai');
+      const genAI = new genai.GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      
+      // Map to store unique rules by field and ruleType
+      const uniqueRulesMap = new Map<string, any>();
+      
+      // Process data in chunks
+      for (let i = 0; i < chunksToProcess; i++) {
+        const startIdx = i * CHUNK_SIZE;
+        const endIdx = Math.min(startIdx + CHUNK_SIZE, totalRows);
+        const chunkData = sheetData.data.slice(startIdx, endIdx);
+        
+        // Skip if chunk is empty
+        if (chunkData.length === 0) continue;
+        
+        const analysisPrompt = `
+Analyze this Excel sheet data chunk and generate validation rules.
 
 Sheet Name: ${sheetName}
-Sample Data (first 20 rows):
-${JSON.stringify(sampleData, null, 2)}
+Data Chunk ${i + 1} of ${chunksToProcess} (rows ${startIdx + 1} to ${endIdx}):
+${JSON.stringify(chunkData, null, 2)}
 
 Based on the data patterns, headers, and values, generate validation rules following these types:
 1. "required" - For fields that must have values
@@ -548,27 +566,64 @@ Return the response as a JSON array of validation rules.
 Only return the JSON array, no additional text.
 `;
 
-      const genai = await import('@google/genai');
-      const genAI = new genai.GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-      
-      const result = await genAI.models.generateContent({
-        model: 'gemini-1.5-flash',
-        contents: analysisPrompt
-      });
-      
-      const text = result.text || '';
-      
-      if (!text) {
-        throw new Error('No response from AI model');
+        try {
+          const result = await genAI.models.generateContent({
+            model: 'gemini-1.5-flash',
+            contents: analysisPrompt
+          });
+          
+          const text = result.text || '';
+          
+          if (!text) {
+            console.warn(`No response from AI model for chunk ${i + 1}`);
+            continue;
+          }
+          
+          // Extract JSON from the response
+          const jsonMatch = text.match(/\[[\s\S]*\]/);
+          if (!jsonMatch) {
+            console.warn(`Failed to parse AI response for chunk ${i + 1}`);
+            continue;
+          }
+          
+          const chunkRules = JSON.parse(jsonMatch[0]);
+          
+          // Add rules to map, deduplicating by field + ruleType
+          for (const rule of chunkRules) {
+            const key = `${rule.field}_${rule.ruleType}`;
+            
+            // For range rules, merge min/max values
+            if (rule.ruleType === 'range' && uniqueRulesMap.has(key)) {
+              const existingRule = uniqueRulesMap.get(key);
+              const existingCondition = existingRule.condition;
+              const newCondition = rule.condition;
+              
+              // Parse and merge range conditions
+              const existingMatch = existingCondition.match(/min:(-?\d+(?:\.\d+)?),max:(-?\d+(?:\.\d+)?)/);
+              const newMatch = newCondition.match(/min:(-?\d+(?:\.\d+)?),max:(-?\d+(?:\.\d+)?)/);
+              
+              if (existingMatch && newMatch) {
+                const minVal = Math.min(parseFloat(existingMatch[1]), parseFloat(newMatch[1]));
+                const maxVal = Math.max(parseFloat(existingMatch[2]), parseFloat(newMatch[2]));
+                existingRule.condition = `min:${minVal},max:${maxVal}`;
+              }
+            } else {
+              uniqueRulesMap.set(key, rule);
+            }
+          }
+          
+        } catch (chunkError) {
+          console.error(`Error processing chunk ${i + 1}:`, chunkError);
+          // Continue with next chunk
+        }
       }
       
-      // Extract JSON from the response
-      const jsonMatch = text.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) {
-        throw new Error('Failed to parse AI response - no valid JSON array found');
-      }
+      // Convert map to array
+      const generatedRules = Array.from(uniqueRulesMap.values());
       
-      const generatedRules = JSON.parse(jsonMatch[0]);
+      if (generatedRules.length === 0) {
+        return res.status(400).json({ error: "No validation rules could be generated from the data" });
+      }
       
       // Save the generated rules to database
       const rulesToCreate = generatedRules.map((rule: any) => ({
@@ -586,7 +641,12 @@ Only return the JSON array, no additional text.
       res.json({ 
         success: true,
         rulesCount: rulesToCreate.length,
-        rules: rulesToCreate
+        rules: rulesToCreate,
+        metadata: {
+          totalRows,
+          chunksProcessed: chunksToProcess,
+          chunkSize: CHUNK_SIZE
+        }
       });
     } catch (error) {
       console.error("Generate validation rules error:", error);
