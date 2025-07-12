@@ -24,6 +24,7 @@ type SubmissionFormData = z.infer<typeof submissionSchema>;
 
 interface ValidationResult {
   id: number;
+  ruleId: number;
   ruleType: string;
   field: string;
   condition: string;
@@ -158,7 +159,12 @@ export function UserSubmission() {
     const errors = validationResults.filter(r => r.severity === 'error' && r.result === 'failed').length;
     const warnings = validationResults.filter(r => r.severity === 'warning' && r.result === 'failed').length;
     const passed = validationResults.filter(r => r.result === 'passed').length;
-    return { errors, warnings, passed, total: validationResults.length };
+    
+    // Get unique rule IDs to count actual rules used
+    const uniqueRuleIds = new Set(validationResults.map(r => r.ruleId));
+    const totalRules = uniqueRuleIds.size;
+    
+    return { errors, warnings, passed, total: validationResults.length, totalRules };
   };
 
   const stats = getValidationStats();
@@ -396,22 +402,30 @@ export function UserSubmission() {
             </div>
             
             {/* Summary Badges */}
-            <div className="flex flex-wrap gap-3 mt-4">
-              <Badge variant={stats.errors > 0 ? "destructive" : "outline"} className="px-4 py-2 text-base">
-                <XCircle className="w-5 h-5 mr-2" />
-                {stats.errors} Critical Errors
-              </Badge>
-              <Badge variant={stats.warnings > 0 ? "secondary" : "outline"} className="px-4 py-2 text-base">
-                <AlertCircle className="w-5 h-5 mr-2" />
-                {stats.warnings} Warnings
-              </Badge>
-              <Badge variant="outline" className="px-4 py-2 text-base border-green-500 text-green-700">
-                <CheckCircle className="w-5 h-5 mr-2" />
-                {stats.passed} Passed
-              </Badge>
-              <Badge className="px-4 py-2 text-base">
-                Total: {stats.total} Validations
-              </Badge>
+            <div className="space-y-3 mt-4">
+              {/* Rules and Checks Info */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm text-blue-800">
+                  <span className="font-semibold">{stats.totalRules} validation rules</span> were applied, 
+                  resulting in <span className="font-semibold">{stats.total} individual cell/field checks</span>
+                </p>
+              </div>
+              
+              {/* Result Badges */}
+              <div className="flex flex-wrap gap-3">
+                <Badge variant={stats.errors > 0 ? "destructive" : "outline"} className="px-4 py-2 text-base">
+                  <XCircle className="w-5 h-5 mr-2" />
+                  {stats.errors} Failed Checks (Errors)
+                </Badge>
+                <Badge variant={stats.warnings > 0 ? "secondary" : "outline"} className="px-4 py-2 text-base">
+                  <AlertCircle className="w-5 h-5 mr-2" />
+                  {stats.warnings} Failed Checks (Warnings)
+                </Badge>
+                <Badge variant="outline" className="px-4 py-2 text-base border-green-500 text-green-700">
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  {stats.passed} Passed Checks
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           
