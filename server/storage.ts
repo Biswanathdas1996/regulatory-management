@@ -15,6 +15,8 @@ import {
   type ProcessingStatus,
   type InsertProcessingStatus
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -44,168 +46,128 @@ export interface IStorage {
   getProcessingStatus(templateId: number): Promise<ProcessingStatus[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private templates: Map<number, Template>;
-  private templateSheets: Map<number, TemplateSheet>;
-  private templateSchemas: Map<number, TemplateSchema>;
-  private processingStatuses: Map<number, ProcessingStatus>;
-  private currentUserId: number;
-  private currentTemplateId: number;
-  private currentSheetId: number;
-  private currentSchemaId: number;
-  private currentStatusId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.templates = new Map();
-    this.templateSheets = new Map();
-    this.templateSchemas = new Map();
-    this.processingStatuses = new Map();
-    this.currentUserId = 1;
-    this.currentTemplateId = 1;
-    this.currentSheetId = 1;
-    this.currentSchemaId = 1;
-    this.currentStatusId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   async createTemplate(insertTemplate: InsertTemplate): Promise<Template> {
-    const id = this.currentTemplateId++;
-    const now = new Date();
-    const template: Template = { 
-      ...insertTemplate, 
-      id, 
-      status: "uploaded",
-      createdAt: now,
-      updatedAt: now
-    };
-    this.templates.set(id, template);
+    const [template] = await db
+      .insert(templates)
+      .values(insertTemplate)
+      .returning();
     return template;
   }
 
   async getTemplate(id: number): Promise<Template | undefined> {
-    return this.templates.get(id);
+    const [template] = await db.select().from(templates).where(eq(templates.id, id));
+    return template || undefined;
   }
 
   async getTemplates(): Promise<Template[]> {
-    return Array.from(this.templates.values()).sort((a, b) => 
-      b.createdAt.getTime() - a.createdAt.getTime()
-    );
+    return await db.select().from(templates).orderBy(templates.createdAt);
   }
 
   async updateTemplateStatus(id: number, status: string): Promise<void> {
-    const template = this.templates.get(id);
-    if (template) {
-      template.status = status;
-      template.updatedAt = new Date();
-      this.templates.set(id, template);
-    }
+    await db
+      .update(templates)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(templates.id, id));
   }
 
   async deleteTemplate(id: number): Promise<void> {
-    this.templates.delete(id);
-    // Clean up related data
-    Array.from(this.templateSheets.entries()).forEach(([key, sheet]) => {
-      if (sheet.templateId === id) {
-        this.templateSheets.delete(key);
-      }
-    });
-    Array.from(this.templateSchemas.entries()).forEach(([key, schema]) => {
-      if (schema.templateId === id) {
-        this.templateSchemas.delete(key);
-      }
-    });
-    Array.from(this.processingStatuses.entries()).forEach(([key, status]) => {
-      if (status.templateId === id) {
-        this.processingStatuses.delete(key);
-      }
-    });
+    // Delete all related data first
+    await db.delete(processingStatus).where(eq(processingStatus.templateId, id));
+    await db.delete(templateSchemas).where(eq(templateSchemas.templateId, id));
+    await db.delete(templateSheets).where(eq(templateSheets.templateId, id));
+    await db.delete(templates).where(eq(templates.id, id));
   }
 
   async createTemplateSheet(insertSheet: InsertTemplateSheet): Promise<TemplateSheet> {
-    const id = this.currentSheetId++;
-    const sheet: TemplateSheet = { 
-      ...insertSheet, 
-      id,
-      createdAt: new Date(),
-      extractedData: insertSheet.extractedData || null
-    };
-    this.templateSheets.set(id, sheet);
+    const [sheet] = await db
+      .insert(templateSheets)
+      .values(insertSheet)
+      .returning();
     return sheet;
   }
 
   async getTemplateSheets(templateId: number): Promise<TemplateSheet[]> {
-    return Array.from(this.templateSheets.values()).filter(
-      sheet => sheet.templateId === templateId
-    ).sort((a, b) => a.sheetIndex - b.sheetIndex);
+    return await db
+      .select()
+      .from(templateSheets)
+      .where(eq(templateSheets.templateId, templateId))
+      .orderBy(templateSheets.sheetIndex);
   }
 
   async createTemplateSchema(insertSchema: InsertTemplateSchema): Promise<TemplateSchema> {
-    const id = this.currentSchemaId++;
-    const schema: TemplateSchema = { 
-      ...insertSchema, 
-      id,
-      createdAt: new Date(),
-      sheetId: insertSchema.sheetId || null,
-      extractionNotes: insertSchema.extractionNotes || null
-    };
-    this.templateSchemas.set(id, schema);
+    const [schema] = await db
+      .insert(templateSchemas)
+      .values(insertSchema)
+      .returning();
     return schema;
   }
 
   async getTemplateSchemas(templateId: number): Promise<TemplateSchema[]> {
-    return Array.from(this.templateSchemas.values()).filter(
-      schema => schema.templateId === templateId
-    );
+    return await db
+      .select()
+      .from(templateSchemas)
+      .where(eq(templateSchemas.templateId, templateId));
   }
 
   async getTemplateSchema(templateId: number, sheetId?: number): Promise<TemplateSchema | undefined> {
-    return Array.from(this.templateSchemas.values()).find(
-      schema => schema.templateId === templateId && (!sheetId || schema.sheetId === sheetId)
-    );
+    const conditions = [eq(templateSchemas.templateId, templateId)];
+    if (sheetId !== undefined) {
+      conditions.push(eq(templateSchemas.sheetId, sheetId));
+    }
+    
+    const [schema] = await db
+      .select()
+      .from(templateSchemas)
+      .where(conditions.length > 1 ? conditions[0] : conditions[0]);
+    
+    return schema || undefined;
   }
 
   async createProcessingStatus(insertStatus: InsertProcessingStatus): Promise<ProcessingStatus> {
-    const id = this.currentStatusId++;
-    const status: ProcessingStatus = { 
-      ...insertStatus, 
-      id,
-      updatedAt: new Date(),
-      message: insertStatus.message || null,
-      progress: insertStatus.progress || null
-    };
-    this.processingStatuses.set(id, status);
+    const [status] = await db
+      .insert(processingStatus)
+      .values(insertStatus)
+      .returning();
     return status;
   }
 
   async updateProcessingStatus(templateId: number, step: string, status: string, message?: string, progress?: number): Promise<void> {
-    const existingStatus = Array.from(this.processingStatuses.values()).find(
-      s => s.templateId === templateId && s.step === step
-    );
+    const [existingStatus] = await db
+      .select()
+      .from(processingStatus)
+      .where(eq(processingStatus.templateId, templateId));
     
-    if (existingStatus) {
-      existingStatus.status = status;
-      existingStatus.message = message || existingStatus.message;
-      existingStatus.progress = progress !== undefined ? progress : existingStatus.progress;
-      existingStatus.updatedAt = new Date();
-      this.processingStatuses.set(existingStatus.id, existingStatus);
+    const matchingStatus = existingStatus && existingStatus.step === step ? existingStatus : null;
+    
+    if (matchingStatus) {
+      await db
+        .update(processingStatus)
+        .set({ 
+          status, 
+          message: message || matchingStatus.message, 
+          progress: progress !== undefined ? progress : matchingStatus.progress,
+          updatedAt: new Date()
+        })
+        .where(eq(processingStatus.id, matchingStatus.id));
     } else {
       await this.createProcessingStatus({
         templateId,
@@ -218,10 +180,12 @@ export class MemStorage implements IStorage {
   }
 
   async getProcessingStatus(templateId: number): Promise<ProcessingStatus[]> {
-    return Array.from(this.processingStatuses.values()).filter(
-      status => status.templateId === templateId
-    ).sort((a, b) => a.updatedAt.getTime() - b.updatedAt.getTime());
+    return await db
+      .select()
+      .from(processingStatus)
+      .where(eq(processingStatus.templateId, templateId))
+      .orderBy(processingStatus.updatedAt);
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
