@@ -226,6 +226,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 // Background processing function
 async function processTemplateAsync(templateId: number) {
+  let currentStep = "extraction";
+  
   try {
     console.log(`Starting processing for template ${templateId}`);
     
@@ -245,15 +247,17 @@ async function processTemplateAsync(templateId: number) {
     
     if (!result.success) {
       console.error(`File processing failed: ${result.error}`);
-      await storage.updateProcessingStatus(templateId, "extraction", "failed", result.error);
+      await storage.updateProcessingStatus(templateId, "extraction", "failed", result.error || "Failed to process file");
       throw new Error(result.error);
     }
 
     console.log(`Extracted ${result.sheets?.length} sheets`);
 
     // Store extracted sheets
-    if (result.sheets) {
-      for (const sheet of result.sheets) {
+    if (result.sheets && result.sheets.length > 0) {
+      let sheetProgress = 50;
+      for (let i = 0; i < result.sheets.length; i++) {
+        const sheet = result.sheets[i];
         await storage.createTemplateSheet({
           templateId,
           sheetName: sheet.name,
@@ -261,21 +265,53 @@ async function processTemplateAsync(templateId: number) {
           dataPointCount: sheet.dataPointCount,
           extractedData: sheet.data
         });
+        
+        // Update progress for each sheet stored
+        sheetProgress = 50 + Math.round((i + 1) / result.sheets.length * 40);
+        await storage.updateProcessingStatus(
+          templateId, 
+          "extraction", 
+          "in_progress", 
+          `Storing sheet ${i + 1}/${result.sheets.length}: ${sheet.name}`, 
+          sheetProgress
+        );
       }
     }
 
     // Update extraction as complete
-    await storage.updateProcessingStatus(templateId, "extraction", "completed", `Extracted ${result.sheets?.length || 0} sheets`, 100);
+    await storage.updateProcessingStatus(templateId, "extraction", "completed", `Successfully extracted ${result.sheets?.length || 0} sheets`, 100);
 
     // Generate schemas with AI
-    await storage.updateProcessingStatus(templateId, "ai_processing", "in_progress", "Generating schemas with AI", 0);
-    await FileProcessor.generateSchemas(templateId);
-
-    await storage.updateTemplateStatus(templateId, "completed");
+    currentStep = "ai_processing";
+    await storage.updateProcessingStatus(templateId, "ai_processing", "in_progress", "Starting AI schema generation", 0);
+    
+    try {
+      await FileProcessor.generateSchemas(templateId);
+      await storage.updateTemplateStatus(templateId, "completed");
+      await storage.updateProcessingStatus(templateId, "schema_generation", "completed", "All processing completed successfully", 100);
+    } catch (aiError) {
+      console.error("AI processing error:", aiError);
+      await storage.updateProcessingStatus(
+        templateId, 
+        "ai_processing", 
+        "failed", 
+        aiError instanceof Error ? aiError.message : "AI processing failed"
+      );
+      throw aiError;
+    }
 
   } catch (error) {
     console.error("Template processing failed:", error);
     await storage.updateTemplateStatus(templateId, "failed");
-    await storage.updateProcessingStatus(templateId, "extraction", "failed", error instanceof Error ? error.message : "Unknown error");
+    
+    // Update the appropriate step as failed
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+    await storage.updateProcessingStatus(templateId, currentStep, "failed", errorMessage);
+    
+    // If we haven't started AI processing yet, mark it as pending
+    if (currentStep === "extraction") {
+      await storage.updateProcessingStatus(templateId, "ai_processing", "pending", "Waiting for extraction to complete");
+      await storage.updateProcessingStatus(templateId, "schema_generation", "pending", "Waiting for AI processing");
+    }
   }
 }

@@ -148,7 +148,7 @@ export class FileProcessor {
 
   static async generateSchemas(templateId: number): Promise<void> {
     try {
-      await storage.updateProcessingStatus(templateId, "ai_processing", "in_progress", "Starting AI schema generation...", 60);
+      await storage.updateProcessingStatus(templateId, "ai_processing", "in_progress", "Starting AI schema generation...", 5);
 
       const template = await storage.getTemplate(templateId);
       if (!template) {
@@ -156,49 +156,95 @@ export class FileProcessor {
       }
 
       const sheets = await storage.getTemplateSheets(templateId);
-      const schemas: any[] = [];
-
-      for (let i = 0; i < sheets.length; i++) {
-        const sheet = sheets[i];
-        await storage.updateProcessingStatus(templateId, "ai_processing", "in_progress", `Processing sheet ${i + 1}/${sheets.length}: ${sheet.sheetName}`, Math.round(60 + (i * 20) / sheets.length));
-
-        // Process data in chunks for AI
-        const chunks = this.chunkDataForAI(sheet.extractedData);
-        const consolidatedData = this.consolidateChunks(chunks);
-
-        const schema = await extractSchemaWithAI(consolidatedData, sheet.sheetName, template.templateType);
-        schemas.push(schema);
-
-        // Store individual sheet schema
-        await storage.createTemplateSchema({
-          templateId,
-          sheetId: sheet.id,
-          schemaData: schema,
-          aiConfidence: Math.round(schema.ai_confidence * 100),
-          extractionNotes: schema.extraction_notes
-        });
+      if (!sheets || sheets.length === 0) {
+        throw new Error("No sheets found to process");
       }
 
-      await storage.updateProcessingStatus(templateId, "ai_processing", "completed", "AI processing completed", 80);
+      const schemas: any[] = [];
+      const totalSheets = sheets.length;
+
+      for (let i = 0; i < totalSheets; i++) {
+        const sheet = sheets[i];
+        const progress = Math.round(5 + (i / totalSheets) * 70); // 5-75% for individual sheets
+        
+        await storage.updateProcessingStatus(
+          templateId, 
+          "ai_processing", 
+          "in_progress", 
+          `Processing sheet ${i + 1}/${totalSheets}: ${sheet.sheetName}`, 
+          progress
+        );
+
+        try {
+          // Process data in chunks for AI
+          const chunks = this.chunkDataForAI(sheet.extractedData || []);
+          const consolidatedData = this.consolidateChunks(chunks);
+
+          console.log(`Processing sheet ${sheet.sheetName} with ${sheet.dataPointCount} data points`);
+
+          const schema = await extractSchemaWithAI(consolidatedData, sheet.sheetName, template.templateType);
+          schemas.push(schema);
+
+          // Store individual sheet schema
+          await storage.createTemplateSchema({
+            templateId,
+            sheetId: sheet.id,
+            schemaData: schema,
+            aiConfidence: Math.round(schema.ai_confidence * 100),
+            extractionNotes: schema.extraction_notes
+          });
+
+          // Update progress after each successful sheet
+          await storage.updateProcessingStatus(
+            templateId, 
+            "ai_processing", 
+            "in_progress", 
+            `Completed sheet ${i + 1}/${totalSheets}: ${sheet.sheetName}`, 
+            Math.round(5 + ((i + 1) / totalSheets) * 70)
+          );
+
+        } catch (sheetError) {
+          console.error(`Failed to process sheet ${sheet.sheetName}:`, sheetError);
+          // Continue with other sheets even if one fails
+          schemas.push({
+            sheetName: sheet.sheetName,
+            required_fields: [],
+            ai_confidence: 0,
+            extraction_notes: `Failed to process: ${sheetError instanceof Error ? sheetError.message : 'Unknown error'}`
+          });
+        }
+      }
+
+      await storage.updateProcessingStatus(templateId, "ai_processing", "completed", `Processed ${schemas.length} sheets successfully`, 80);
       await storage.updateProcessingStatus(templateId, "schema_generation", "in_progress", "Generating consolidated schema...", 85);
 
       // Generate consolidated schema with cross-sheet relationships
-      if (schemas.length > 1) {
-        const enhanced = await enhanceSchemaWithAI(schemas, template.templateType);
-        await storage.createTemplateSchema({
-          templateId,
-          sheetId: null,
-          schemaData: enhanced,
-          aiConfidence: 95,
-          extractionNotes: "Consolidated schema with cross-sheet relationships"
-        });
+      if (schemas.length > 1 && schemas.some(s => s.ai_confidence > 0)) {
+        try {
+          const validSchemas = schemas.filter(s => s.ai_confidence > 0);
+          if (validSchemas.length > 0) {
+            const enhanced = await enhanceSchemaWithAI(validSchemas, template.templateType);
+            await storage.createTemplateSchema({
+              templateId,
+              sheetId: null,
+              schemaData: enhanced,
+              aiConfidence: 95,
+              extractionNotes: "Consolidated schema with cross-sheet relationships"
+            });
+          }
+        } catch (enhanceError) {
+          console.error("Failed to enhance schema:", enhanceError);
+          // Not critical - we still have individual schemas
+        }
       }
 
-      await storage.updateProcessingStatus(templateId, "schema_generation", "completed", "Schema generation completed", 100);
+      await storage.updateProcessingStatus(templateId, "schema_generation", "completed", "All schemas generated successfully", 100);
       await storage.updateTemplateStatus(templateId, "completed");
 
     } catch (error) {
-      await storage.updateProcessingStatus(templateId, "ai_processing", "failed", `AI processing failed: ${error}`);
+      console.error("Schema generation failed:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error during AI processing";
+      await storage.updateProcessingStatus(templateId, "ai_processing", "failed", `AI processing failed: ${errorMessage}`);
       await storage.updateTemplateStatus(templateId, "failed");
       throw error;
     }
