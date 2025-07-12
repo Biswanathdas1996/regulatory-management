@@ -2,6 +2,9 @@ import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
 import path from "path";
+import fs from "fs";
+import csv from "csv-parser";
+import ExcelJS from "exceljs";
 import { storage } from "./storage";
 import { FileProcessor } from "./services/fileProcessor";
 import { ValidationRulesParser } from "./services/validationRulesParser";
@@ -375,6 +378,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/validation-rules/example", (req, res) => {
     const example = ValidationRulesParser.generateExampleRules();
     res.type('text/plain').send(example);
+  });
+
+  // Get Excel data for viewer
+  app.get("/api/templates/:id/excel-data", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const template = await storage.getTemplate(id);
+      
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+
+      // Get the sheets for this template
+      const sheets = await storage.getTemplateSheets(id);
+      
+      if (sheets.length === 0) {
+        return res.json([]);
+      }
+
+      // Parse the Excel file to get data
+      const workbook = new ExcelJS.Workbook();
+      const ext = path.extname(template.filePath).toLowerCase();
+      
+      if (ext === '.xlsx' || ext === '.xls') {
+        await workbook.xlsx.readFile(template.filePath);
+        
+        const sheetsData: any[] = [];
+        
+        workbook.eachSheet((worksheet, sheetId) => {
+          const sheetData: any[][] = [];
+          
+          // Convert worksheet to array format for react-spreadsheet
+          worksheet.eachRow((row, rowNumber) => {
+            const rowData: any[] = [];
+            row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+              rowData.push({
+                value: cell.value !== undefined && cell.value !== null ? String(cell.value) : ""
+              });
+            });
+            sheetData.push(rowData);
+          });
+          
+          // Ensure all rows have the same number of columns
+          const maxCols = Math.max(...sheetData.map(row => row.length));
+          sheetData.forEach(row => {
+            while (row.length < maxCols) {
+              row.push({ value: "" });
+            }
+          });
+          
+          sheetsData.push({
+            sheetName: worksheet.name,
+            data: sheetData
+          });
+        });
+        
+        res.json(sheetsData);
+      } else if (ext === '.csv') {
+        // For CSV files, create a single sheet
+        const data: any[][] = [];
+        const stream = fs.createReadStream(template.filePath);
+        
+        stream
+          .pipe(csv())
+          .on('data', (row: any) => {
+            const rowData = Object.values(row).map((value: any) => ({
+              value: value !== undefined && value !== null ? String(value) : ""
+            }));
+            data.push(rowData);
+          })
+          .on('end', () => {
+            res.json([{
+              sheetName: 'Sheet1',
+              data
+            }]);
+          })
+          .on('error', (error) => {
+            console.error('CSV parsing error:', error);
+            res.status(500).json({ error: "Failed to parse CSV file" });
+          });
+      } else {
+        res.status(400).json({ error: "Unsupported file format" });
+      }
+    } catch (error) {
+      console.error("Excel data fetch error:", error);
+      res.status(500).json({ error: "Failed to fetch Excel data" });
+    }
   });
 
   const httpServer = createServer(app);

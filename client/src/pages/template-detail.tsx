@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, FileText, Database, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { ProcessingStatus } from "@/components/ProcessingStatus";
 import { SchemaDisplay } from "@/components/SchemaDisplay";
+import { ExcelViewer } from "@/components/ExcelViewer";
 
 export default function TemplateDetail() {
   const params = useParams<{ id: string }>();
@@ -161,8 +162,11 @@ export default function TemplateDetail() {
 
       {/* Generated Schemas Section */}
       {template.status === "completed" && schemas && schemas.length > 0 && (
-        <div className="mb-8">
+        <div className="mb-8 space-y-8">
           <SchemaDisplay templateId={templateId} />
+          
+          {/* Excel Viewer Section */}
+          <ExcelViewer templateId={templateId} />
         </div>
       )}
 
