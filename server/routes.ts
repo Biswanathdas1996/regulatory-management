@@ -129,6 +129,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Start processing in the background
+      processTemplateAsync(template.id).catch(error => {
+        console.error(`Background processing failed for template ${template.id}:`, error);
+      });
+
       res.json({ 
         message: "Template uploaded successfully", 
         templateId: template.id,

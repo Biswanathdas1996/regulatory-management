@@ -211,7 +211,7 @@ export function TemplateLibrary({ templates, onTemplateSelected, onTemplateDelet
                       variant="ghost"
                       size="sm"
                       onClick={() => navigate(`/template/${template.id}`)}
-                      disabled={template.status !== "completed"}
+                      title="View template details"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
