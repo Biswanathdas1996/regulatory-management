@@ -1,0 +1,52 @@
+# Sample Validation Rules File
+# Upload this file along with your template to set up validation rules
+# Each rule block should be separated by ---
+
+FIELD: company_name
+RULE: required
+CONDITION: not_empty
+ERROR: Company name is required
+SEVERITY: error
+---
+
+FIELD: email
+RULE: format
+CONDITION: ^[^\s@]+@[^\s@]+\.[^\s@]+$
+ERROR: Invalid email format
+SEVERITY: error
+---
+
+FIELD: revenue
+RULE: range
+CONDITION: min:0,max:1000000000
+ERROR: Revenue must be between 0 and 1 billion
+SEVERITY: error
+---
+
+FIELD: A1:A10
+RULE: required
+CONDITION: not_empty
+ERROR: Cells A1 to A10 must not be empty
+SEVERITY: error
+---
+
+FIELD: B5
+RULE: custom
+CONDITION: value > 100 AND value < 1000
+ERROR: Value in B5 must be between 100 and 1000
+SEVERITY: warning
+---
+
+FIELD: phone
+RULE: format
+CONDITION: ^\+?[1-9]\d{1,14}$
+ERROR: Please enter a valid phone number
+SEVERITY: warning
+---
+
+FIELD: C1:C100
+RULE: range
+CONDITION: min:1,max:100
+ERROR: Values in column C must be between 1 and 100
+SEVERITY: error
+---

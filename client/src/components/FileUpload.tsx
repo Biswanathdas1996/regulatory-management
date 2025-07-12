@@ -261,6 +261,15 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
               <div className="mb-4">
                 <p className="text-lg font-medium text-gray-900">Validation Rules (Optional)</p>
                 <p className="text-sm text-gray-500 mt-1">Upload a .txt file with validation rules</p>
+                <div className="mt-2">
+                  <a
+                    href="/sample-validation-rules.txt"
+                    download="sample-validation-rules.txt"
+                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Download sample validation rules file
+                  </a>
+                </div>
               </div>
               <FormField
                 control={form.control}
