@@ -4,6 +4,9 @@ import {
   templateSheets, 
   templateSchemas, 
   processingStatus,
+  validationRules,
+  submissions,
+  validationResults,
   type User, 
   type InsertUser, 
   type Template, 
@@ -13,7 +16,13 @@ import {
   type TemplateSchema,
   type InsertTemplateSchema,
   type ProcessingStatus,
-  type InsertProcessingStatus
+  type InsertProcessingStatus,
+  type ValidationRule,
+  type InsertValidationRule,
+  type Submission,
+  type InsertSubmission,
+  type ValidationResult,
+  type InsertValidationResult
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -29,6 +38,7 @@ export interface IStorage {
   getTemplate(id: number): Promise<Template | undefined>;
   getTemplates(): Promise<Template[]>;
   updateTemplateStatus(id: number, status: string): Promise<void>;
+  updateTemplateValidationRulesPath(id: number, path: string): Promise<void>;
   deleteTemplate(id: number): Promise<void>;
   
   // Template sheet methods
@@ -44,6 +54,24 @@ export interface IStorage {
   createProcessingStatus(status: InsertProcessingStatus): Promise<ProcessingStatus>;
   updateProcessingStatus(templateId: number, step: string, status: string, message?: string, progress?: number): Promise<void>;
   getProcessingStatus(templateId: number): Promise<ProcessingStatus[]>;
+  
+  // Validation rules methods
+  createValidationRule(rule: InsertValidationRule): Promise<ValidationRule>;
+  createValidationRules(rules: InsertValidationRule[]): Promise<ValidationRule[]>;
+  getValidationRules(templateId: number): Promise<ValidationRule[]>;
+  deleteValidationRules(templateId: number): Promise<void>;
+  
+  // Submission methods
+  createSubmission(submission: InsertSubmission): Promise<Submission>;
+  getSubmission(id: number): Promise<Submission | undefined>;
+  getSubmissions(userId?: number, templateId?: number): Promise<Submission[]>;
+  updateSubmissionStatus(id: number, status: string, errors?: number, warnings?: number): Promise<void>;
+  
+  // Validation result methods
+  createValidationResult(result: InsertValidationResult): Promise<ValidationResult>;
+  createValidationResults(results: InsertValidationResult[]): Promise<ValidationResult[]>;
+  getValidationResults(submissionId: number): Promise<ValidationResult[]>;
+  deleteValidationResults(submissionId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -89,11 +117,20 @@ export class DatabaseStorage implements IStorage {
       .where(eq(templates.id, id));
   }
 
+  async updateTemplateValidationRulesPath(id: number, path: string): Promise<void> {
+    await db
+      .update(templates)
+      .set({ validationRulesPath: path, updatedAt: new Date() })
+      .where(eq(templates.id, id));
+  }
+
   async deleteTemplate(id: number): Promise<void> {
     // Delete all related data first
     await db.delete(processingStatus).where(eq(processingStatus.templateId, id));
     await db.delete(templateSchemas).where(eq(templateSchemas.templateId, id));
     await db.delete(templateSheets).where(eq(templateSheets.templateId, id));
+    await db.delete(validationRules).where(eq(validationRules.templateId, id));
+    await db.delete(submissions).where(eq(submissions.templateId, id));
     await db.delete(templates).where(eq(templates.id, id));
   }
 
@@ -185,6 +222,106 @@ export class DatabaseStorage implements IStorage {
       .from(processingStatus)
       .where(eq(processingStatus.templateId, templateId))
       .orderBy(processingStatus.updatedAt);
+  }
+
+  // Validation rules methods
+  async createValidationRule(rule: InsertValidationRule): Promise<ValidationRule> {
+    const [validationRule] = await db
+      .insert(validationRules)
+      .values(rule)
+      .returning();
+    return validationRule;
+  }
+
+  async createValidationRules(rules: InsertValidationRule[]): Promise<ValidationRule[]> {
+    return await db
+      .insert(validationRules)
+      .values(rules)
+      .returning();
+  }
+
+  async getValidationRules(templateId: number): Promise<ValidationRule[]> {
+    return await db
+      .select()
+      .from(validationRules)
+      .where(eq(validationRules.templateId, templateId));
+  }
+
+  async deleteValidationRules(templateId: number): Promise<void> {
+    await db.delete(validationRules).where(eq(validationRules.templateId, templateId));
+  }
+
+  // Submission methods
+  async createSubmission(submission: InsertSubmission): Promise<Submission> {
+    const [newSubmission] = await db
+      .insert(submissions)
+      .values(submission)
+      .returning();
+    return newSubmission;
+  }
+
+  async getSubmission(id: number): Promise<Submission | undefined> {
+    const [submission] = await db.select().from(submissions).where(eq(submissions.id, id));
+    return submission || undefined;
+  }
+
+  async getSubmissions(userId?: number, templateId?: number): Promise<Submission[]> {
+    const conditions = [];
+    if (userId !== undefined) {
+      conditions.push(eq(submissions.userId, userId));
+    }
+    if (templateId !== undefined) {
+      conditions.push(eq(submissions.templateId, templateId));
+    }
+    
+    const query = db.select().from(submissions);
+    if (conditions.length > 0) {
+      const whereClause = conditions.length === 1 ? conditions[0] : 
+        conditions.reduce((acc, condition) => acc && condition);
+      return await query.where(whereClause).orderBy(submissions.submittedAt);
+    }
+    
+    return await query.orderBy(submissions.submittedAt);
+  }
+
+  async updateSubmissionStatus(id: number, status: string, errors?: number, warnings?: number): Promise<void> {
+    const updates: any = { status, validatedAt: new Date() };
+    if (errors !== undefined) updates.validationErrors = errors;
+    if (warnings !== undefined) updates.validationWarnings = warnings;
+    
+    await db
+      .update(submissions)
+      .set(updates)
+      .where(eq(submissions.id, id));
+  }
+
+  // Validation result methods
+  async createValidationResult(result: InsertValidationResult): Promise<ValidationResult> {
+    const [validationResult] = await db
+      .insert(validationResults)
+      .values(result)
+      .returning();
+    return validationResult;
+  }
+
+  async createValidationResults(results: InsertValidationResult[]): Promise<ValidationResult[]> {
+    if (results.length === 0) return [];
+    return await db
+      .insert(validationResults)
+      .values(results)
+      .returning();
+  }
+
+  async getValidationResults(submissionId: number): Promise<ValidationResult[]> {
+    return await db
+      .select()
+      .from(validationResults)
+      .where(eq(validationResults.submissionId, submissionId))
+      .orderBy(validationResults.createdAt);
+  }
+
+  async deleteValidationResults(submissionId: number): Promise<void> {
+    await db.delete(validationResults).where(eq(validationResults.submissionId, submissionId));
   }
 }
 

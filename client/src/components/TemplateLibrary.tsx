@@ -102,6 +102,36 @@ export function TemplateLibrary({ templates, onTemplateSelected, onTemplateDelet
     return date.toLocaleDateString();
   };
 
+  const handleDownload = async (templateId: number, fileName: string) => {
+    try {
+      const response = await fetch(`/api/templates/${templateId}/download`);
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Success",
+        description: "Template downloaded successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to download template",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -162,9 +192,16 @@ export function TemplateLibrary({ templates, onTemplateSelected, onTemplateDelet
                     </Badge>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge className={`text-xs ${getStatusColor(template.status)}`}>
-                      {getStatusIcon(template.status)} {template.status}
-                    </Badge>
+                    <div className="flex items-center space-x-2">
+                      <Badge className={`text-xs ${getStatusColor(template.status)}`}>
+                        {getStatusIcon(template.status)} {template.status}
+                      </Badge>
+                      {template.validationRulesPath && (
+                        <Badge variant="outline" className="text-xs">
+                          ✓ Rules
+                        </Badge>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(template.updatedAt)}
@@ -181,7 +218,9 @@ export function TemplateLibrary({ templates, onTemplateSelected, onTemplateDelet
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => handleDownload(template.id, template.fileName)}
                       disabled={template.status !== "completed"}
+                      title="Download template"
                     >
                       <Download className="h-4 w-4" />
                     </Button>

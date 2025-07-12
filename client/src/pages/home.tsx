@@ -4,10 +4,12 @@ import { ProcessingStatus } from "@/components/ProcessingStatus";
 import { SchemaDisplay } from "@/components/SchemaDisplay";
 import { TemplateLibrary } from "@/components/TemplateLibrary";
 import { SystemStats } from "@/components/SystemStats";
+import { UserSubmission } from "@/components/UserSubmission";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChartLine, User } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChartLine, User, FileUp, Upload } from "lucide-react";
 
 export default function Home() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
@@ -42,7 +44,7 @@ export default function Home() {
               <h1 className="text-xl font-semibold text-gray-900">Financial Template Processor</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">AI-Powered Schema Extraction</span>
+              <span className="text-sm text-gray-500">Template Validation System</span>
               <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
                 <User className="text-white text-sm" />
               </div>
@@ -52,62 +54,81 @@ export default function Home() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Upload Section */}
-        <div className="mb-8">
-          <FileUpload onTemplateUploaded={handleTemplateUploaded} />
-        </div>
+        <Tabs defaultValue="admin" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsTrigger value="admin" className="flex items-center gap-2">
+              <FileUp className="h-4 w-4" />
+              Admin - Template Management
+            </TabsTrigger>
+            <TabsTrigger value="user" className="flex items-center gap-2">
+              <Upload className="h-4 w-4" />
+              User - Submit Forms
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Selected Template Details */}
-        {selectedTemplateId && (
-          <div className="mb-8">
-            <Card className="border-2 border-blue-200 bg-blue-50">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg font-semibold text-gray-900">
-                    Template Details - {templates?.find(t => t.id === selectedTemplateId)?.name}
-                  </CardTitle>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => setSelectedTemplateId(null)}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    Close View
-                  </Button>
-                </div>
-              </CardHeader>
-            </Card>
-          </div>
-        )}
+          <TabsContent value="admin" className="space-y-8">
+            {/* Upload Section */}
+            <div>
+              <FileUpload onTemplateUploaded={handleTemplateUploaded} />
+            </div>
 
-        {/* Processing Status */}
-        {selectedTemplateId && (
-          <div className="mb-8">
-            <ProcessingStatus templateId={selectedTemplateId} />
-          </div>
-        )}
+            {/* Selected Template Details */}
+            {selectedTemplateId && (
+              <div>
+                <Card className="border-2 border-blue-200 bg-blue-50">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg font-semibold text-gray-900">
+                        Template Details - {templates?.find(t => t.id === selectedTemplateId)?.name}
+                      </CardTitle>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setSelectedTemplateId(null)}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        Close View
+                      </Button>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </div>
+            )}
 
-        {/* Schema Output Section */}
-        {selectedTemplateId && (
-          <div className="mb-8">
-            <SchemaDisplay templateId={selectedTemplateId} />
-          </div>
-        )}
+            {/* Processing Status */}
+            {selectedTemplateId && (
+              <div>
+                <ProcessingStatus templateId={selectedTemplateId} />
+              </div>
+            )}
 
-        {/* Template Management */}
-        <div className="mb-8">
-          <TemplateLibrary 
-            templates={templates || []} 
-            onTemplateSelected={handleTemplateSelected}
-            onTemplateDeleted={refetchTemplates}
-            selectedTemplateId={selectedTemplateId}
-          />
-        </div>
+            {/* Schema Output Section */}
+            {selectedTemplateId && (
+              <div>
+                <SchemaDisplay templateId={selectedTemplateId} />
+              </div>
+            )}
 
-        {/* System Stats */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SystemStats stats={stats} />
-        </div>
+            {/* Template Management */}
+            <div>
+              <TemplateLibrary 
+                templates={templates || []} 
+                onTemplateSelected={handleTemplateSelected}
+                onTemplateDeleted={refetchTemplates}
+                selectedTemplateId={selectedTemplateId}
+              />
+            </div>
+
+            {/* System Stats */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SystemStats stats={stats} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="user" className="space-y-8">
+            <UserSubmission />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

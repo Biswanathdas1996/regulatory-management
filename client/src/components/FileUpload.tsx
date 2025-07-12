@@ -17,7 +17,8 @@ import { apiRequest } from "@/lib/queryClient";
 const uploadSchema = z.object({
   templateType: z.string().min(1, "Template type is required"),
   templateName: z.string().min(1, "Template name is required"),
-  file: z.instanceof(FileList).refine((files) => files.length > 0, "File is required")
+  templateFile: z.instanceof(FileList).refine((files) => files.length > 0, "Template file is required"),
+  validationRulesFile: z.instanceof(FileList).optional()
 });
 
 type UploadFormData = z.infer<typeof uploadSchema>;
@@ -40,14 +41,18 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
     defaultValues: {
       templateType: "",
       templateName: "",
-      file: undefined
+      templateFile: undefined,
+      validationRulesFile: undefined
     }
   });
 
   const uploadMutation = useMutation({
     mutationFn: async (data: UploadFormData) => {
       const formData = new FormData();
-      formData.append("file", data.file[0]);
+      formData.append("template", data.templateFile[0]);
+      if (data.validationRulesFile && data.validationRulesFile.length > 0) {
+        formData.append("validationRules", data.validationRulesFile[0]);
+      }
       formData.append("templateType", data.templateType);
       formData.append("templateName", data.templateName);
 
@@ -100,14 +105,21 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
     if (files.length > 0) {
       const fileList = new DataTransfer();
       fileList.items.add(files[0]);
-      form.setValue("file", fileList.files);
+      form.setValue("templateFile", fileList.files);
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      form.setValue("file", files);
+      form.setValue("templateFile", files);
+    }
+  };
+
+  const handleValidationFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      form.setValue("validationRulesFile", files);
     }
   };
 
@@ -184,7 +196,7 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
               </div>
               <FormField
                 control={form.control}
-                name="file"
+                name="templateFile"
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
@@ -192,13 +204,13 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => document.getElementById("file-input")?.click()}
+                          onClick={() => document.getElementById("template-file-input")?.click()}
                         >
                           <FolderOpen className="mr-2 h-4 w-4" />
-                          Choose File
+                          Choose Template File
                         </Button>
                         <input
-                          id="file-input"
+                          id="template-file-input"
                           type="file"
                           accept=".xlsx,.csv"
                           onChange={handleFileSelect}
@@ -210,9 +222,50 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
                   </FormItem>
                 )}
               />
-              {form.watch("file") && form.watch("file").length > 0 && (
+              {form.watch("templateFile") && form.watch("templateFile").length > 0 && (
                 <p className="text-sm text-gray-600 mt-2">
-                  Selected: {form.watch("file")[0].name}
+                  Template: {form.watch("templateFile")[0].name}
+                </p>
+              )}
+            </div>
+
+            {/* Validation Rules Upload Area */}
+            <div className="border-2 border-dashed rounded-lg p-6 text-center">
+              <div className="mb-4">
+                <p className="text-lg font-medium text-gray-900">Validation Rules (Optional)</p>
+                <p className="text-sm text-gray-500 mt-1">Upload a .txt file with validation rules</p>
+              </div>
+              <FormField
+                control={form.control}
+                name="validationRulesFile"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById("validation-file-input")?.click()}
+                        >
+                          <FolderOpen className="mr-2 h-4 w-4" />
+                          Choose Validation Rules
+                        </Button>
+                        <input
+                          id="validation-file-input"
+                          type="file"
+                          accept=".txt"
+                          onChange={handleValidationFileSelect}
+                          className="hidden"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {form.watch("validationRulesFile") && form.watch("validationRulesFile").length > 0 && (
+                <p className="text-sm text-gray-600 mt-2">
+                  Rules: {form.watch("validationRulesFile")[0].name}
                 </p>
               )}
             </div>

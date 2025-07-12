@@ -1,0 +1,35 @@
+FIELD: company_name
+RULE: required
+CONDITION: not_empty
+ERROR: Company name is required
+SEVERITY: error
+---
+FIELD: A2
+RULE: format
+CONDITION: email
+ERROR: Please enter a valid email address
+SEVERITY: error
+---
+FIELD: revenue
+RULE: range
+CONDITION: min:0;max:1000000000
+ERROR: Revenue must be between 0 and 1 billion
+SEVERITY: warning
+---
+FIELD: B10
+RULE: custom
+CONDITION: value > 0 && value < 100
+ERROR: Percentage must be between 0 and 100
+SEVERITY: error
+---
+FIELD: total_assets
+RULE: required
+CONDITION: not_empty
+ERROR: Total assets is a required field
+SEVERITY: error
+---
+FIELD: C15
+RULE: format
+CONDITION: date
+ERROR: Please enter a valid date in the format MM/DD/YYYY
+SEVERITY: error

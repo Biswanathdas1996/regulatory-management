@@ -1,8 +1,12 @@
-# Financial Template Processor
+# Financial Template Validation System
 
 ## Overview
 
-This is a full-stack web application for processing financial templates using AI-powered schema extraction. The application allows users to upload Excel and CSV files, automatically extracts data schemas using Google's Gemini AI, and provides a user-friendly interface for managing templates and viewing extracted schemas.
+This is a full-stack web application for financial template validation. The system provides two distinct workflows: 
+1. **Admin Workflow**: Upload Excel/CSV templates with corresponding validation rules (.txt files)
+2. **User Workflow**: Download templates, fill them out, and submit for validation
+
+The application validates submissions against predefined rules with 100% accuracy, flagging violations or confirming success.
 
 ## User Preferences
 
@@ -23,7 +27,8 @@ Preferred communication style: Simple, everyday language.
 - **Language**: TypeScript with ES modules
 - **API Style**: RESTful API with JSON responses
 - **File Processing**: Multer for file uploads, ExcelJS for Excel parsing, csv-parser for CSV processing
-- **AI Integration**: Google Gemini AI for schema extraction and enhancement
+- **Validation Engine**: Custom rules-based validation engine for 100% accurate validation
+- **Rules Parser**: Validation rules parser for .txt file processing
 
 ### Database Architecture
 - **ORM**: Drizzle ORM for type-safe database operations
@@ -34,40 +39,50 @@ Preferred communication style: Simple, everyday language.
 ## Key Components
 
 ### Core Services
-1. **FileProcessor**: Handles Excel and CSV file parsing, data extraction, and chunked processing
-2. **Gemini AI Service**: Integrates with Google's Gemini AI for intelligent schema extraction
-3. **Storage Interface**: Abstracted storage layer with in-memory implementation
-4. **Template Management**: CRUD operations for templates, sheets, and schemas
+1. **FileProcessor**: Handles Excel and CSV file parsing and data extraction
+2. **ValidationEngine**: Rules-based validation engine for accurate submission validation
+3. **ValidationRulesParser**: Parses .txt validation rules files into structured format
+4. **Storage Interface**: Abstracted storage layer with PostgreSQL implementation
+5. **Template Management**: CRUD operations for templates and validation rules
+6. **Submission Management**: Handles user submissions and validation results
 
 ### Frontend Components
-1. **FileUpload**: Drag-and-drop file upload with validation
-2. **ProcessingStatus**: Real-time status tracking with progress indicators
-3. **SchemaDisplay**: Interactive schema visualization and export
-4. **TemplateLibrary**: Template management and browsing
+1. **FileUpload**: Drag-and-drop file upload for templates and validation rules
+2. **UserSubmission**: Interface for users to submit filled templates for validation
+3. **TemplateLibrary**: Template management with download functionality and validation rules status
+4. **ValidationResults**: Display validation results with error/warning details
 5. **SystemStats**: Dashboard with processing statistics
 
 ### Database Schema
 - **Users**: User authentication and management
-- **Templates**: File metadata and processing status
-- **Template Sheets**: Individual sheet data within templates
-- **Template Schemas**: AI-extracted schemas with confidence scores
+- **Templates**: Template file metadata and validation rules path
+- **Validation Rules**: Structured validation rules for each template
+- **Submissions**: User-submitted files for validation
+- **Validation Results**: Detailed validation results for each submission
 - **Processing Status**: Real-time processing progress tracking
 
 ## Data Flow
 
-1. **File Upload**: User uploads Excel/CSV files through the web interface
-2. **File Processing**: Backend processes files in chunks, extracting data from sheets
-3. **AI Processing**: Gemini AI analyzes extracted data to generate structured schemas
-4. **Schema Storage**: Generated schemas are stored with confidence scores and metadata
-5. **Real-time Updates**: Frontend polls for processing status updates
-6. **Schema Display**: Users can view, copy, and export generated schemas
+### Admin Workflow
+1. **Template Upload**: Admin uploads Excel/CSV template with optional validation rules (.txt file)
+2. **Rules Processing**: Validation rules parser converts .txt rules into structured format
+3. **Storage**: Template and validation rules stored in PostgreSQL database
+4. **Template Available**: Template becomes available for users to download and fill
+
+### User Workflow
+1. **Template Download**: User downloads template file from the system
+2. **Fill Template**: User fills out the template with their data
+3. **Submit for Validation**: User uploads filled template through submission interface
+4. **Validation Process**: Validation engine checks submission against predefined rules
+5. **Results Display**: System shows validation results with errors, warnings, and passed checks
+6. **Status Update**: Submission marked as passed, failed, or warning based on results
 
 ## External Dependencies
 
-### AI Services
-- **Google Gemini AI**: Primary AI service for schema extraction and enhancement
-- **Model**: Using gemini-2.0-flash-lite for efficient processing
-- **API Integration**: RESTful integration with streaming support for large datasets
+### Validation System
+- **Rules-based Engine**: Custom validation engine for 100% accurate validation
+- **Validation Rules Format**: Text-based rules format with support for required, format, range, and custom validations
+- **Cell Reference Support**: Direct Excel cell references (e.g., A1, B2) and named fields
 
 ### Database Services
 - **Neon Database**: Serverless PostgreSQL for production
@@ -112,10 +127,10 @@ Preferred communication style: Simple, everyday language.
 - **Solution**: Monorepo with shared directory for common TypeScript types
 - **Benefits**: Type safety across the stack, reduced duplication
 
-### AI-First Schema Extraction
-- **Problem**: Manual schema definition is time-consuming and error-prone
-- **Solution**: Google Gemini AI for automated schema extraction
-- **Benefits**: Intelligent field detection, confidence scoring, scalable processing
+### Rules-Based Validation System
+- **Problem**: Need for 100% accurate validation without AI variability
+- **Solution**: Custom rules-based validation engine with text file configuration
+- **Benefits**: Deterministic results, flexible rule definitions, clear error messages
 
 ### Streaming File Processing
 - **Problem**: Large files can cause memory issues and timeouts
