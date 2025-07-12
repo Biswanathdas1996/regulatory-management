@@ -43,13 +43,26 @@ interface SheetData {
   }>;
 }
 
-export function ExcelViewer({ templateId, selectedSheetId, sheets }: ExcelViewerProps) {
+export function ExcelViewer({
+  templateId,
+  selectedSheetId,
+  sheets,
+}: ExcelViewerProps) {
   const [activeSheet, setActiveSheet] = useState(0);
-  const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null);
-  const [cellValues, setCellValues] = useState<Record<string, Record<string, string>>>({});
+  const [editingCell, setEditingCell] = useState<{
+    row: number;
+    col: number;
+  } | null>(null);
+  const [cellValues, setCellValues] = useState<
+    Record<string, Record<string, string>>
+  >({});
 
   // Fetch Excel data from the API
-  const { data: sheetsData, isLoading, error } = useQuery<SheetData[]>({
+  const {
+    data: sheetsData,
+    isLoading,
+    error,
+  } = useQuery<SheetData[]>({
     queryKey: [`/api/templates/${templateId}/excel-data`],
     enabled: !!templateId,
   });
@@ -58,9 +71,11 @@ export function ExcelViewer({ templateId, selectedSheetId, sheets }: ExcelViewer
   useEffect(() => {
     if (selectedSheetId !== null && sheets && sheetsData) {
       // Find the sheet index that matches the selectedSheetId
-      const selectedSheet = sheets.find(s => s.id === selectedSheetId);
+      const selectedSheet = sheets.find((s) => s.id === selectedSheetId);
       if (selectedSheet) {
-        const sheetIndex = sheetsData.findIndex(sd => sd.sheetName === selectedSheet.sheetName);
+        const sheetIndex = sheetsData.findIndex(
+          (sd) => sd.sheetName === selectedSheet.sheetName,
+        );
         if (sheetIndex !== -1 && sheetIndex !== activeSheet) {
           setActiveSheet(sheetIndex);
         }
@@ -78,33 +93,54 @@ export function ExcelViewer({ templateId, selectedSheetId, sheets }: ExcelViewer
     }
   };
 
-  const handleCellChange = (value: string, row: number, col: number, sheetName: string) => {
-    setCellValues(prev => ({
+  const handleCellChange = (
+    value: string,
+    row: number,
+    col: number,
+    sheetName: string,
+  ) => {
+    setCellValues((prev) => ({
       ...prev,
       [sheetName]: {
         ...prev[sheetName],
-        [`${row},${col}`]: value
-      }
+        [`${row},${col}`]: value,
+      },
     }));
   };
 
-  const getCellValue = (row: number, col: number, sheetName: string, originalValue: string) => {
+  const getCellValue = (
+    row: number,
+    col: number,
+    sheetName: string,
+    originalValue: string,
+  ) => {
     return cellValues[sheetName]?.[`${row},${col}`] ?? originalValue;
   };
 
-  const renderCell = (cell: CellData, rowIndex: number, colIndex: number, sheetName: string) => {
+  const renderCell = (
+    cell: CellData,
+    rowIndex: number,
+    colIndex: number,
+    sheetName: string,
+  ) => {
     // Skip rendering cells that are part of a merged range but not the top-left
     if (cell.merged && cell.mergeInfo && !cell.mergeInfo.isTopLeft) {
       return null;
     }
 
-    const isEditing = editingCell?.row === rowIndex && editingCell?.col === colIndex;
-    const cellValue = getCellValue(rowIndex, colIndex, sheetName, cell.value?.toString() || "");
-    
+    const isEditing =
+      editingCell?.row === rowIndex && editingCell?.col === colIndex;
+    const cellValue = getCellValue(
+      rowIndex,
+      colIndex,
+      sheetName,
+      cell.value?.toString() || "",
+    );
+
     // Calculate colspan and rowspan for merged cells
     let colSpan = 1;
     let rowSpan = 1;
-    
+
     if (cell.merged && cell.mergeInfo?.isTopLeft) {
       colSpan = cell.mergeInfo.right - cell.mergeInfo.left + 1;
       rowSpan = cell.mergeInfo.bottom - cell.mergeInfo.top + 1;
@@ -114,14 +150,14 @@ export function ExcelViewer({ templateId, selectedSheetId, sheets }: ExcelViewer
       backgroundColor: cell.style?.backgroundColor || undefined,
       color: cell.style?.color || undefined,
       fontWeight: cell.style?.fontWeight || undefined,
-      textAlign: (cell.style?.textAlign as any) || 'left',
-      verticalAlign: (cell.style?.verticalAlign as any) || 'middle',
-      border: '1px solid #e5e7eb',
-      padding: '4px 8px',
-      minWidth: '80px',
-      height: '32px',
-      cursor: 'pointer',
-      position: 'relative'
+      textAlign: (cell.style?.textAlign as any) || "left",
+      verticalAlign: (cell.style?.verticalAlign as any) || "middle",
+      border: "1px solid #e5e7eb",
+      padding: "4px 8px",
+      minWidth: "80px",
+      height: "32px",
+      cursor: "pointer",
+      position: "relative",
     };
 
     return (
@@ -137,20 +173,22 @@ export function ExcelViewer({ templateId, selectedSheetId, sheets }: ExcelViewer
           <Input
             type="text"
             value={cellValue}
-            onChange={(e) => handleCellChange(e.target.value, rowIndex, colIndex, sheetName)}
+            onChange={(e) =>
+              handleCellChange(e.target.value, rowIndex, colIndex, sheetName)
+            }
             onBlur={() => setEditingCell(null)}
             onKeyPress={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 setEditingCell(null);
               }
             }}
             className="absolute inset-0 w-full h-full border-2 border-blue-500"
             autoFocus
             style={{
-              backgroundColor: cell.style?.backgroundColor || 'white',
+              backgroundColor: cell.style?.backgroundColor || "white",
               color: cell.style?.color || undefined,
               fontWeight: cell.style?.fontWeight || undefined,
-              textAlign: (cell.style?.textAlign as any) || 'left'
+              textAlign: (cell.style?.textAlign as any) || "left",
             }}
           />
         ) : (
@@ -213,7 +251,8 @@ export function ExcelViewer({ templateId, selectedSheetId, sheets }: ExcelViewer
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              No Excel data available. Please ensure the template has been processed.
+              No Excel data available. Please ensure the template has been
+              processed.
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -223,18 +262,26 @@ export function ExcelViewer({ templateId, selectedSheetId, sheets }: ExcelViewer
 
   const renderSheet = (sheet: SheetData) => {
     if (!sheet.data || sheet.data.length === 0) {
-      return <div className="p-4 text-center text-gray-500">No data available in this sheet</div>;
+      return (
+        <div className="p-4 text-center text-gray-500">
+          No data available in this sheet
+        </div>
+      );
     }
 
     return (
-      <div className="overflow-auto" style={{ maxHeight: '600px' }}>
-        <table className="w-full border-collapse" style={{ minWidth: '100%' }}>
+      <div className="overflow-auto" style={{ maxHeight: "600px" }}>
+        <table className="w-full border-collapse" style={{ minWidth: "100%" }}>
           <tbody>
             {sheet.data.map((row, rowIndex) => (
               <tr key={rowIndex}>
                 {row.map((cell, colIndex) => {
                   // Skip cells that are merged but not top-left
-                  if (cell.merged && cell.mergeInfo && !cell.mergeInfo.isTopLeft) {
+                  if (
+                    cell.merged &&
+                    cell.mergeInfo &&
+                    !cell.mergeInfo.isTopLeft
+                  ) {
                     return null;
                   }
                   return renderCell(cell, rowIndex, colIndex, sheet.sheetName);
@@ -258,30 +305,30 @@ export function ExcelViewer({ templateId, selectedSheetId, sheets }: ExcelViewer
       <CardContent>
         {sheetsData.length === 1 ? (
           // Single sheet - show directly without tabs
-          <div className="border rounded-lg">
-            {renderSheet(sheetsData[0])}
-          </div>
+          <div className="border rounded-lg">{renderSheet(sheetsData[0])}</div>
         ) : (
           // Multiple sheets - show with tabs
-          <Tabs value={activeSheet.toString()} onValueChange={(v) => setActiveSheet(parseInt(v))}>
-            <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${Math.min(sheetsData.length, 5)}, 1fr)` }}>
-              {sheetsData.map((sheet, index) => (
-                <TabsTrigger key={index} value={index.toString()} className="text-sm">
-                  {sheet.sheetName}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+          <Tabs
+            value={activeSheet.toString()}
+            onValueChange={(v) => setActiveSheet(parseInt(v))}
+          >
             {sheetsData.map((sheet, index) => (
-              <TabsContent key={index} value={index.toString()} className="mt-4">
-                <div className="border rounded-lg">
-                  {renderSheet(sheet)}
-                </div>
+              <TabsContent
+                key={index}
+                value={index.toString()}
+                className="mt-4"
+              >
+                <div className="border rounded-lg">{renderSheet(sheet)}</div>
               </TabsContent>
             ))}
           </Tabs>
         )}
         <div className="mt-4 text-sm text-muted-foreground">
-          <p>💡 Tip: Click on any cell to edit. Changes are made locally in your browser. Merged cells are displayed as they appear in the original Excel file.</p>
+          <p>
+            💡 Tip: Click on any cell to edit. Changes are made locally in your
+            browser. Merged cells are displayed as they appear in the original
+            Excel file.
+          </p>
         </div>
       </CardContent>
     </Card>
