@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
-import { CloudUpload, Upload, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { CloudUpload, Upload, CheckCircle, XCircle, AlertCircle, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -208,6 +208,34 @@ export function UserSubmission() {
                   </FormItem>
                 )}
               />
+
+              {/* Template Download Link */}
+              {form.watch("templateId") && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium text-blue-900">Download Template</h4>
+                      <p className="text-sm text-blue-700">
+                        Download the selected template file to fill it out before submitting
+                      </p>
+                    </div>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        const templateId = form.watch("templateId");
+                        if (templateId) {
+                          window.open(`/api/templates/${templateId}/download`, '_blank');
+                        }
+                      }}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Download Template
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               <FormField
                 control={form.control}
