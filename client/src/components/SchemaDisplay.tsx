@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Download, Table, Code, CheckCircle, XCircle } from "lucide-react";
+import { Copy, Download, Table, Code, CheckCircle, XCircle, FileJson, Database } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SchemaDisplayProps {
@@ -60,39 +60,42 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
     const calculatedFields = schema.schemaData.calculated_fields || [];
     
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         {fields.length > 0 && (
           <div>
-            <h4 className="text-sm font-semibold text-gray-900 mb-2">Required Fields</h4>
-            <div className="overflow-x-auto">
+            <div className="flex items-center gap-2 mb-3">
+              <Database className="h-4 w-4 text-blue-600" />
+              <h4 className="text-sm font-semibold text-gray-900">Required Fields</h4>
+            </div>
+            <div className="overflow-x-auto rounded-md border border-gray-200">
               <table className="min-w-full divide-y divide-gray-200 text-sm">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50/50">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Field</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Required</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Field</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Type</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Description</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Required</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-100">
                   {fields.map((field: any, index: number) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {field.field_name}
+                    <tr key={index} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="font-medium text-gray-900">{field.field_name}</span>
                       </td>
-                      <td className="px-3 py-2 whitespace-nowrap">
-                        <Badge variant="secondary" className="text-xs">
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                           {field.data_type}
                         </Badge>
                       </td>
-                      <td className="px-3 py-2 text-sm text-gray-500">
+                      <td className="px-4 py-3 text-sm text-gray-600">
                         {field.description}
                       </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-sm">
+                      <td className="px-4 py-3 whitespace-nowrap text-center">
                         {field.is_required ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <CheckCircle className="h-4 w-4 text-emerald-500 mx-auto" />
                         ) : (
-                          <XCircle className="h-4 w-4 text-gray-300" />
+                          <XCircle className="h-4 w-4 text-gray-300 mx-auto" />
                         )}
                       </td>
                     </tr>
@@ -105,26 +108,31 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
         
         {calculatedFields.length > 0 && (
           <div>
-            <h4 className="text-sm font-semibold text-gray-900 mb-2">Calculated Fields</h4>
-            <div className="overflow-x-auto">
+            <div className="flex items-center gap-2 mb-3">
+              <FileJson className="h-4 w-4 text-purple-600" />
+              <h4 className="text-sm font-semibold text-gray-900">Calculated Fields</h4>
+            </div>
+            <div className="overflow-x-auto rounded-md border border-gray-200">
               <table className="min-w-full divide-y divide-gray-200 text-sm">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50/50">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Field</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Formula</th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Field</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Formula</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Description</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-100">
                   {calculatedFields.map((field: any, index: number) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {field.field_name}
+                    <tr key={index} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="font-medium text-gray-900">{field.field_name}</span>
                       </td>
-                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs text-gray-600">
-                        {field.formula}
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <code className="font-mono text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded">
+                          {field.formula}
+                        </code>
                       </td>
-                      <td className="px-3 py-2 text-sm text-gray-500">
+                      <td className="px-4 py-3 text-sm text-gray-600">
                         {field.description}
                       </td>
                     </tr>
@@ -140,8 +148,8 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
 
   const renderJsonView = (schema: any) => {
     return (
-      <div className="bg-gray-900 rounded-lg p-4 max-h-96 overflow-y-auto">
-        <pre className="text-green-400 font-mono text-sm overflow-x-auto">
+      <div className="bg-slate-900 rounded-lg p-4 max-h-96 overflow-y-auto shadow-inner">
+        <pre className="text-emerald-400 font-mono text-xs leading-relaxed overflow-x-auto">
           {JSON.stringify(schema.schemaData, null, 2)}
         </pre>
       </div>
@@ -169,39 +177,46 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
   const consolidatedSchema = schemas.find((s: any) => s.sheetId === null);
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="shadow-lg border-gray-200">
+      <CardHeader className="pb-4 bg-gradient-to-r from-gray-50 to-white border-b">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-gray-900">Generated Schemas</CardTitle>
-          <div className="flex items-center space-x-2">
+          <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <Database className="h-5 w-5 text-blue-600" />
+            Generated Schemas
+          </CardTitle>
+          <div className="flex items-center bg-gray-100 rounded-lg p-1">
             <Button 
-              variant={viewMode === 'table' ? 'default' : 'outline'}
+              variant={viewMode === 'table' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('table')}
+              className={viewMode === 'table' ? 'bg-white shadow-sm' : ''}
             >
-              <Table className="h-4 w-4" />
+              <Table className="h-4 w-4 mr-1" />
+              Table
             </Button>
             <Button 
-              variant={viewMode === 'json' ? 'default' : 'outline'}
+              variant={viewMode === 'json' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('json')}
+              className={viewMode === 'json' ? 'bg-white shadow-sm' : ''}
             >
-              <Code className="h-4 w-4" />
+              <Code className="h-4 w-4 mr-1" />
+              JSON
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <Tabs defaultValue={sheetSchemas[0]?.sheetId?.toString() || "consolidated"} className="w-full">
-          <div className="flex items-center justify-between mb-4">
-            <TabsList className="flex flex-wrap gap-1">
+          <div className="flex items-center justify-between mb-6">
+            <TabsList className="flex flex-wrap gap-2 bg-gray-100/50 p-1">
               {sheetSchemas.map((schema: any) => {
                 const sheet = sheets?.find((s: any) => s.id === schema.sheetId);
                 return (
                   <TabsTrigger 
                     key={schema.sheetId} 
                     value={schema.sheetId.toString()}
-                    className="text-xs px-3 py-1"
+                    className="text-xs px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
                   >
                     {sheet?.sheetName || `Sheet ${schema.sheetId}`}
                   </TabsTrigger>
@@ -210,7 +225,7 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
               {consolidatedSchema && (
                 <TabsTrigger 
                   value="consolidated"
-                  className="text-xs px-3 py-1"
+                  className="text-xs px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
                 >
                   Consolidated
                 </TabsTrigger>
@@ -222,37 +237,39 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
             const sheet = sheets?.find((s: any) => s.id === schema.sheetId);
             return (
               <TabsContent key={schema.sheetId} value={schema.sheetId.toString()} className="mt-0">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
                     <div className="flex items-center space-x-3">
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
                         {schema.schemaData.required_fields?.length || 0} fields
                       </Badge>
-                      <Badge variant="outline" className="text-xs">
+                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
                         {schema.aiConfidence}% confidence
                       </Badge>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1">
                       <Button 
                         variant="ghost" 
                         size="sm" 
                         onClick={() => handleCopySchema(schema)}
-                        className="h-8 px-2"
+                        className="h-9 px-3 hover:bg-white"
                       >
-                        <Copy className="h-3 w-3" />
+                        <Copy className="h-4 w-4 mr-1" />
+                        Copy
                       </Button>
                       <Button 
                         variant="ghost" 
                         size="sm" 
                         onClick={() => handleExportSchema(schema)}
-                        className="h-8 px-2"
+                        className="h-9 px-3 hover:bg-white"
                       >
-                        <Download className="h-3 w-3" />
+                        <Download className="h-4 w-4 mr-1" />
+                        Export
                       </Button>
                     </div>
                   </div>
                   
-                  <div className="border rounded-lg p-3 bg-white">
+                  <div className="rounded-lg overflow-hidden shadow-sm">
                     {viewMode === 'table' ? renderTableView(schema) : renderJsonView(schema)}
                   </div>
                 </div>
@@ -262,37 +279,39 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
 
           {consolidatedSchema && (
             <TabsContent value="consolidated" className="mt-0">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
                   <div className="flex items-center space-x-3">
-                    <Badge variant="secondary" className="text-xs">
-                      Consolidated
+                    <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100">
+                      Consolidated View
                     </Badge>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
                       {consolidatedSchema.aiConfidence}% confidence
                     </Badge>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1">
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       onClick={() => handleCopySchema(consolidatedSchema)}
-                      className="h-8 px-2"
+                      className="h-9 px-3 hover:bg-white"
                     >
-                      <Copy className="h-3 w-3" />
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copy
                     </Button>
                     <Button 
                       variant="ghost" 
                       size="sm" 
                       onClick={() => handleExportSchema(consolidatedSchema)}
-                      className="h-8 px-2"
+                      className="h-9 px-3 hover:bg-white"
                     >
-                      <Download className="h-3 w-3" />
+                      <Download className="h-4 w-4 mr-1" />
+                      Export
                     </Button>
                   </div>
                 </div>
                 
-                <div className="border rounded-lg p-3 bg-white">
+                <div className="rounded-lg overflow-hidden shadow-sm">
                   {viewMode === 'table' ? renderTableView(consolidatedSchema) : renderJsonView(consolidatedSchema)}
                 </div>
               </div>
