@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Check, Clock, Loader2 } from "lucide-react";
 
 interface ProcessingStatusProps {
@@ -86,16 +87,48 @@ export function ProcessingStatus({ templateId }: ProcessingStatusProps) {
       case "ai_processing":
         return status === "completed" ? "AI analysis completed" : "Analyzing data patterns with Gemini AI...";
       case "schema_generation":
-        return status === "completed" ? "Schema generation completed" : "Generating JSON schema...";
+        return status === "completed" ? "Schema generation completed" : "Schema generation in progress...";
       default:
         return `${step} ${status}`;
     }
   };
 
+  // Calculate overall progress
+  const calculateOverallProgress = () => {
+    const totalSteps = stepOrder.length;
+    const completedSteps = sortedStatuses.filter(s => s.status === "completed").length;
+    const inProgressSteps = sortedStatuses.filter(s => s.status === "in_progress").length;
+    
+    if (completedSteps === totalSteps) return 100;
+    if (inProgressSteps > 0) {
+      const inProgressStep = sortedStatuses.find(s => s.status === "in_progress");
+      const stepProgress = inProgressStep?.progress || 0;
+      const baseProgress = (completedSteps / totalSteps) * 100;
+      const currentStepProgress = (stepProgress / totalSteps);
+      return Math.min(100, baseProgress + currentStepProgress);
+    }
+    return (completedSteps / totalSteps) * 100;
+  };
+
+  const overallProgress = calculateOverallProgress();
+  const hasAnyInProgress = sortedStatuses.some(s => s.status === "in_progress");
+  const allCompleted = sortedStatuses.length > 0 && sortedStatuses.every(s => s.status === "completed");
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg font-semibold text-gray-900">Processing Status</CardTitle>
+        {sortedStatuses.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">
+                {allCompleted ? "Processing Complete!" : hasAnyInProgress ? "Processing..." : "Ready"}
+              </span>
+              <span className="text-sm text-gray-500">{Math.round(overallProgress)}%</span>
+            </div>
+            <Progress value={overallProgress} className="w-full" />
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

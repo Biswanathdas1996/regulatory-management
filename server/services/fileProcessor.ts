@@ -383,13 +383,18 @@ export class FileProcessor {
       }
 
       await storage.updateProcessingStatus(templateId, "ai_processing", "completed", `Processed ${schemas.length} sheets successfully`, 80);
-      await storage.updateProcessingStatus(templateId, "schema_generation", "in_progress", "Generating consolidated schema...", 85);
+      await storage.updateProcessingStatus(templateId, "schema_generation", "in_progress", "Starting schema generation...", 85);
+
+      // Add incremental progress during schema generation
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await storage.updateProcessingStatus(templateId, "schema_generation", "in_progress", "Building schema structure...", 90);
 
       // Generate consolidated schema with cross-sheet relationships
       if (schemas.length > 1 && schemas.some(s => s.ai_confidence > 0)) {
         try {
           const validSchemas = schemas.filter(s => s.ai_confidence > 0);
           if (validSchemas.length > 0) {
+            await storage.updateProcessingStatus(templateId, "schema_generation", "in_progress", "Enhancing schema with cross-sheet relationships...", 92);
             const enhanced = await enhanceSchemaWithAI(validSchemas, template.templateType);
             await storage.createTemplateSchema({
               templateId,
@@ -405,7 +410,10 @@ export class FileProcessor {
         }
       }
 
-      await storage.updateProcessingStatus(templateId, "schema_generation", "completed", "All schemas generated successfully", 100);
+      await storage.updateProcessingStatus(templateId, "schema_generation", "in_progress", "Finalizing schema generation...", 95);
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      await storage.updateProcessingStatus(templateId, "schema_generation", "completed", "Schema generation completed successfully", 100);
       await storage.updateTemplateStatus(templateId, "completed");
 
     } catch (error) {
