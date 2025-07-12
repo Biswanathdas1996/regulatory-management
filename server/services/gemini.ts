@@ -1,0 +1,193 @@
+import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+
+export interface SchemaField {
+  field_name: string;
+  data_type: string;
+  format?: string;
+  cell_reference?: string;
+  description: string;
+  validation?: string;
+  is_required?: boolean;
+}
+
+export interface CalculatedField {
+  field_name: string;
+  formula: string;
+  cell_reference?: string;
+  description: string;
+}
+
+export interface ExtractedSchema {
+  sheetName: string;
+  required_fields: SchemaField[];
+  calculated_fields?: CalculatedField[];
+  ai_confidence: number;
+  extraction_notes: string;
+}
+
+export async function extractSchemaWithAI(
+  sheetData: any,
+  sheetName: string,
+  templateType: string
+): Promise<ExtractedSchema> {
+  try {
+    const systemPrompt = `You are an expert financial data analyst specializing in extracting structured schemas from financial templates. Your task is to analyze the provided data and generate a comprehensive JSON schema that identifies key fields, their data types, validation rules, and relationships.
+
+Template Type: ${templateType}
+Sheet Name: ${sheetName}
+
+Guidelines:
+1. Identify all data entry fields that users need to fill
+2. Determine appropriate data types (text, number, date, currency, percentage, etc.)
+3. Provide cell references when possible
+4. Add validation rules for data integrity
+5. Identify calculated fields and their formulas
+6. Provide confidence score (0-1) for the extraction
+7. Include extraction notes for complex patterns
+
+Focus on financial reporting requirements and regulatory compliance fields.`;
+
+    const dataPrompt = `Analyze this financial template data and extract a comprehensive schema:
+
+${JSON.stringify(sheetData, null, 2)}
+
+Return a JSON schema with the following structure:
+{
+  "sheetName": "string",
+  "required_fields": [
+    {
+      "field_name": "string",
+      "data_type": "string",
+      "format": "string (optional)",
+      "cell_reference": "string (optional)",
+      "description": "string",
+      "validation": "string (optional)",
+      "is_required": boolean
+    }
+  ],
+  "calculated_fields": [
+    {
+      "field_name": "string",
+      "formula": "string",
+      "cell_reference": "string (optional)",
+      "description": "string"
+    }
+  ],
+  "ai_confidence": number (0-1),
+  "extraction_notes": "string"
+}`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-pro",
+      config: {
+        systemInstruction: systemPrompt,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "object",
+          properties: {
+            sheetName: { type: "string" },
+            required_fields: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  field_name: { type: "string" },
+                  data_type: { type: "string" },
+                  format: { type: "string" },
+                  cell_reference: { type: "string" },
+                  description: { type: "string" },
+                  validation: { type: "string" },
+                  is_required: { type: "boolean" }
+                },
+                required: ["field_name", "data_type", "description"]
+              }
+            },
+            calculated_fields: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  field_name: { type: "string" },
+                  formula: { type: "string" },
+                  cell_reference: { type: "string" },
+                  description: { type: "string" }
+                },
+                required: ["field_name", "formula", "description"]
+              }
+            },
+            ai_confidence: { type: "number" },
+            extraction_notes: { type: "string" }
+          },
+          required: ["sheetName", "required_fields", "ai_confidence", "extraction_notes"]
+        }
+      },
+      contents: dataPrompt,
+    });
+
+    const rawJson = response.text;
+    if (!rawJson) {
+      throw new Error("Empty response from Gemini API");
+    }
+
+    const schema: ExtractedSchema = JSON.parse(rawJson);
+    return schema;
+  } catch (error) {
+    console.error("AI schema extraction error:", error);
+    throw new Error(`Failed to extract schema with AI: ${error}`);
+  }
+}
+
+export async function enhanceSchemaWithAI(
+  schemas: ExtractedSchema[],
+  templateType: string
+): Promise<{
+  consolidated_schema: any;
+  cross_sheet_relationships: any[];
+  validation_rules: any[];
+}> {
+  try {
+    const systemPrompt = `You are an expert financial data analyst. Analyze multiple sheet schemas and provide:
+1. Consolidated schema with cross-sheet relationships
+2. Advanced validation rules
+3. Data integrity checks
+4. Regulatory compliance mappings
+
+Template Type: ${templateType}`;
+
+    const dataPrompt = `Analyze these schemas and provide enhanced insights:
+
+${JSON.stringify(schemas, null, 2)}
+
+Return consolidated analysis with cross-sheet relationships and validation rules.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-pro",
+      config: {
+        systemInstruction: systemPrompt,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "object",
+          properties: {
+            consolidated_schema: { type: "object" },
+            cross_sheet_relationships: { type: "array" },
+            validation_rules: { type: "array" }
+          },
+          required: ["consolidated_schema", "cross_sheet_relationships", "validation_rules"]
+        }
+      },
+      contents: dataPrompt,
+    });
+
+    const rawJson = response.text;
+    if (!rawJson) {
+      throw new Error("Empty response from Gemini API");
+    }
+
+    return JSON.parse(rawJson);
+  } catch (error) {
+    console.error("AI schema enhancement error:", error);
+    throw new Error(`Failed to enhance schema with AI: ${error}`);
+  }
+}
