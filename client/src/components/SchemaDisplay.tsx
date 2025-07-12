@@ -194,7 +194,7 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
       <CardContent>
         <Tabs defaultValue={sheetSchemas[0]?.sheetId?.toString() || "consolidated"} className="w-full">
           <div className="flex items-center justify-between mb-4">
-            <TabsList className="grid grid-cols-auto">
+            <TabsList className="flex flex-wrap gap-1">
               {sheetSchemas.map((schema: any) => {
                 const sheet = sheets?.find((s: any) => s.id === schema.sheetId);
                 return (
