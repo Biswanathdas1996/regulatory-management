@@ -485,6 +485,147 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Import validation rules from text
+  // Export validation rules to Excel
+  app.post("/api/export/validation-rules", async (req, res) => {
+    try {
+      const { headers, rows } = req.body;
+      
+      if (!headers || !rows) {
+        return res.status(400).json({ error: "Invalid export data" });
+      }
+      
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Validation Rules');
+      
+      // Add headers
+      worksheet.addRow(headers);
+      
+      // Style the header row
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE0E0E0' }
+      };
+      
+      // Add data rows
+      rows.forEach((row: any[]) => worksheet.addRow(row));
+      
+      // Auto-fit columns
+      worksheet.columns.forEach((column: any) => {
+        let maxLength = 0;
+        column.eachCell({ includeEmpty: true }, (cell: any) => {
+          const length = cell.value ? cell.value.toString().length : 10;
+          if (length > maxLength) maxLength = length;
+        });
+        column.width = Math.min(maxLength + 2, 50);
+      });
+      
+      // Generate Excel file
+      const buffer = await workbook.xlsx.writeBuffer();
+      
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename=validation-rules.xlsx');
+      res.send(buffer);
+    } catch (error: any) {
+      console.error("Error exporting validation rules:", error);
+      res.status(500).json({ error: error.message || "Failed to export validation rules" });
+    }
+  });
+
+  // Import validation rules from Excel file
+  app.post("/api/templates/:id/validation-rules/import-excel", upload.single('file'), async (req: MulterRequest, res) => {
+    try {
+      const templateId = parseInt(req.params.id);
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ error: "No file provided" });
+      }
+      
+      // Check if it's an Excel file
+      if (!file.originalname.match(/\.(xlsx|xls)$/)) {
+        return res.status(400).json({ error: "Please upload an Excel file (.xlsx or .xls)" });
+      }
+      
+      // Parse Excel file
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.readFile(file.path);
+      const worksheet = workbook.getWorksheet(1);
+      
+      if (!worksheet) {
+        return res.status(400).json({ error: "No worksheet found in Excel file" });
+      }
+      
+      // Get sheets for this template to map sheet names to IDs
+      const sheets = await storage.getTemplateSheets(templateId);
+      const sheetMap = new Map(sheets.map(s => [s.sheetName.toLowerCase(), s.id]));
+      
+      // Parse rules from Excel
+      const rules: any[] = [];
+      let headerRow: string[] = [];
+      
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) {
+          // Header row
+          headerRow = row.values as string[];
+          headerRow = headerRow.slice(1); // Remove empty first element
+        } else {
+          // Data row
+          const values = row.values as any[];
+          const rowData = values.slice(1); // Remove empty first element
+          
+          if (rowData.length >= 6) {
+            const sheetName = rowData[0]?.toString().toLowerCase() || 'all sheets';
+            const sheetId = sheetName === 'all sheets' ? null : sheetMap.get(sheetName) || null;
+            
+            rules.push({
+              templateId,
+              sheetId,
+              field: rowData[1]?.toString() || '',
+              ruleType: rowData[2]?.toString().toLowerCase() || 'required',
+              condition: rowData[3]?.toString() || '',
+              errorMessage: rowData[4]?.toString() || '',
+              severity: rowData[5]?.toString().toLowerCase() || 'error',
+              createdAt: new Date()
+            });
+          }
+        }
+      });
+      
+      if (rules.length === 0) {
+        return res.status(400).json({ error: "No valid rules found in Excel file" });
+      }
+      
+      // Validate rule types and severity
+      const validRuleTypes = ['required', 'format', 'range', 'custom'];
+      const validSeverities = ['error', 'warning'];
+      
+      for (const rule of rules) {
+        if (!validRuleTypes.includes(rule.ruleType)) {
+          rule.ruleType = 'required';
+        }
+        if (!validSeverities.includes(rule.severity)) {
+          rule.severity = 'error';
+        }
+      }
+      
+      // Insert rules
+      const insertedRules = await storage.createValidationRules(rules);
+      
+      // Clean up uploaded file
+      fs.unlinkSync(file.path);
+      
+      res.json({ 
+        imported: insertedRules.length,
+        message: `Successfully imported ${insertedRules.length} validation rules`
+      });
+    } catch (error: any) {
+      console.error("Error importing validation rules from Excel:", error);
+      res.status(500).json({ error: error.message || "Failed to import validation rules" });
+    }
+  });
+
   app.post("/api/templates/:id/validation-rules/import", async (req, res) => {
     try {
       const templateId = parseInt(req.params.id);

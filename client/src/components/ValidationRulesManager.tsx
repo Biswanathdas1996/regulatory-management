@@ -54,6 +54,7 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
   const [selectedRules, setSelectedRules] = useState<number[]>([]);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importText, setImportText] = useState("");
+  const [importFile, setImportFile] = useState<File | null>(null);
   const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
   
   const rulesPerPage = 10;
@@ -187,11 +188,13 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
 
   // Import rules mutation
   const importRulesMutation = useMutation({
-    mutationFn: async (rulesText: string) => {
-      const response = await fetch(`/api/templates/${templateId}/validation-rules/import`, {
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch(`/api/templates/${templateId}/validation-rules/import-excel`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rulesText }),
+        body: formData,
       });
       if (!response.ok) {
         const error = await response.json();
@@ -206,7 +209,7 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
         description: `${data.imported} rules imported successfully` 
       });
       setShowImportDialog(false);
-      setImportText("");
+      setImportFile(null);
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -234,22 +237,43 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
     setIsAddDialogOpen(true);
   };
 
-  const handleExport = () => {
-    const exportData = rules.map((rule: ValidationRule) => 
-      `FIELD: ${rule.field}\nRULE: ${rule.ruleType}\nCONDITION: ${rule.condition}\nERROR: ${rule.errorMessage}\nSEVERITY: ${rule.severity}\n---`
-    ).join('\n');
-    
-    const blob = new Blob([exportData], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `validation-rules-template-${templateId}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({ title: "Success", description: "Rules exported successfully" });
+  const handleExport = async () => {
+    try {
+      // Create Excel data structure
+      const excelData = {
+        headers: ['Sheet', 'Field', 'Rule Type', 'Condition', 'Error Message', 'Severity'],
+        rows: rules.map((rule: ValidationRule) => [
+          rule.sheetId && sheets ? sheets.find(s => s.id === rule.sheetId)?.sheetName || 'All sheets' : 'All sheets',
+          rule.field,
+          rule.ruleType,
+          rule.condition,
+          rule.errorMessage,
+          rule.severity
+        ])
+      };
+      
+      const response = await fetch('/api/export/validation-rules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(excelData),
+      });
+      
+      if (!response.ok) throw new Error('Export failed');
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `validation-rules-template-${templateId}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({ title: "Success", description: "Rules exported successfully" });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to export rules", variant: "destructive" });
+    }
   };
 
   const toggleRuleSelection = (ruleId: number) => {
@@ -708,38 +732,53 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
 
       {/* Import Dialog */}
       <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Import Validation Rules</DialogTitle>
+            <DialogTitle>Import Validation Rules from Excel</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Rules Text</Label>
-              <Textarea
-                value={importText}
-                onChange={(e) => setImportText(e.target.value)}
-                placeholder="Paste your validation rules here..."
-                className="h-64 font-mono text-sm"
+              <Label htmlFor="excel-file">Select Excel File</Label>
+              <Input
+                id="excel-file"
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) setImportFile(file);
+                }}
+                className="mt-2"
               />
               <p className="text-sm text-muted-foreground mt-2">
-                Format: FIELD: field_name | RULE: type | CONDITION: condition | ERROR: message | SEVERITY: error/warning | ---
+                Upload an Excel file with columns: Sheet, Field, Rule Type, Condition, Error Message, Severity
               </p>
+            </div>
+            <div className="bg-muted p-3 rounded-md">
+              <h4 className="text-sm font-medium mb-2">Expected Format:</h4>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>• Sheet: Sheet name or "All sheets"</li>
+                <li>• Field: Cell reference (e.g., A1, B2)</li>
+                <li>• Rule Type: required | format | range | custom</li>
+                <li>• Condition: Validation condition</li>
+                <li>• Error Message: Error text to display</li>
+                <li>• Severity: error | warning</li>
+              </ul>
             </div>
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
                 onClick={() => {
                   setShowImportDialog(false);
-                  setImportText("");
+                  setImportFile(null);
                 }}
               >
                 Cancel
               </Button>
               <Button
-                onClick={() => importRulesMutation.mutate(importText)}
-                disabled={!importText.trim()}
+                onClick={() => importFile && importRulesMutation.mutate(importFile)}
+                disabled={!importFile || importRulesMutation.isPending}
               >
-                Import Rules
+                {importRulesMutation.isPending ? 'Importing...' : 'Import Rules'}
               </Button>
             </div>
           </div>
