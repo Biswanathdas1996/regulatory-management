@@ -208,29 +208,31 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
       </CardHeader>
       <CardContent className="pt-6">
         <Tabs defaultValue={sheetSchemas[0]?.sheetId?.toString() || "consolidated"} className="w-full">
-          <div className="flex items-center justify-between mb-6">
-            <TabsList className="flex flex-wrap gap-2 bg-gray-100/50 p-1">
-              {sheetSchemas.map((schema: any) => {
-                const sheet = sheets?.find((s: any) => s.id === schema.sheetId);
-                return (
+          <div className="mb-6">
+            <div className="overflow-x-auto">
+              <TabsList className="inline-flex w-max min-w-full gap-1 bg-gray-100/50 p-1">
+                {sheetSchemas.map((schema: any) => {
+                  const sheet = sheets?.find((s: any) => s.id === schema.sheetId);
+                  return (
+                    <TabsTrigger 
+                      key={schema.sheetId} 
+                      value={schema.sheetId.toString()}
+                      className="text-xs px-3 py-2 whitespace-nowrap flex-shrink-0 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                    >
+                      {sheet?.sheetName || `Sheet ${schema.sheetId}`}
+                    </TabsTrigger>
+                  );
+                })}
+                {consolidatedSchema && (
                   <TabsTrigger 
-                    key={schema.sheetId} 
-                    value={schema.sheetId.toString()}
-                    className="text-xs px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                    value="consolidated"
+                    className="text-xs px-3 py-2 whitespace-nowrap flex-shrink-0 data-[state=active]:bg-white data-[state=active]:shadow-sm"
                   >
-                    {sheet?.sheetName || `Sheet ${schema.sheetId}`}
+                    Consolidated
                   </TabsTrigger>
-                );
-              })}
-              {consolidatedSchema && (
-                <TabsTrigger 
-                  value="consolidated"
-                  className="text-xs px-4 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-                >
-                  Consolidated
-                </TabsTrigger>
-              )}
-            </TabsList>
+                )}
+              </TabsList>
+            </div>
           </div>
 
           {sheetSchemas.map((schema: any) => {
