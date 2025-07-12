@@ -8,6 +8,16 @@ This is a full-stack web application for financial template validation. The syst
 
 The application validates submissions against predefined rules with 100% accuracy, flagging violations or confirming success.
 
+## Recent Changes (January 13, 2025)
+
+### Enhanced Validation Rules Management
+- Added a visual Validation Rules Manager component on template detail pages
+- Implemented CRUD operations for validation rules with pagination
+- Added bulk operations (select all, bulk delete)
+- Implemented import/export functionality for validation rules
+- Enhanced validation engine with chunked processing for large datasets
+- Added progress tracking for validation processing
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -52,6 +62,11 @@ Preferred communication style: Simple, everyday language.
 3. **TemplateLibrary**: Template management with download functionality and validation rules status
 4. **ValidationResults**: Display validation results with error/warning details
 5. **SystemStats**: Dashboard with processing statistics
+6. **ValidationRulesManager**: Visual interface for creating, editing, and managing validation rules
+   - Supports pagination for large rule sets
+   - Bulk operations (select all, bulk delete)
+   - Import/export validation rules
+   - Rule builder with field reference helpers
 
 ### Database Schema
 - **Users**: User authentication and management
@@ -131,6 +146,15 @@ Preferred communication style: Simple, everyday language.
 - **Problem**: Need for 100% accurate validation without AI variability
 - **Solution**: Custom rules-based validation engine with text file configuration
 - **Benefits**: Deterministic results, flexible rule definitions, clear error messages
+
+### Enhanced Validation for Large Datasets
+- **Problem**: Memory issues and timeouts when validating large files
+- **Solution**: Chunked validation processing with configurable batch sizes
+- **Benefits**: 
+  - Process files with millions of rows without memory overflow
+  - Progress tracking for long-running validations
+  - Batch storage of validation results for better performance
+  - Support for streaming validation of CSV files
 
 ### Streaming File Processing
 - **Problem**: Large files can cause memory issues and timeouts

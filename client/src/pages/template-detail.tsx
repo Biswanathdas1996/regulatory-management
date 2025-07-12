@@ -8,6 +8,7 @@ import { ArrowLeft, FileText, Database, Clock, CheckCircle, XCircle, AlertCircle
 import { ProcessingStatus } from "@/components/ProcessingStatus";
 import { SchemaDisplay } from "@/components/SchemaDisplay";
 import { ExcelViewer } from "@/components/ExcelViewer";
+import { ValidationRulesManager } from "@/components/ValidationRulesManager";
 
 export default function TemplateDetail() {
   const params = useParams<{ id: string }>();
@@ -179,6 +180,14 @@ export default function TemplateDetail() {
           />
         </div>
       )}
+
+      {/* Validation Rules Section */}
+      <div className="mb-8">
+        <ValidationRulesManager 
+          templateId={templateId}
+          sheets={sheets}
+        />
+      </div>
 
       {/* No Schemas Message */}
       {template.status === "completed" && (!schemas || schemas.length === 0) && (

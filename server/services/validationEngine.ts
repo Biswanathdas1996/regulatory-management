@@ -2,12 +2,14 @@ import ExcelJS from 'exceljs';
 import * as csv from 'csv-parser';
 import fs from 'fs';
 import { ValidationRule, InsertValidationResult } from '@shared/schema';
+import { storage } from '../storage';
 import path from 'path';
 
 export interface ValidationContext {
   submissionId: number;
   filePath: string;
   rules: ValidationRule[];
+  onProgress?: (progress: number, message?: string) => void;
 }
 
 export interface ValidationSummary {
@@ -19,6 +21,9 @@ export interface ValidationSummary {
 }
 
 export class ValidationEngine {
+  private static readonly BATCH_SIZE = 1000; // Process 1000 rows at a time
+  private static readonly RESULT_BATCH_SIZE = 100; // Store results in batches
+  
   /**
    * Validate a submitted file against template validation rules
    */
@@ -27,6 +32,9 @@ export class ValidationEngine {
     summary: ValidationSummary;
   }> {
     const fileExtension = path.extname(context.filePath).toLowerCase();
+    
+    // Report initial progress
+    context.onProgress?.(0, 'Starting validation...');
     
     if (fileExtension === '.xlsx' || fileExtension === '.xls') {
       return await this.validateExcelFile(context);
@@ -51,16 +59,36 @@ export class ValidationEngine {
       throw new Error('No worksheet found in the Excel file');
     }
 
-    // Convert worksheet to accessible format
-    const data = this.worksheetToData(worksheet);
+    context.onProgress?.(10, 'Reading Excel data...');
+
+    // Convert worksheet to accessible format with chunking for large files
+    const totalRows = worksheet.rowCount;
+    const rulesCount = context.rules.length;
+    let processedRules = 0;
     
-    // Validate each rule
+    // Process rules in batches for better performance
     for (const rule of context.rules) {
-      const ruleResults = await this.validateRule(rule, data, context.submissionId);
-      results.push(...ruleResults);
+      const progress = 10 + Math.round((processedRules / rulesCount) * 80);
+      context.onProgress?.(progress, `Validating rule: ${rule.field}`);
+      
+      // For large datasets, process in chunks
+      if (totalRows > this.BATCH_SIZE * 2) {
+        const ruleResults = await this.validateRuleInChunks(rule, worksheet, context.submissionId);
+        results.push(...ruleResults);
+      } else {
+        // For smaller datasets, use existing method
+        const data = this.worksheetToData(worksheet);
+        const ruleResults = await this.validateRule(rule, data, context.submissionId);
+        results.push(...ruleResults);
+      }
+      
+      processedRules++;
     }
 
+    context.onProgress?.(90, 'Calculating summary...');
     const summary = this.calculateSummary(results);
+    context.onProgress?.(100, 'Validation complete');
+    
     return { results, summary };
   }
 
@@ -90,6 +118,75 @@ export class ValidationEngine {
         })
         .on('error', reject);
     });
+  }
+
+  /**
+   * Validate a rule in chunks for large datasets
+   */
+  private static async validateRuleInChunks(
+    rule: ValidationRule, 
+    worksheet: ExcelJS.Worksheet, 
+    submissionId: number
+  ): Promise<InsertValidationResult[]> {
+    const results: InsertValidationResult[] = [];
+    const cellReferences = this.parseCellReferences(rule.field);
+    
+    // Process each cell reference in chunks
+    for (const ref of cellReferences) {
+      if (ref.row !== null && ref.col !== null) {
+        // Single cell reference
+        const row = worksheet.getRow(ref.row + 1);
+        const value = row.getCell(ref.col + 1).value;
+        const validationResult = this.applyRuleLogic(rule, value, []);
+        
+        results.push({
+          submissionId,
+          ruleId: rule.id,
+          field: ref.original,
+          value: value?.toString() || '',
+          passed: validationResult.passed,
+          errorMessage: validationResult.passed ? '' : rule.errorMessage,
+          severity: rule.severity
+        });
+      } else if (ref.original.includes(':')) {
+        // Range reference - process in chunks
+        const [startCell, endCell] = ref.original.split(':');
+        const start = this.parseCell(startCell);
+        const end = this.parseCell(endCell);
+        
+        if (start && end) {
+          const totalRows = end.row - start.row + 1;
+          const chunks = Math.ceil(totalRows / this.BATCH_SIZE);
+          
+          for (let chunk = 0; chunk < chunks; chunk++) {
+            const chunkStart = start.row + (chunk * this.BATCH_SIZE);
+            const chunkEnd = Math.min(start.row + ((chunk + 1) * this.BATCH_SIZE) - 1, end.row);
+            
+            // Process this chunk
+            for (let row = chunkStart; row <= chunkEnd; row++) {
+              for (let col = start.col; col <= end.col; col++) {
+                const worksheetRow = worksheet.getRow(row + 1);
+                const value = worksheetRow.getCell(col + 1).value;
+                const validationResult = this.applyRuleLogic(rule, value, []);
+                
+                const cellRef = this.cellToString(row, col);
+                results.push({
+                  submissionId,
+                  ruleId: rule.id,
+                  field: cellRef,
+                  value: value?.toString() || '',
+                  passed: validationResult.passed,
+                  errorMessage: validationResult.passed ? '' : rule.errorMessage,
+                  severity: rule.severity
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return results;
   }
 
   private static worksheetToData(worksheet: ExcelJS.Worksheet): any[][] {

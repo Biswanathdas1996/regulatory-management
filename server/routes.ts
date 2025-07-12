@@ -296,6 +296,208 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create a new validation rule
+  app.post("/api/templates/:id/validation-rules", async (req, res) => {
+    try {
+      const templateId = parseInt(req.params.id);
+      const { ruleType, field, condition, errorMessage, severity } = req.body;
+
+      // Validate required fields
+      if (!ruleType || !field || !condition || !errorMessage) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Validate rule type
+      const validRuleTypes = ["required", "format", "range", "custom"];
+      if (!validRuleTypes.includes(ruleType)) {
+        return res.status(400).json({ error: "Invalid rule type" });
+      }
+
+      // Validate severity
+      const validSeverities = ["error", "warning"];
+      if (severity && !validSeverities.includes(severity)) {
+        return res.status(400).json({ error: "Invalid severity" });
+      }
+
+      const rule = await storage.createValidationRule({
+        templateId,
+        ruleType,
+        field,
+        condition,
+        errorMessage,
+        severity: severity || "error"
+      });
+
+      res.json(rule);
+    } catch (error) {
+      console.error("Create validation rule error:", error);
+      res.status(500).json({ error: "Failed to create validation rule" });
+    }
+  });
+
+  // Update a validation rule
+  app.put("/api/templates/:id/validation-rules/:ruleId", async (req, res) => {
+    try {
+      const templateId = parseInt(req.params.id);
+      const ruleId = parseInt(req.params.ruleId);
+      const { ruleType, field, condition, errorMessage, severity } = req.body;
+
+      // Validate required fields
+      if (!ruleType || !field || !condition || !errorMessage) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Check if rule exists
+      const existingRules = await storage.getValidationRules(templateId);
+      const ruleExists = existingRules.some(r => r.id === ruleId);
+      if (!ruleExists) {
+        return res.status(404).json({ error: "Validation rule not found" });
+      }
+
+      // Delete old rule and create new one (since we don't have an update method)
+      await storage.deleteValidationRules(templateId);
+      
+      // Re-create all rules except the one being updated
+      const rulesToKeep = existingRules.filter(r => r.id !== ruleId);
+      const updatedRules = [
+        ...rulesToKeep.map(r => ({
+          templateId: r.templateId,
+          ruleType: r.ruleType,
+          field: r.field,
+          condition: r.condition,
+          errorMessage: r.errorMessage,
+          severity: r.severity
+        })),
+        {
+          templateId,
+          ruleType,
+          field,
+          condition,
+          errorMessage,
+          severity: severity || "error"
+        }
+      ];
+
+      await storage.createValidationRules(updatedRules);
+      res.json({ message: "Validation rule updated successfully" });
+    } catch (error) {
+      console.error("Update validation rule error:", error);
+      res.status(500).json({ error: "Failed to update validation rule" });
+    }
+  });
+
+  // Delete a validation rule
+  app.delete("/api/templates/:id/validation-rules/:ruleId", async (req, res) => {
+    try {
+      const templateId = parseInt(req.params.id);
+      const ruleId = parseInt(req.params.ruleId);
+
+      // Get existing rules
+      const existingRules = await storage.getValidationRules(templateId);
+      const ruleExists = existingRules.some(r => r.id === ruleId);
+      
+      if (!ruleExists) {
+        return res.status(404).json({ error: "Validation rule not found" });
+      }
+
+      // Delete all rules and recreate without the deleted one
+      await storage.deleteValidationRules(templateId);
+      
+      const rulesToKeep = existingRules
+        .filter(r => r.id !== ruleId)
+        .map(r => ({
+          templateId: r.templateId,
+          ruleType: r.ruleType,
+          field: r.field,
+          condition: r.condition,
+          errorMessage: r.errorMessage,
+          severity: r.severity
+        }));
+
+      if (rulesToKeep.length > 0) {
+        await storage.createValidationRules(rulesToKeep);
+      }
+
+      res.json({ message: "Validation rule deleted successfully" });
+    } catch (error) {
+      console.error("Delete validation rule error:", error);
+      res.status(500).json({ error: "Failed to delete validation rule" });
+    }
+  });
+
+  // Bulk delete validation rules
+  app.post("/api/templates/:id/validation-rules/bulk-delete", async (req, res) => {
+    try {
+      const templateId = parseInt(req.params.id);
+      const { ruleIds } = req.body;
+
+      if (!Array.isArray(ruleIds) || ruleIds.length === 0) {
+        return res.status(400).json({ error: "No rule IDs provided" });
+      }
+
+      // Get existing rules
+      const existingRules = await storage.getValidationRules(templateId);
+      
+      // Delete all rules and recreate without the deleted ones
+      await storage.deleteValidationRules(templateId);
+      
+      const rulesToKeep = existingRules
+        .filter(r => !ruleIds.includes(r.id))
+        .map(r => ({
+          templateId: r.templateId,
+          ruleType: r.ruleType,
+          field: r.field,
+          condition: r.condition,
+          errorMessage: r.errorMessage,
+          severity: r.severity
+        }));
+
+      if (rulesToKeep.length > 0) {
+        await storage.createValidationRules(rulesToKeep);
+      }
+
+      res.json({ message: `${ruleIds.length} rules deleted successfully` });
+    } catch (error) {
+      console.error("Bulk delete validation rules error:", error);
+      res.status(500).json({ error: "Failed to delete rules" });
+    }
+  });
+
+  // Import validation rules from text
+  app.post("/api/templates/:id/validation-rules/import", async (req, res) => {
+    try {
+      const templateId = parseInt(req.params.id);
+      const { rulesText } = req.body;
+
+      if (!rulesText || typeof rulesText !== 'string') {
+        return res.status(400).json({ error: "Invalid rules text provided" });
+      }
+
+      // Parse the rules text
+      const parsedRules = ValidationRulesParser.parseRulesContent(rulesText);
+      
+      if (parsedRules.length === 0) {
+        return res.status(400).json({ error: "No valid rules found in the provided text" });
+      }
+
+      // Create the rules
+      const rules = parsedRules.map(rule => ({
+        templateId,
+        ...rule
+      }));
+
+      await storage.createValidationRules(rules);
+
+      res.json({ 
+        message: "Rules imported successfully", 
+        imported: rules.length 
+      });
+    } catch (error) {
+      console.error("Import validation rules error:", error);
+      res.status(500).json({ error: "Failed to import validation rules" });
+    }
+  });
+
   // Submit a filled template for validation
   app.post("/api/submissions/upload", upload.single('file'), async (req: MulterRequest, res) => {
     try {
@@ -565,18 +767,24 @@ async function validateSubmissionAsync(submissionId: number) {
       return;
     }
 
-    // Run validation
+    // Run validation with progress tracking
     const context = {
       submissionId,
       filePath: submission.filePath,
-      rules
+      rules,
+      onProgress: async (progress: number, message?: string) => {
+        // You could store progress in database or use WebSockets for real-time updates
+        console.log(`Validation progress for submission ${submissionId}: ${progress}% - ${message}`);
+      }
     };
 
     const { results, summary } = await ValidationEngine.validateSubmission(context);
     
-    // Store validation results
-    if (results.length > 0) {
-      await storage.createValidationResults(results);
+    // Store validation results in batches for better performance
+    const batchSize = 100;
+    for (let i = 0; i < results.length; i += batchSize) {
+      const batch = results.slice(i, i + batchSize);
+      await storage.createValidationResults(batch);
     }
 
     // Update submission status
