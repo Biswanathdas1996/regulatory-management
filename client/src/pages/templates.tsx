@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Upload, FileText, Eye, Download, Settings } from "lucide-react";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
-import { TemplateLibrary } from "@/components/TemplateLibrary";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function TemplatesPage() {
@@ -42,19 +41,32 @@ export default function TemplatesPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-6">
-          {/* Template Library Component */}
+          {/* Template Upload Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Template Library
+                <Upload className="h-5 w-5" />
+                Upload New Template
               </CardTitle>
               <CardDescription>
-                Upload and manage validation templates with rules
+                Upload Excel or CSV templates with validation rules
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <TemplateLibrary />
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <Upload className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-4 text-lg font-medium text-gray-900">Upload Template</h3>
+                <p className="mt-2 text-sm text-gray-600">
+                  Select Excel (.xlsx, .xls) or CSV files to upload as templates
+                </p>
+                <Button 
+                  className="mt-4"
+                  onClick={() => navigate(user?.role === "admin" ? "/admin" : "/dashboard")}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Go to Upload Page
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
