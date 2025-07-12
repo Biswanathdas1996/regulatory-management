@@ -57,6 +57,75 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Simple in-memory session store for demo
+  const sessions = new Map<string, any>();
+  
+  // Authentication middleware
+  const requireAuth = (req: any, res: any, next: any) => {
+    const sessionId = req.headers.authorization?.replace('Bearer ', '');
+    if (!sessionId || !sessions.has(sessionId)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    req.user = sessions.get(sessionId);
+    next();
+  };
+  
+  const requireAdmin = (req: any, res: any, next: any) => {
+    const sessionId = req.headers.authorization?.replace('Bearer ', '');
+    if (!sessionId || !sessions.has(sessionId)) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const user = sessions.get(sessionId);
+    if (user.role !== 'admin') {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    req.user = user;
+    next();
+  };
+
+  // Auth routes
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, role } = req.body;
+      
+      // Simple demo auth - create or get user
+      let user = await storage.getUserByUsername(username);
+      
+      if (!user) {
+        // Create demo user
+        user = await storage.createUser({
+          username,
+          password: "demo", // Not used in demo auth
+          role: role || "user"
+        });
+      }
+      
+      // Create session
+      const sessionId = `session-${Date.now()}-${Math.random()}`;
+      sessions.set(sessionId, user);
+      
+      res.json({ 
+        user,
+        token: sessionId 
+      });
+    } catch (error: any) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: error.message || "Login failed" });
+    }
+  });
+  
+  app.post("/api/auth/logout", (req, res) => {
+    const sessionId = req.headers.authorization?.replace('Bearer ', '');
+    if (sessionId) {
+      sessions.delete(sessionId);
+    }
+    res.json({ success: true });
+  });
+  
+  app.get("/api/auth/me", requireAuth, (req: any, res) => {
+    res.json(req.user);
+  });
+
   // Get all templates
   app.get("/api/templates", async (req, res) => {
     try {
@@ -889,15 +958,94 @@ Only return the JSON array, no additional text.
     }
   });
 
+  // Get all users (admin only)
+  app.get("/api/users", requireAdmin, async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      res.json(users);
+    } catch (error: any) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: error.message || "Failed to fetch users" });
+    }
+  });
+
+  // Admin: Get all submissions
+  app.get("/api/admin/submissions", requireAdmin, async (req, res) => {
+    try {
+      const submissions = await storage.getAllSubmissionsWithDetails();
+      res.json(submissions);
+    } catch (error: any) {
+      console.error("Error fetching submissions:", error);
+      res.status(500).json({ error: error.message || "Failed to fetch submissions" });
+    }
+  });
+
+  // Admin: Get stats
+  app.get("/api/admin/stats", requireAdmin, async (req, res) => {
+    try {
+      const stats = await storage.getAdminStats();
+      res.json(stats);
+    } catch (error: any) {
+      console.error("Error fetching stats:", error);
+      res.status(500).json({ error: error.message || "Failed to fetch stats" });
+    }
+  });
+
+  // Admin: Approve/reject/reassign submission
+  app.post("/api/admin/submissions/:id/approval", requireAdmin, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { action, comments, assignToUserId } = req.body;
+      const adminId = req.user.id;
+
+      await storage.updateSubmissionApproval(
+        parseInt(id),
+        action,
+        adminId,
+        comments,
+        assignToUserId
+      );
+
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Error updating submission approval:", error);
+      res.status(500).json({ error: error.message || "Failed to update submission" });
+    }
+  });
+
+  // User: Get own submissions
+  app.get("/api/user/submissions", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const submissions = await storage.getUserSubmissionsWithDetails(userId);
+      res.json(submissions);
+    } catch (error: any) {
+      console.error("Error fetching user submissions:", error);
+      res.status(500).json({ error: error.message || "Failed to fetch submissions" });
+    }
+  });
+
+  // User: Get stats
+  app.get("/api/user/stats", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const stats = await storage.getUserStats(userId);
+      res.json(stats);
+    } catch (error: any) {
+      console.error("Error fetching user stats:", error);
+      res.status(500).json({ error: error.message || "Failed to fetch stats" });
+    }
+  });
+
   // Submit a filled template for validation
-  app.post("/api/submissions/upload", upload.single('file'), async (req: MulterRequest, res) => {
+  app.post("/api/submissions/upload", requireAuth, upload.single('file'), async (req: MulterRequest & { user?: any }, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
       const { templateId, reportingPeriod } = req.body;
-      const userId = 1; // TODO: Get from authenticated user
+      const userId = req.user?.id;
       
       if (!templateId) {
         return res.status(400).json({ error: "Template ID is required" });

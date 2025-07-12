@@ -6,6 +6,9 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  email: text("email"),
+  role: text("role").notNull().default("user"), // admin, user
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const templates = pgTable("templates", {
@@ -64,7 +67,7 @@ export const validationRules = pgTable("validation_rules", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// User submissions
+// User submissions with approval workflow
 export const submissions = pgTable("submissions", {
   id: serial("id").primaryKey(),
   templateId: integer("template_id").references(() => templates.id).notNull(),
@@ -73,11 +76,18 @@ export const submissions = pgTable("submissions", {
   filePath: text("file_path").notNull(),
   fileSize: integer("file_size").notNull(),
   reportingPeriod: text("reporting_period").notNull(),
-  status: text("status").notNull().default("pending"), // pending, validating, passed, failed
+  status: text("status").notNull().default("pending"), // pending, validating, validated, approved, rejected, reassigned
+  approvalStatus: text("approval_status"), // pending_approval, approved, rejected, reassigned
+  approvedBy: integer("approved_by").references(() => users.id),
+  approvalComments: text("approval_comments"),
+  assignedTo: integer("assigned_to").references(() => users.id),
   validationErrors: integer("validation_errors").default(0),
   validationWarnings: integer("validation_warnings").default(0),
+  version: integer("version").notNull().default(1),
+  parentSubmissionId: integer("parent_submission_id"),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
   validatedAt: timestamp("validated_at"),
+  approvedAt: timestamp("approved_at"),
 });
 
 // Validation results for each submission
@@ -185,4 +195,5 @@ export type TemplateType = typeof templateTypes[number];
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  role: true,
 });
