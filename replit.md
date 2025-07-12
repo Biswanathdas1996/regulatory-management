@@ -26,6 +26,13 @@ The application validates submissions against predefined rules with 100% accurac
 - Updated API endpoints to support sheet-wise filtering and creation
 - Backward compatibility maintained - rules without sheetId apply to all sheets
 
+### AI-Powered Validation Rule Generation (January 13, 2025)
+- Added "Generate validation rules" button in ExcelViewer component
+- Integrated Gemini AI (via @google/genai SDK) for intelligent rule generation
+- AI analyzes sheet data patterns to automatically suggest validation rules
+- Supports automatic detection of required fields, data formats, ranges, and custom validations
+- Generated rules are saved to database with sheet-specific targeting
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

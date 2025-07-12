@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FileSpreadsheet, AlertCircle } from "lucide-react";
+import { FileSpreadsheet, AlertCircle, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
 
 interface ExcelViewerProps {
   templateId: number;
@@ -56,6 +59,7 @@ export function ExcelViewer({
   const [cellValues, setCellValues] = useState<
     Record<string, Record<string, string>>
   >({});
+  const { toast } = useToast();
 
   // Fetch Excel data from the API
   const {
@@ -65,6 +69,47 @@ export function ExcelViewer({
   } = useQuery<SheetData[]>({
     queryKey: [`/api/templates/${templateId}/excel-data`],
     enabled: !!templateId,
+  });
+
+  // Generate validation rules mutation
+  const generateRulesMutation = useMutation({
+    mutationFn: async () => {
+      const currentSheet = sheetsData?.[activeSheet];
+      if (!currentSheet) throw new Error('No sheet data available');
+      
+      const sheetId = sheets?.find(s => s.sheetName === currentSheet.sheetName)?.id;
+      
+      const response = await fetch(`/api/templates/${templateId}/sheets/${sheetId}/generate-rules`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          sheetData: currentSheet,
+          sheetName: currentSheet.sheetName,
+          sheetIndex: activeSheet
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate validation rules');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/templates', templateId, 'validation-rules'] });
+      toast({ 
+        title: "Success", 
+        description: `Generated ${data.rulesCount} validation rules for ${sheetsData?.[activeSheet].sheetName}` 
+      });
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Error", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    },
   });
 
   // Sync activeSheet with selectedSheetId
@@ -297,10 +342,23 @@ export function ExcelViewer({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileSpreadsheet className="h-5 w-5" />
-          Excel Viewer
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <FileSpreadsheet className="h-5 w-5" />
+            Excel Viewer
+          </CardTitle>
+          {sheetsData && sheetsData.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => generateRulesMutation.mutate()}
+              disabled={generateRulesMutation.isPending}
+            >
+              <Sparkles className="h-4 w-4 mr-1" />
+              {generateRulesMutation.isPending ? 'Generating...' : 'Generate validation rules'}
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {sheetsData.length === 1 ? (

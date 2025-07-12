@@ -509,6 +509,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate validation rules for a specific sheet using AI
+  app.post("/api/templates/:templateId/sheets/:sheetId/generate-rules", async (req, res) => {
+    try {
+      const templateId = parseInt(req.params.templateId);
+      const sheetId = parseInt(req.params.sheetId);
+      const { sheetData, sheetName, sheetIndex } = req.body;
+
+      if (!sheetData || !sheetName) {
+        return res.status(400).json({ error: "Sheet data and name are required" });
+      }
+
+      // Prepare a simplified data sample for AI analysis
+      const sampleData = sheetData.data.slice(0, 20); // Take first 20 rows as sample
+      
+      // Use Gemini AI to analyze the sheet and generate validation rules
+      const analysisPrompt = `
+Analyze this Excel sheet data and generate validation rules.
+
+Sheet Name: ${sheetName}
+Sample Data (first 20 rows):
+${JSON.stringify(sampleData, null, 2)}
+
+Based on the data patterns, headers, and values, generate validation rules following these types:
+1. "required" - For fields that must have values
+2. "format" - For fields with specific patterns (email, phone, dates, etc.)
+3. "range" - For numeric fields with min/max values
+4. "custom" - For other business logic validations
+
+For each rule, provide:
+- field: The column name or cell reference (e.g., "Company Name" or "A1:A100")
+- ruleType: One of the types above
+- condition: The validation condition (e.g., "not_empty", "^\\d{10}$" for phone, "min:0,max:100")
+- errorMessage: A clear error message
+- severity: "error" or "warning"
+
+Return the response as a JSON array of validation rules.
+Only return the JSON array, no additional text.
+`;
+
+      const genai = await import('@google/genai');
+      const genAI = new genai.GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      
+      const result = await genAI.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: analysisPrompt
+      });
+      
+      const text = result.text || '';
+      
+      if (!text) {
+        throw new Error('No response from AI model');
+      }
+      
+      // Extract JSON from the response
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        throw new Error('Failed to parse AI response - no valid JSON array found');
+      }
+      
+      const generatedRules = JSON.parse(jsonMatch[0]);
+      
+      // Save the generated rules to database
+      const rulesToCreate = generatedRules.map((rule: any) => ({
+        templateId,
+        sheetId,
+        ruleType: rule.ruleType,
+        field: rule.field,
+        condition: rule.condition,
+        errorMessage: rule.errorMessage,
+        severity: rule.severity || 'error'
+      }));
+      
+      await storage.createValidationRules(rulesToCreate);
+      
+      res.json({ 
+        success: true,
+        rulesCount: rulesToCreate.length,
+        rules: rulesToCreate
+      });
+    } catch (error) {
+      console.error("Generate validation rules error:", error);
+      res.status(500).json({ error: "Failed to generate validation rules" });
+    }
+  });
+
   // Submit a filled template for validation
   app.post("/api/submissions/upload", upload.single('file'), async (req: MulterRequest, res) => {
     try {
