@@ -22,6 +22,12 @@ The application validates submissions against predefined rules with 100% accurac
   - Expected conditions for each rule
   - Clear visual hierarchy with color-coded sections
   - Actionable next steps for users
+- Added field-to-field validation mapping showing:
+  - Clear distinction between validation rules (6) and individual cell checks (3998)
+  - Grouped validation results by rule for better understanding
+  - Shows rule field specification (e.g., A2:A1000) mapped to actual failed cells
+  - Displays up to 10 failed cells per rule with values
+  - Provides count of total failed checks vs total checks per rule
 
 ## Recent Changes (January 13, 2025)
 

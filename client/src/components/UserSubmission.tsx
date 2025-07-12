@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
-import { CloudUpload, Upload, CheckCircle, XCircle, AlertCircle, Download } from "lucide-react";
+import { CloudUpload, Upload, CheckCircle, XCircle, AlertCircle, Download, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -34,6 +34,15 @@ interface ValidationResult {
   createdAt: string;
   value?: string;
   errorMessage?: string;
+}
+
+interface ValidationRule {
+  id: number;
+  field: string;
+  ruleType: string;
+  condition: string;
+  errorMessage: string;
+  severity: string;
 }
 
 export function UserSubmission() {
@@ -165,6 +174,59 @@ export function UserSubmission() {
     const totalRules = uniqueRuleIds.size;
     
     return { errors, warnings, passed, total: validationResults.length, totalRules };
+  };
+
+  // Group validation results by rule for better field-to-field mapping
+  const groupResultsByRule = () => {
+    const grouped = new Map<number, {
+      rule: ValidationRule;
+      results: ValidationResult[];
+    }>();
+    
+    // First, create unique rules from results
+    validationResults.forEach(result => {
+      if (!grouped.has(result.ruleId)) {
+        // Reconstruct rule from first result with this ruleId
+        grouped.set(result.ruleId, {
+          rule: {
+            id: result.ruleId,
+            field: getRuleFieldSpec(result.ruleId), // Get original rule field spec
+            ruleType: result.ruleType,
+            condition: result.condition,
+            errorMessage: result.errorMessage || result.message,
+            severity: result.severity
+          },
+          results: []
+        });
+      }
+      grouped.get(result.ruleId)!.results.push(result);
+    });
+    
+    return Array.from(grouped.values());
+  };
+
+  // Get the original field specification from validation results
+  const getRuleFieldSpec = (ruleId: number): string => {
+    // Find all results for this rule
+    const ruleResults = validationResults.filter(r => r.ruleId === ruleId);
+    if (ruleResults.length === 0) return '';
+    
+    // Try to determine the range from individual cells
+    const cells = ruleResults.map(r => r.field).sort();
+    if (cells.length === 1) return cells[0];
+    
+    // Check if it's a continuous range
+    const cellPattern = /^([A-Z]+)(\d+)$/;
+    const firstMatch = cells[0].match(cellPattern);
+    const lastMatch = cells[cells.length - 1].match(cellPattern);
+    
+    if (firstMatch && lastMatch && firstMatch[1] === lastMatch[1]) {
+      // Same column, return as range
+      return `${cells[0]}:${cells[cells.length - 1]}`;
+    }
+    
+    // Otherwise return first and last with ellipsis
+    return `${cells[0]}...${cells[cells.length - 1]} (${cells.length} cells)`;
   };
 
   const stats = getValidationStats();
@@ -440,57 +502,102 @@ export function UserSubmission() {
               </div>
             ) : (
               <div>
-                {/* Violations by Type */}
+                {/* Field-to-Field Validation Mapping */}
                 <div className="p-6">
-                  {/* Critical Errors Section */}
-                  {stats.errors > 0 && (
-                    <div className="mb-8">
-                      <h3 className="text-lg font-bold text-red-700 mb-4 flex items-center">
-                        <XCircle className="w-6 h-6 mr-2" />
-                        Critical Errors ({stats.errors}) - Must be fixed
-                      </h3>
-                      <div className="grid gap-4">
-                        {validationResults
-                          .filter(r => r.result === 'failed' && r.severity === 'error')
-                          .map((result) => (
-                            <div key={result.id} className="bg-red-50 border-2 border-red-300 rounded-lg p-5 hover:shadow-md transition-shadow">
-                              <div className="flex items-start gap-4">
-                                <XCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <span className="font-mono text-base bg-red-200 px-3 py-1 rounded-md text-red-800 font-bold">
-                                      {result.field}
-                                    </span>
-                                    <Badge variant="destructive" className="text-sm">
-                                      {result.ruleType.toUpperCase()}
-                                    </Badge>
+                  <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center">
+                    <FileSpreadsheet className="w-6 h-6 mr-2" />
+                    Field-to-Field Validation Mapping
+                  </h3>
+                  
+                  {/* Group results by rule */}
+                  {groupResultsByRule()
+                    .filter(group => group.results.some(r => r.result === 'failed'))
+                    .map(group => {
+                      const failedResults = group.results.filter(r => r.result === 'failed');
+                      const isError = group.rule.severity === 'error';
+                      
+                      return (
+                        <div key={group.rule.id} className="mb-6">
+                          {/* Rule Header */}
+                          <div className={`p-4 rounded-t-lg border-2 ${
+                            isError ? 'bg-red-100 border-red-300' : 'bg-yellow-100 border-yellow-300'
+                          }`}>
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <h4 className={`font-bold text-lg ${
+                                    isError ? 'text-red-800' : 'text-yellow-800'
+                                  }`}>
+                                    Rule #{group.rule.id}: {group.rule.ruleType.toUpperCase()}
+                                  </h4>
+                                  <Badge variant={isError ? "destructive" : "secondary"}>
+                                    {group.rule.severity.toUpperCase()}
+                                  </Badge>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <span className="font-medium text-gray-700">Rule Field Spec:</span>
+                                    <code className={`ml-2 px-2 py-1 rounded font-mono ${
+                                      isError ? 'bg-red-200 text-red-800' : 'bg-yellow-200 text-yellow-800'
+                                    }`}>
+                                      {group.rule.field}
+                                    </code>
                                   </div>
-                                  
-                                  <p className="text-red-800 font-semibold text-lg mb-3">
-                                    {result.errorMessage || result.message}
-                                  </p>
-                                  
-                                  <div className="bg-white p-3 rounded-md border border-red-200 space-y-2">
-                                    {result.value !== undefined && (
-                                      <div className="flex items-start">
-                                        <span className="font-medium text-gray-700 min-w-[120px]">Current Value:</span>
-                                        <code className="bg-red-100 px-2 py-1 rounded text-red-700 font-mono text-sm">
-                                          {result.value === '' ? '<empty>' : result.value || '<null>'}
-                                        </code>
-                                      </div>
-                                    )}
-                                    <div className="flex items-start">
-                                      <span className="font-medium text-gray-700 min-w-[120px]">Expected:</span>
-                                      <span className="text-gray-800">{result.condition}</span>
-                                    </div>
+                                  <div>
+                                    <span className="font-medium text-gray-700">Condition:</span>
+                                    <span className="ml-2">{group.rule.condition}</span>
                                   </div>
                                 </div>
                               </div>
+                              <div className="text-right">
+                                <div className={`text-2xl font-bold ${
+                                  isError ? 'text-red-600' : 'text-yellow-600'
+                                }`}>
+                                  {failedResults.length} / {group.results.length}
+                                </div>
+                                <div className="text-sm text-gray-600">Failed Checks</div>
+                              </div>
                             </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
+                          </div>
+                          
+                          {/* Failed Cells */}
+                          <div className={`border-2 border-t-0 rounded-b-lg p-4 ${
+                            isError ? 'bg-red-50 border-red-300' : 'bg-yellow-50 border-yellow-300'
+                          }`}>
+                            <p className={`font-medium mb-3 ${
+                              isError ? 'text-red-700' : 'text-yellow-700'
+                            }`}>
+                              {group.rule.errorMessage}
+                            </p>
+                            
+                            {/* Show up to 10 failed cells */}
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium text-gray-700">Failed Cells:</p>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                {failedResults.slice(0, 10).map((result, idx) => (
+                                  <div key={idx} className="bg-white p-2 rounded border border-gray-200">
+                                    <div className="flex items-center justify-between">
+                                      <code className="font-mono text-sm font-bold">{result.field}</code>
+                                      <code className={`text-xs px-2 py-0.5 rounded ${
+                                        isError ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                                      }`}>
+                                        {result.value === '' ? '<empty>' : result.value || '<null>'}
+                                      </code>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              {failedResults.length > 10 && (
+                                <p className="text-sm text-gray-600 italic">
+                                  ... and {failedResults.length - 10} more cells
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  }
 
                   {/* Warnings Section */}
                   {stats.warnings > 0 && (
