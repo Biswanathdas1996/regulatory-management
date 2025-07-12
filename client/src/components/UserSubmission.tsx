@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 import { CloudUpload, Upload, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -35,6 +36,8 @@ export function UserSubmission() {
   const [isDragging, setIsDragging] = useState(false);
   const [submissionId, setSubmissionId] = useState<number | null>(null);
   const [validationResults, setValidationResults] = useState<ValidationResult[]>([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [validationPhase, setValidationPhase] = useState<'idle' | 'uploading' | 'validating' | 'complete'>('idle');
   const { toast } = useToast();
 
   const { data: templates } = useQuery({
@@ -51,14 +54,32 @@ export function UserSubmission() {
 
   const uploadMutation = useMutation({
     mutationFn: async (data: SubmissionFormData) => {
+      setValidationPhase('uploading');
+      setUploadProgress(0);
+      
       const formData = new FormData();
       formData.append("file", data.file[0]);
       formData.append("templateId", data.templateId);
+
+      // Simulate upload progress
+      const uploadInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 80) {
+            clearInterval(uploadInterval);
+            return 80;
+          }
+          return prev + 20;
+        });
+      }, 300);
 
       const response = await fetch("/api/submissions/upload", {
         method: "POST",
         body: formData,
       });
+
+      clearInterval(uploadInterval);
+      setUploadProgress(100);
+      setValidationPhase('validating');
 
       if (!response.ok) {
         const error = await response.json();
@@ -74,12 +95,15 @@ export function UserSubmission() {
         description: "File uploaded successfully. Validation in progress...",
       });
       
-      // Fetch validation results
-      const resultsResponse = await fetch(`/api/submissions/${data.submissionId}/results`);
-      if (resultsResponse.ok) {
-        const results = await resultsResponse.json();
-        setValidationResults(results);
-      }
+      // Simulate validation time and fetch results
+      setTimeout(async () => {
+        const resultsResponse = await fetch(`/api/submissions/${data.submissionId}/results`);
+        if (resultsResponse.ok) {
+          const results = await resultsResponse.json();
+          setValidationResults(results);
+          setValidationPhase('complete');
+        }
+      }, 2000);
     },
     onError: (error) => {
       toast({
@@ -87,6 +111,8 @@ export function UserSubmission() {
         description: error.message || "Failed to upload file",
         variant: "destructive",
       });
+      setValidationPhase('idle');
+      setUploadProgress(0);
     }
   });
 
@@ -220,9 +246,44 @@ export function UserSubmission() {
                 )}
               </div>
 
+              {/* Validation Progress */}
+              {uploadMutation.isPending && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      {validationPhase === 'uploading' && 'Uploading submission...'}
+                      {validationPhase === 'validating' && 'Validating against rules...'}
+                      {validationPhase === 'complete' && 'Validation complete!'}
+                    </span>
+                    <span className="text-sm text-gray-500">{uploadProgress}%</span>
+                  </div>
+                  <Progress value={uploadProgress} className="w-full" />
+                  
+                  {/* Phase indicators */}
+                  <div className="flex items-center space-x-4 text-xs text-gray-500">
+                    <div className={`flex items-center ${validationPhase === 'uploading' ? 'text-blue-600' : uploadProgress >= 100 ? 'text-green-600' : 'text-gray-400'}`}>
+                      <div className={`w-2 h-2 rounded-full mr-1 ${validationPhase === 'uploading' ? 'bg-blue-600' : uploadProgress >= 100 ? 'bg-green-600' : 'bg-gray-400'}`}></div>
+                      Upload
+                    </div>
+                    <div className={`flex items-center ${validationPhase === 'validating' ? 'text-blue-600' : validationPhase === 'complete' ? 'text-green-600' : 'text-gray-400'}`}>
+                      <div className={`w-2 h-2 rounded-full mr-1 ${validationPhase === 'validating' ? 'bg-blue-600' : validationPhase === 'complete' ? 'bg-green-600' : 'bg-gray-400'}`}></div>
+                      Validate
+                    </div>
+                    <div className={`flex items-center ${validationPhase === 'complete' ? 'text-green-600' : 'text-gray-400'}`}>
+                      <div className={`w-2 h-2 rounded-full mr-1 ${validationPhase === 'complete' ? 'bg-green-600' : 'bg-gray-400'}`}></div>
+                      Complete
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <Button type="submit" disabled={uploadMutation.isPending} className="w-full">
                 {uploadMutation.isPending ? (
-                  <>Validating...</>
+                  <>
+                    {validationPhase === 'uploading' && 'Uploading...'}
+                    {validationPhase === 'validating' && 'Validating...'}
+                    {validationPhase === 'complete' && 'Complete!'}
+                  </>
                 ) : (
                   <>
                     <Upload className="mr-2 h-4 w-4" />

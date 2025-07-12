@@ -30,6 +30,7 @@ interface FileUploadProps {
 export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadPhase, setUploadPhase] = useState<'idle' | 'uploading' | 'processing' | 'complete'>('idle');
   const { toast } = useToast();
 
   const { data: templateTypes } = useQuery({
@@ -48,6 +49,9 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
 
   const uploadMutation = useMutation({
     mutationFn: async (data: UploadFormData) => {
+      setUploadPhase('uploading');
+      setUploadProgress(0);
+      
       const formData = new FormData();
       formData.append("template", data.templateFile[0]);
       if (data.validationRulesFile && data.validationRulesFile.length > 0) {
@@ -56,16 +60,32 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
       formData.append("templateType", data.templateType);
       formData.append("templateName", data.templateName);
 
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
       const response = await fetch("/api/templates/upload", {
         method: "POST",
         body: formData,
       });
 
+      clearInterval(progressInterval);
+      
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || "Upload failed");
       }
 
+      setUploadProgress(100);
+      setUploadPhase('processing');
+      
       return response.json();
     },
     onSuccess: (data) => {
@@ -76,6 +96,12 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
       onTemplateUploaded(data.templateId);
       form.reset();
       setUploadProgress(0);
+      setUploadPhase('complete');
+      
+      // Reset phase after a short delay
+      setTimeout(() => {
+        setUploadPhase('idle');
+      }, 2000);
     },
     onError: (error) => {
       toast({
@@ -84,6 +110,7 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
         variant: "destructive",
       });
       setUploadProgress(0);
+      setUploadPhase('idle');
     }
   });
 
@@ -272,12 +299,32 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
 
             {/* Upload Progress */}
             {uploadMutation.isPending && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Uploading template...</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    {uploadPhase === 'uploading' && 'Uploading files...'}
+                    {uploadPhase === 'processing' && 'Processing template...'}
+                    {uploadPhase === 'complete' && 'Upload complete!'}
+                  </span>
                   <span className="text-sm text-gray-500">{uploadProgress}%</span>
                 </div>
                 <Progress value={uploadProgress} className="w-full" />
+                
+                {/* Phase indicators */}
+                <div className="flex items-center space-x-4 text-xs text-gray-500">
+                  <div className={`flex items-center ${uploadPhase === 'uploading' ? 'text-blue-600' : uploadProgress >= 100 ? 'text-green-600' : 'text-gray-400'}`}>
+                    <div className={`w-2 h-2 rounded-full mr-1 ${uploadPhase === 'uploading' ? 'bg-blue-600' : uploadProgress >= 100 ? 'bg-green-600' : 'bg-gray-400'}`}></div>
+                    Upload
+                  </div>
+                  <div className={`flex items-center ${uploadPhase === 'processing' ? 'text-blue-600' : uploadPhase === 'complete' ? 'text-green-600' : 'text-gray-400'}`}>
+                    <div className={`w-2 h-2 rounded-full mr-1 ${uploadPhase === 'processing' ? 'bg-blue-600' : uploadPhase === 'complete' ? 'bg-green-600' : 'bg-gray-400'}`}></div>
+                    Process
+                  </div>
+                  <div className={`flex items-center ${uploadPhase === 'complete' ? 'text-green-600' : 'text-gray-400'}`}>
+                    <div className={`w-2 h-2 rounded-full mr-1 ${uploadPhase === 'complete' ? 'bg-green-600' : 'bg-gray-400'}`}></div>
+                    Complete
+                  </div>
+                </div>
               </div>
             )}
 
