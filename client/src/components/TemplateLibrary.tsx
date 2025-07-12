@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ interface TemplateLibraryProps {
 export function TemplateLibrary({ templates, onTemplateSelected, onTemplateDeleted, selectedTemplateId }: TemplateLibraryProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
 
   const deleteMutation = useMutation({
     mutationFn: async (templateId: number) => {
@@ -171,7 +173,7 @@ export function TemplateLibrary({ templates, onTemplateSelected, onTemplateDelet
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onTemplateSelected(template.id)}
+                      onClick={() => navigate(`/template/${template.id}`)}
                       disabled={template.status !== "completed"}
                     >
                       <Eye className="h-4 w-4" />
