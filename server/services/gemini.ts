@@ -30,7 +30,7 @@ export interface ExtractedSchema {
 export async function extractSchemaWithAI(
   sheetData: any,
   sheetName: string,
-  templateType: string
+  templateType: string,
 ): Promise<ExtractedSchema> {
   try {
     const systemPrompt = `You are an expert financial data analyst specializing in extracting structured schemas from financial templates. Your task is to analyze the provided data and generate a comprehensive JSON schema that identifies key fields, their data types, validation rules, and relationships.
@@ -38,11 +38,11 @@ export async function extractSchemaWithAI(
 Template Type: ${templateType}
 Sheet Name: ${sheetName}
 
-Guidelines:
-1. Identify all data entry fields that users need to fill
-2. Determine appropriate data types (text, number, date, currency, percentage, etc.)
-3. Provide cell references when possible
-4. Add validation rules for data integrity
+For EACH worksheet, identify:
+1. PURPOSE: What regulatory data this sheet collects
+2. REQUIRED FIELDS: All mandatory input fields with data types
+3. FIELD SPECIFICATIONS: Format, validation rules, acceptable ranges
+4. REGULATORY MAPPING: Which IFSCA regulations require this data
 5. Identify calculated fields and their formulas
 6. Provide confidence score (0-1) for the extraction
 7. Include extraction notes for complex patterns
@@ -52,9 +52,10 @@ Guidelines:
 
 Focus on financial reporting requirements and regulatory compliance fields.`;
 
-    const tabularInfo = sheetData.tabularTemplates && sheetData.tabularTemplates.length > 0
-      ? `\n\nDetected Tabular Templates:\n${JSON.stringify(sheetData.tabularTemplates, null, 2)}\n\nPLEASE PAY SPECIAL ATTENTION to these tabular structures. They represent important data patterns and should be intelligently incorporated into the schema. Consider their headers, data types, and relationships.`
-      : '';
+    const tabularInfo =
+      sheetData.tabularTemplates && sheetData.tabularTemplates.length > 0
+        ? `\n\nDetected Tabular Templates:\n${JSON.stringify(sheetData.tabularTemplates, null, 2)}\n\nPLEASE PAY SPECIAL ATTENTION to these tabular structures. They represent important data patterns and should be intelligently incorporated into the schema. Consider their headers, data types, and relationships.`
+        : "";
 
     const dataPrompt = `Analyze this financial template data and extract a comprehensive schema:
 
@@ -106,10 +107,10 @@ Return a JSON schema with the following structure:
                   cell_reference: { type: "string" },
                   description: { type: "string" },
                   validation: { type: "string" },
-                  is_required: { type: "boolean" }
+                  is_required: { type: "boolean" },
                 },
-                required: ["field_name", "data_type", "description"]
-              }
+                required: ["field_name", "data_type", "description"],
+              },
             },
             calculated_fields: {
               type: "array",
@@ -119,16 +120,21 @@ Return a JSON schema with the following structure:
                   field_name: { type: "string" },
                   formula: { type: "string" },
                   cell_reference: { type: "string" },
-                  description: { type: "string" }
+                  description: { type: "string" },
                 },
-                required: ["field_name", "formula", "description"]
-              }
+                required: ["field_name", "formula", "description"],
+              },
             },
             ai_confidence: { type: "number" },
-            extraction_notes: { type: "string" }
+            extraction_notes: { type: "string" },
           },
-          required: ["sheetName", "required_fields", "ai_confidence", "extraction_notes"]
-        }
+          required: [
+            "sheetName",
+            "required_fields",
+            "ai_confidence",
+            "extraction_notes",
+          ],
+        },
       },
       contents: dataPrompt,
     });
@@ -148,7 +154,7 @@ Return a JSON schema with the following structure:
 
 export async function enhanceSchemaWithAI(
   schemas: ExtractedSchema[],
-  templateType: string
+  templateType: string,
 ): Promise<{
   consolidated_schema: any;
   cross_sheet_relationships: any[];
@@ -177,27 +183,27 @@ Return consolidated analysis with cross-sheet relationships and validation rules
         responseSchema: {
           type: "object",
           properties: {
-            consolidated_schema: { 
+            consolidated_schema: {
               type: "object",
               properties: {
                 template_type: { type: "string" },
                 total_sheets: { type: "number" },
-                key_fields: { 
-                  type: "array", 
-                  items: { 
+                key_fields: {
+                  type: "array",
+                  items: {
                     type: "object",
                     properties: {
                       field_name: { type: "string" },
                       sheet_name: { type: "string" },
-                      description: { type: "string" }
+                      description: { type: "string" },
                     },
-                    required: ["field_name", "sheet_name"]
-                  } 
+                    required: ["field_name", "sheet_name"],
+                  },
                 },
-                summary: { type: "string" }
-              }
+                summary: { type: "string" },
+              },
             },
-            cross_sheet_relationships: { 
+            cross_sheet_relationships: {
               type: "array",
               items: {
                 type: "object",
@@ -205,11 +211,11 @@ Return consolidated analysis with cross-sheet relationships and validation rules
                   source_sheet: { type: "string" },
                   target_sheet: { type: "string" },
                   relationship_type: { type: "string" },
-                  fields: { type: "array", items: { type: "string" } }
-                }
-              }
+                  fields: { type: "array", items: { type: "string" } },
+                },
+              },
             },
-            validation_rules: { 
+            validation_rules: {
               type: "array",
               items: {
                 type: "object",
@@ -217,13 +223,17 @@ Return consolidated analysis with cross-sheet relationships and validation rules
                   rule_name: { type: "string" },
                   description: { type: "string" },
                   applies_to: { type: "string" },
-                  validation_type: { type: "string" }
-                }
-              }
-            }
+                  validation_type: { type: "string" },
+                },
+              },
+            },
           },
-          required: ["consolidated_schema", "cross_sheet_relationships", "validation_rules"]
-        }
+          required: [
+            "consolidated_schema",
+            "cross_sheet_relationships",
+            "validation_rules",
+          ],
+        },
       },
       contents: dataPrompt,
     });
