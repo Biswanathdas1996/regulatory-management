@@ -1,135 +1,104 @@
-import { useState, useEffect } from "react";
-import { FileUpload } from "@/components/FileUpload";
-import { ProcessingStatus } from "@/components/ProcessingStatus";
-import { SchemaDisplay } from "@/components/SchemaDisplay";
-import { TemplateLibrary } from "@/components/TemplateLibrary";
-import { SystemStats } from "@/components/SystemStats";
-import { UserSubmission } from "@/components/UserSubmission";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChartLine, User, FileUp, Upload } from "lucide-react";
+import { Link } from "wouter";
+import { Settings, Upload, FileText, User, ArrowRight } from "lucide-react";
 
 export default function Home() {
-  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
-
-  const { data: templates, refetch: refetchTemplates } = useQuery({
-    queryKey: ["/api/templates"],
-    refetchInterval: 5000, // Refetch every 5 seconds to update processing status
-  });
-
-  const { data: stats } = useQuery({
-    queryKey: ["/api/stats"],
-    refetchInterval: 10000, // Refetch every 10 seconds
-  });
-
-  const handleTemplateUploaded = (templateId: number) => {
-    setSelectedTemplateId(templateId);
-    refetchTemplates();
-  };
-
-  const handleTemplateSelected = (templateId: number) => {
-    setSelectedTemplateId(templateId);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <ChartLine className="text-primary text-2xl mr-3" />
-              <h1 className="text-xl font-semibold text-gray-900">Financial Template Processor</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">Template Validation System</span>
-              <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
-                <User className="text-white text-sm" />
-              </div>
-            </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Financial Template Validation System
+            </h1>
+            <p className="text-xl text-gray-600">
+              Upload Excel/CSV templates with validation rules or submit forms for validation
+            </p>
+          </div>
+
+          {/* Main Navigation Cards */}
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
+            {/* Template Management Card */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto mb-4 h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Settings className="h-8 w-8 text-blue-600" />
+                </div>
+                <CardTitle className="text-2xl">Template Management</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-gray-600 mb-6">
+                  Upload and manage Excel/CSV templates with validation rules. View processing status and manage template library.
+                </p>
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center text-sm text-gray-500">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Templates & Validation Rules
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Manage Template Library
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <Settings className="h-4 w-4 mr-2" />
+                    View Processing Stats
+                  </div>
+                </div>
+                <Link href="/template-management">
+                  <Button className="w-full">
+                    Go to Template Management
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* User Submission Card */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="text-center pb-4">
+                <div className="mx-auto mb-4 h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
+                  <User className="h-8 w-8 text-green-600" />
+                </div>
+                <CardTitle className="text-2xl">User Submission</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <p className="text-gray-600 mb-6">
+                  Download templates, fill them out, and submit for validation. Get detailed validation results with error reporting.
+                </p>
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center text-sm text-gray-500">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Download Available Templates
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Submit Filled Templates
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <Settings className="h-4 w-4 mr-2" />
+                    View Validation Results
+                  </div>
+                </div>
+                <Link href="/user-submission">
+                  <Button className="w-full">
+                    Go to User Submission
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Quick Access Info */}
+          <div className="text-center">
+            <p className="text-gray-500 text-sm">
+              Choose your workflow above to get started with the template validation system
+            </p>
           </div>
         </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="admin" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="admin" className="flex items-center gap-2">
-              <FileUp className="h-4 w-4" />
-              Admin - Template Management
-            </TabsTrigger>
-            <TabsTrigger value="user" className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              User - Submit Forms
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="admin" className="space-y-8">
-            {/* Upload Section */}
-            <div>
-              <FileUpload onTemplateUploaded={handleTemplateUploaded} />
-            </div>
-
-            {/* Selected Template Details */}
-            {selectedTemplateId && (
-              <div>
-                <Card className="border-2 border-blue-200 bg-blue-50">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg font-semibold text-gray-900">
-                        Template Details - {templates?.find(t => t.id === selectedTemplateId)?.name}
-                      </CardTitle>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setSelectedTemplateId(null)}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        Close View
-                      </Button>
-                    </div>
-                  </CardHeader>
-                </Card>
-              </div>
-            )}
-
-            {/* Processing Status */}
-            {selectedTemplateId && (
-              <div>
-                <ProcessingStatus templateId={selectedTemplateId} />
-              </div>
-            )}
-
-            {/* Schema Output Section */}
-            {selectedTemplateId && (
-              <div>
-                <SchemaDisplay templateId={selectedTemplateId} />
-              </div>
-            )}
-
-            {/* Template Management */}
-            <div>
-              <TemplateLibrary 
-                templates={templates || []} 
-                onTemplateSelected={handleTemplateSelected}
-                onTemplateDeleted={refetchTemplates}
-                selectedTemplateId={selectedTemplateId}
-              />
-            </div>
-
-            {/* System Stats */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <SystemStats stats={stats} />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="user" className="space-y-8">
-            <UserSubmission />
-          </TabsContent>
-        </Tabs>
-      </main>
+      </div>
     </div>
   );
 }

@@ -10,6 +10,14 @@ The application validates submissions against predefined rules with 100% accurac
 
 ## Recent Changes (January 13, 2025)
 
+### Separated Route Architecture (January 13, 2025)
+- Refactored application from single-page tabs to dedicated routes
+- Created `/template-management` route for admin functionality
+- Created `/user-submission` route for user functionality
+- Updated home page to navigation landing page with clear workflow selection
+- Moved template upload, library management, and stats to dedicated admin route
+- Moved user submission and validation results to dedicated user route
+
 ### Enhanced User Submission Interface
 - Added reporting period selection field to user submission form
 - Implemented automatic template download link that appears when template is selected
