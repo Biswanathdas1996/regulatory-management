@@ -39,23 +39,35 @@ export default function AdminPanel() {
   }
 
   // Fetch all submissions
-  const { data: submissions = [], isLoading: submissionsLoading } = useQuery({
+  const { data: submissions = [], isLoading: submissionsLoading, error: submissionsError } = useQuery({
     queryKey: ["/api/admin/submissions"],
+    meta: {
+      errorMessage: "Failed to fetch submissions"
+    }
   });
 
   // Fetch all users
-  const { data: users = [] } = useQuery({
+  const { data: users = [], error: usersError } = useQuery({
     queryKey: ["/api/users"],
+    meta: {
+      errorMessage: "Failed to fetch users"
+    }
   });
 
   // Fetch templates
-  const { data: templates = [] } = useQuery({
+  const { data: templates = [], error: templatesError } = useQuery({
     queryKey: ["/api/templates"],
+    meta: {
+      errorMessage: "Failed to fetch templates"
+    }
   });
 
   // Fetch stats
-  const { data: stats } = useQuery({
+  const { data: stats, error: statsError } = useQuery({
     queryKey: ["/api/admin/stats"],
+    meta: {
+      errorMessage: "Failed to fetch stats"
+    }
   });
 
   const handleApproval = async (submissionId: number, action: "approve" | "reject" | "reassign") => {

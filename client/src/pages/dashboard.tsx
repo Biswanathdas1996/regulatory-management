@@ -27,18 +27,27 @@ export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState("submissions");
 
   // Fetch user submissions
-  const { data: submissions = [], isLoading: submissionsLoading } = useQuery({
+  const { data: submissions = [], isLoading: submissionsLoading, error: submissionsError } = useQuery({
     queryKey: ["/api/user/submissions"],
+    meta: {
+      errorMessage: "Failed to fetch submissions"
+    }
   });
 
   // Fetch templates for submission
-  const { data: templates = [] } = useQuery({
+  const { data: templates = [], error: templatesError } = useQuery({
     queryKey: ["/api/templates/with-rules"],
+    meta: {
+      errorMessage: "Failed to fetch templates"
+    }
   });
 
   // Fetch user stats
-  const { data: stats } = useQuery({
+  const { data: stats, error: statsError } = useQuery({
     queryKey: ["/api/user/stats"],
+    meta: {
+      errorMessage: "Failed to fetch stats"
+    }
   });
 
   const getStatusBadge = (status: string, approvalStatus?: string) => {
