@@ -79,11 +79,19 @@ export function ExcelViewer({
       
       const sheetId = sheets?.find(s => s.sheetName === currentSheet.sheetName)?.id;
       
+      // Sample the data to avoid sending too much
+      const MAX_ROWS_TO_SEND = 250; // Limit to 250 rows for AI analysis
+      const sampledData = currentSheet.data.slice(0, MAX_ROWS_TO_SEND);
+      
       const response = await fetch(`/api/templates/${templateId}/sheets/${sheetId}/generate-rules`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          sheetData: currentSheet,
+          sheetData: {
+            ...currentSheet,
+            data: sampledData,
+            totalRows: currentSheet.data.length // Send total count for context
+          },
           sheetName: currentSheet.sheetName,
           sheetIndex: activeSheet
         }),
