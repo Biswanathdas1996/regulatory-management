@@ -16,6 +16,7 @@ import { apiRequest } from "@/lib/queryClient";
 
 const submissionSchema = z.object({
   templateId: z.string().min(1, "Please select a template"),
+  reportingPeriod: z.string().min(1, "Please select a reporting period"),
   file: z.instanceof(FileList).refine((files) => files.length > 0, "File is required")
 });
 
@@ -48,6 +49,7 @@ export function UserSubmission() {
     resolver: zodResolver(submissionSchema),
     defaultValues: {
       templateId: "",
+      reportingPeriod: "",
       file: undefined
     }
   });
@@ -60,6 +62,7 @@ export function UserSubmission() {
       const formData = new FormData();
       formData.append("file", data.file[0]);
       formData.append("templateId", data.templateId);
+      formData.append("reportingPeriod", data.reportingPeriod);
 
       // Simulate upload progress
       const uploadInterval = setInterval(() => {
@@ -199,6 +202,32 @@ export function UserSubmission() {
                             No templates with validation rules available
                           </div>
                         )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="reportingPeriod"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reporting Period *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select reporting period" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Q1 2024">Q1 2024</SelectItem>
+                        <SelectItem value="Q2 2024">Q2 2024</SelectItem>
+                        <SelectItem value="Q3 2024">Q3 2024</SelectItem>
+                        <SelectItem value="Q4 2024">Q4 2024</SelectItem>
+                        <SelectItem value="FY 2023-24">FY 2023-24</SelectItem>
+                        <SelectItem value="FY 2024-25">FY 2024-25</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

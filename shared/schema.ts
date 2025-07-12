@@ -72,6 +72,7 @@ export const submissions = pgTable("submissions", {
   fileName: text("file_name").notNull(),
   filePath: text("file_path").notNull(),
   fileSize: integer("file_size").notNull(),
+  reportingPeriod: text("reporting_period").notNull(),
   status: text("status").notNull().default("pending"), // pending, validating, passed, failed
   validationErrors: integer("validation_errors").default(0),
   validationWarnings: integer("validation_warnings").default(0),
@@ -150,6 +151,7 @@ export const insertSubmissionSchema = createInsertSchema(submissions).pick({
   fileName: true,
   filePath: true,
   fileSize: true,
+  reportingPeriod: true,
 });
 
 export const insertValidationResultSchema = createInsertSchema(validationResults).pick({

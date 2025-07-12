@@ -896,11 +896,15 @@ Only return the JSON array, no additional text.
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const { templateId } = req.body;
+      const { templateId, reportingPeriod } = req.body;
       const userId = 1; // TODO: Get from authenticated user
       
       if (!templateId) {
         return res.status(400).json({ error: "Template ID is required" });
+      }
+
+      if (!reportingPeriod) {
+        return res.status(400).json({ error: "Reporting period is required" });
       }
 
       // Create submission record
@@ -909,7 +913,8 @@ Only return the JSON array, no additional text.
         userId,
         fileName: req.file.originalname,
         filePath: req.file.path,
-        fileSize: req.file.size
+        fileSize: req.file.size,
+        reportingPeriod
       });
 
       // Validate submission in background
