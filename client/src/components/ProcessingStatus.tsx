@@ -12,6 +12,28 @@ export function ProcessingStatus({ templateId }: ProcessingStatusProps) {
     refetchInterval: 2000, // Refetch every 2 seconds
   });
 
+  // Group statuses by step and get the latest one for each step
+  const latestStatuses = statuses?.reduce((acc: any[], status: any) => {
+    const existingIndex = acc.findIndex(s => s.step === status.step);
+    if (existingIndex === -1) {
+      acc.push(status);
+    } else {
+      // Replace with newer status (assuming they're ordered by time)
+      acc[existingIndex] = status;
+    }
+    return acc;
+  }, []) || [];
+
+  // Define the order of steps
+  const stepOrder = ["upload", "extraction", "ai_processing", "schema_generation"];
+  
+  // Sort by predefined order
+  const sortedStatuses = latestStatuses.sort((a, b) => {
+    const aIndex = stepOrder.indexOf(a.step);
+    const bIndex = stepOrder.indexOf(b.step);
+    return aIndex - bIndex;
+  });
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
@@ -77,7 +99,7 @@ export function ProcessingStatus({ templateId }: ProcessingStatusProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {statuses?.map((status: any) => (
+          {sortedStatuses.map((status: any) => (
             <div key={status.id} className="flex items-center">
               <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-3 ${getStatusColor(status.status)}`}>
                 {getStatusIcon(status.status)}
