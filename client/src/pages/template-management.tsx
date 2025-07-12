@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileUpload } from "@/components/FileUpload";
 import { TemplateLibrary } from "@/components/TemplateLibrary";
@@ -5,6 +7,26 @@ import { SystemStats } from "@/components/SystemStats";
 import { Settings, Upload, FileText, BarChart3 } from "lucide-react";
 
 export default function TemplateManagement() {
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+
+  const { data: templates, refetch: refetchTemplates } = useQuery({
+    queryKey: ["/api/templates"],
+    refetchInterval: 5000, // Refetch every 5 seconds to update processing status
+  });
+
+  const { data: stats } = useQuery({
+    queryKey: ["/api/stats"],
+    refetchInterval: 10000, // Refetch every 10 seconds
+  });
+
+  const handleTemplateUploaded = (templateId: number) => {
+    setSelectedTemplateId(templateId);
+    refetchTemplates();
+  };
+
+  const handleTemplateSelected = (templateId: number) => {
+    setSelectedTemplateId(templateId);
+  };
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
@@ -43,15 +65,20 @@ export default function TemplateManagement() {
             </TabsList>
 
             <TabsContent value="upload" className="space-y-8">
-              <FileUpload />
+              <FileUpload onTemplateUploaded={handleTemplateUploaded} />
             </TabsContent>
 
             <TabsContent value="library" className="space-y-8">
-              <TemplateLibrary />
+              <TemplateLibrary 
+                templates={templates || []} 
+                onTemplateSelected={handleTemplateSelected}
+                onTemplateDeleted={refetchTemplates}
+                selectedTemplateId={selectedTemplateId}
+              />
             </TabsContent>
 
             <TabsContent value="stats" className="space-y-8">
-              <SystemStats />
+              <SystemStats stats={stats} />
             </TabsContent>
           </Tabs>
         </div>
