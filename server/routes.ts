@@ -285,11 +285,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get validation rules for a template
+  // Get validation rules for a template (with optional sheet filtering)
   app.get("/api/templates/:id/validation-rules", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const rules = await storage.getValidationRules(id);
+      const sheetId = req.query.sheetId ? parseInt(req.query.sheetId as string) : undefined;
+      
+      let rules = await storage.getValidationRules(id);
+      
+      // Filter by sheet if sheetId is provided
+      if (sheetId !== undefined) {
+        rules = rules.filter(rule => rule.sheetId === sheetId);
+      }
+      
       res.json(rules);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch validation rules" });
@@ -300,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/templates/:id/validation-rules", async (req, res) => {
     try {
       const templateId = parseInt(req.params.id);
-      const { ruleType, field, condition, errorMessage, severity } = req.body;
+      const { sheetId, ruleType, field, condition, errorMessage, severity } = req.body;
 
       // Validate required fields
       if (!ruleType || !field || !condition || !errorMessage) {
@@ -321,6 +329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const rule = await storage.createValidationRule({
         templateId,
+        sheetId: sheetId || null,
         ruleType,
         field,
         condition,
@@ -362,6 +371,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedRules = [
         ...rulesToKeep.map(r => ({
           templateId: r.templateId,
+          sheetId: r.sheetId,
           ruleType: r.ruleType,
           field: r.field,
           condition: r.condition,
@@ -370,6 +380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })),
         {
           templateId,
+          sheetId: req.body.sheetId || null,
           ruleType,
           field,
           condition,

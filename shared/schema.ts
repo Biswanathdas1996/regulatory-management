@@ -51,10 +51,11 @@ export const processingStatus = pgTable("processing_status", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Validation rules for templates
+// Validation rules for templates (sheet-specific)
 export const validationRules = pgTable("validation_rules", {
   id: serial("id").primaryKey(),
   templateId: integer("template_id").references(() => templates.id).notNull(),
+  sheetId: integer("sheet_id").references(() => templateSheets.id), // Made optional for backward compatibility
   ruleType: text("rule_type").notNull(), // required, format, range, custom
   field: text("field").notNull(), // Field name or cell reference
   condition: text("condition").notNull(), // Validation condition
@@ -135,6 +136,7 @@ export const insertProcessingStatusSchema = createInsertSchema(processingStatus)
 
 export const insertValidationRuleSchema = createInsertSchema(validationRules).pick({
   templateId: true,
+  sheetId: true,
   ruleType: true,
   field: true,
   condition: true,

@@ -19,6 +19,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 const validationRuleSchema = z.object({
+  sheetId: z.number().optional(),
   ruleType: z.enum(["required", "format", "range", "custom"]),
   field: z.string().min(1, "Field is required"),
   condition: z.string().min(1, "Condition is required"),
@@ -31,6 +32,7 @@ type ValidationRuleFormData = z.infer<typeof validationRuleSchema>;
 interface ValidationRule {
   id: number;
   templateId: number;
+  sheetId?: number | null;
   ruleType: string;
   field: string;
   condition: string;
@@ -52,12 +54,14 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
   const [selectedRules, setSelectedRules] = useState<number[]>([]);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importText, setImportText] = useState("");
+  const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
   
   const rulesPerPage = 10;
 
   const form = useForm<ValidationRuleFormData>({
     resolver: zodResolver(validationRuleSchema),
     defaultValues: {
+      sheetId: undefined,
       ruleType: "required",
       field: "",
       condition: "",
@@ -67,9 +71,17 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
   });
 
   // Fetch validation rules
-  const { data: rules = [], isLoading } = useQuery({
-    queryKey: ['/api/templates', templateId, 'validation-rules'],
+  const { data: rules = [], isLoading, refetch } = useQuery({
+    queryKey: ['/api/templates', templateId, 'validation-rules', selectedSheetId],
     enabled: !!templateId,
+    queryFn: async () => {
+      const url = selectedSheetId 
+        ? `/api/templates/${templateId}/validation-rules?sheetId=${selectedSheetId}`
+        : `/api/templates/${templateId}/validation-rules`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch validation rules');
+      return response.json();
+    },
   });
 
   // Create validation rule mutation
@@ -206,6 +218,7 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
   const handleEdit = (rule: ValidationRule) => {
     setEditingRule(rule);
     form.reset({
+      sheetId: rule.sheetId || undefined,
       ruleType: rule.ruleType as any,
       field: rule.field,
       condition: rule.condition,
@@ -290,11 +303,31 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Validation Rules
-          </CardTitle>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Validation Rules
+            </CardTitle>
+            {sheets && sheets.length > 0 && (
+              <Select
+                value={selectedSheetId?.toString() || "all"}
+                onValueChange={(value) => setSelectedSheetId(value === "all" ? null : parseInt(value))}
+              >
+                <SelectTrigger className="w-[250px]">
+                  <SelectValue placeholder="Select a sheet" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sheets</SelectItem>
+                  {sheets.map((sheet) => (
+                    <SelectItem key={sheet.id} value={sheet.id.toString()}>
+                      {sheet.sheetName} (Sheet {sheet.sheetIndex + 1})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             {selectedRules.length > 0 && (
               <Button
@@ -341,6 +374,36 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
                 </DialogHeader>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                    {sheets && sheets.length > 0 && (
+                      <FormField
+                        control={form.control}
+                        name="sheetId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Apply to Sheet</FormLabel>
+                            <Select
+                              onValueChange={(value) => field.onChange(value === "all" ? undefined : parseInt(value))}
+                              value={field.value?.toString() || "all"}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select sheet" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="all">All Sheets</SelectItem>
+                                {sheets.map((sheet) => (
+                                  <SelectItem key={sheet.id} value={sheet.id.toString()}>
+                                    {sheet.sheetName} (Sheet {sheet.sheetIndex + 1})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -497,6 +560,7 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
                         className="rounded border-gray-300"
                       />
                     </TableHead>
+                    <TableHead>Sheet</TableHead>
                     <TableHead>Field</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Condition</TableHead>
@@ -515,6 +579,15 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
                           onChange={() => toggleRuleSelection(rule.id)}
                           className="rounded border-gray-300"
                         />
+                      </TableCell>
+                      <TableCell>
+                        {rule.sheetId && sheets ? (
+                          <span className="text-sm">
+                            {sheets.find(s => s.id === rule.sheetId)?.sheetName || `Sheet ${rule.sheetId}`}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">All sheets</span>
+                        )}
                       </TableCell>
                       <TableCell className="font-mono text-sm">{rule.field}</TableCell>
                       <TableCell>

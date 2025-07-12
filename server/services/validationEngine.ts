@@ -53,36 +53,73 @@ export class ValidationEngine {
     await workbook.xlsx.readFile(context.filePath);
     
     const results: InsertValidationResult[] = [];
-    const worksheet = workbook.worksheets[0]; // Default to first worksheet
     
-    if (!worksheet) {
+    if (workbook.worksheets.length === 0) {
       throw new Error('No worksheet found in the Excel file');
     }
 
     context.onProgress?.(10, 'Reading Excel data...');
 
-    // Convert worksheet to accessible format with chunking for large files
-    const totalRows = worksheet.rowCount;
-    const rulesCount = context.rules.length;
-    let processedRules = 0;
+    // Get submission's template sheets info if available
+    const { db } = await import('../db');
+    const { templateSheets } = await import('../../shared/schema');
+    const submission = await db.query.submissions.findFirst({
+      where: (s, { eq }) => eq(s.id, context.submissionId),
+    });
     
-    // Process rules in batches for better performance
-    for (const rule of context.rules) {
-      const progress = 10 + Math.round((processedRules / rulesCount) * 80);
-      context.onProgress?.(progress, `Validating rule: ${rule.field}`);
+    let sheetMapping: Map<number, number> = new Map(); // Map worksheet index to sheet ID
+    if (submission) {
+      const sheets = await db.query.templateSheets.findMany({
+        where: (ts, { eq }) => eq(ts.templateId, submission.templateId),
+      });
+      sheets.forEach(sheet => {
+        sheetMapping.set(sheet.sheetIndex, sheet.id);
+      });
+    }
+
+    // Process each worksheet
+    const totalSheets = workbook.worksheets.length;
+    let processedSheets = 0;
+
+    for (let sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++) {
+      const worksheet = workbook.worksheets[sheetIndex];
+      const sheetId = sheetMapping.get(sheetIndex);
       
-      // For large datasets, process in chunks
-      if (totalRows > this.BATCH_SIZE * 2) {
-        const ruleResults = await this.validateRuleInChunks(rule, worksheet, context.submissionId);
-        results.push(...ruleResults);
-      } else {
-        // For smaller datasets, use existing method
-        const data = this.worksheetToData(worksheet);
-        const ruleResults = await this.validateRule(rule, data, context.submissionId);
-        results.push(...ruleResults);
+      // Filter rules for this specific sheet (or rules without sheetId for backward compatibility)
+      const sheetRules = context.rules.filter(rule => 
+        rule.sheetId === sheetId || rule.sheetId === null || rule.sheetId === undefined
+      );
+
+      if (sheetRules.length === 0) {
+        continue; // Skip if no rules for this sheet
+      }
+
+      const sheetProgress = 10 + Math.round((processedSheets / totalSheets) * 80);
+      context.onProgress?.(sheetProgress, `Validating sheet: ${worksheet.name}`);
+
+      const totalRows = worksheet.rowCount;
+      let processedRules = 0;
+      
+      // Process rules for this sheet
+      for (const rule of sheetRules) {
+        const ruleProgress = sheetProgress + Math.round((processedRules / sheetRules.length) * (80 / totalSheets));
+        context.onProgress?.(ruleProgress, `Sheet ${worksheet.name}: Validating ${rule.field}`);
+        
+        // For large datasets, process in chunks
+        if (totalRows > this.BATCH_SIZE * 2) {
+          const ruleResults = await this.validateRuleInChunks(rule, worksheet, context.submissionId);
+          results.push(...ruleResults);
+        } else {
+          // For smaller datasets, use existing method
+          const data = this.worksheetToData(worksheet);
+          const ruleResults = await this.validateRule(rule, data, context.submissionId);
+          results.push(...ruleResults);
+        }
+        
+        processedRules++;
       }
       
-      processedRules++;
+      processedSheets++;
     }
 
     context.onProgress?.(90, 'Calculating summary...');

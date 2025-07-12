@@ -18,6 +18,14 @@ The application validates submissions against predefined rules with 100% accurac
 - Enhanced validation engine with chunked processing for large datasets
 - Added progress tracking for validation processing
 
+### Sheet-wise Validation Rules Support (January 13, 2025)
+- Updated database schema to add sheetId field to validation rules table
+- Added sheet selector to ValidationRulesManager for filtering and creating sheet-specific rules
+- Modified validation engine to apply rules only to their designated sheets
+- Added "Sheet" column to validation rules table to display which sheet each rule applies to
+- Updated API endpoints to support sheet-wise filtering and creation
+- Backward compatibility maintained - rules without sheetId apply to all sheets
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
