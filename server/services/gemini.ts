@@ -46,12 +46,19 @@ Guidelines:
 5. Identify calculated fields and their formulas
 6. Provide confidence score (0-1) for the extraction
 7. Include extraction notes for complex patterns
+8. Pay special attention to tabular templates/structures provided - these represent important data patterns in the sheet
+9. For detected tables, extract their schema intelligently considering their headers, data types, and relationships
+10. Identify if tables have time-series data, hierarchical structures, or matrix formats
 
 Focus on financial reporting requirements and regulatory compliance fields.`;
 
+    const tabularInfo = sheetData.tabularTemplates && sheetData.tabularTemplates.length > 0
+      ? `\n\nDetected Tabular Templates:\n${JSON.stringify(sheetData.tabularTemplates, null, 2)}\n\nPLEASE PAY SPECIAL ATTENTION to these tabular structures. They represent important data patterns and should be intelligently incorporated into the schema. Consider their headers, data types, and relationships.`
+      : '';
+
     const dataPrompt = `Analyze this financial template data and extract a comprehensive schema:
 
-${JSON.stringify(sheetData, null, 2)}
+${JSON.stringify(sheetData, null, 2)}${tabularInfo}
 
 Return a JSON schema with the following structure:
 {

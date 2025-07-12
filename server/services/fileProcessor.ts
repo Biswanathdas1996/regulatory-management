@@ -11,6 +11,17 @@ export interface ProcessedSheet {
   index: number;
   data: any[];
   dataPointCount: number;
+  tabularTemplates?: TabularTemplate[];
+}
+
+export interface TabularTemplate {
+  startRow: number;
+  endRow: number;
+  startCol: number;
+  endCol: number;
+  headers: string[];
+  templateType: 'vertical' | 'horizontal' | 'matrix';
+  metadata?: any;
 }
 
 export interface ProcessingResult {
@@ -94,6 +105,9 @@ export class FileProcessor {
     const data: any[] = [];
     const headers: string[] = [];
     
+    // Detect tabular structures first
+    const tabularTemplates = this.detectTabularTemplates(worksheet);
+    
     // Get headers from first row
     const firstRow = worksheet.getRow(1);
     firstRow.eachCell((cell, colNumber) => {
@@ -119,8 +133,9 @@ export class FileProcessor {
       name: worksheet.name,
       index: sheetIndex,
       data,
-      dataPointCount: data.length
-    };
+      dataPointCount: data.length,
+      tabularTemplates // Include detected tabular structures
+    } as ProcessedSheet;
   }
 
   private static extractRowChunk(worksheet: ExcelJS.Worksheet, headers: string[], startRow: number, endRow: number): any[] {
@@ -144,6 +159,148 @@ export class FileProcessor {
     }
     
     return chunk;
+  }
+
+  private static detectTabularTemplates(worksheet: ExcelJS.Worksheet): TabularTemplate[] {
+    const templates: TabularTemplate[] = [];
+    const maxRow = Math.min(worksheet.rowCount, 1000); // Limit scanning for performance
+    const maxCol = worksheet.columnCount;
+    
+    // Method 1: Detect tables with headers and consistent data
+    for (let row = 1; row <= maxRow; row++) {
+      const currentRow = worksheet.getRow(row);
+      const rowValues: any[] = [];
+      
+      // Check if this row could be a header row
+      currentRow.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+        if (cell.value && typeof cell.value === 'string') {
+          rowValues.push({ col: colNumber, value: cell.value });
+        }
+      });
+      
+      // If we have at least 2 potential headers
+      if (rowValues.length >= 2) {
+        // Check if the next rows have data
+        let dataRows = 0;
+        let endRow = row;
+        
+        for (let nextRow = row + 1; nextRow <= Math.min(row + 50, maxRow); nextRow++) {
+          const dataRow = worksheet.getRow(nextRow);
+          let hasData = false;
+          
+          rowValues.forEach(header => {
+            const cell = dataRow.getCell(header.col);
+            if (cell.value !== null && cell.value !== undefined && cell.value !== '') {
+              hasData = true;
+            }
+          });
+          
+          if (hasData) {
+            dataRows++;
+            endRow = nextRow;
+          } else if (dataRows >= 3) {
+            // Found end of table if we already have at least 3 data rows
+            break;
+          }
+        }
+        
+        // If we found a table with at least 3 data rows
+        if (dataRows >= 3) {
+          const startCol = Math.min(...rowValues.map(v => v.col));
+          const endCol = Math.max(...rowValues.map(v => v.col));
+          const headers = rowValues.map(v => v.value);
+          
+          templates.push({
+            startRow: row,
+            endRow: endRow,
+            startCol: startCol,
+            endCol: endCol,
+            headers: headers,
+            templateType: 'vertical',
+            metadata: {
+              dataRowCount: dataRows,
+              columnCount: rowValues.length
+            }
+          });
+          
+          // Skip to end of this table
+          row = endRow;
+        }
+      }
+    }
+    
+    // Method 2: Detect matrix/grid patterns (e.g., time series data)
+    for (let row = 1; row <= Math.min(50, maxRow); row++) {
+      const currentRow = worksheet.getRow(row);
+      let hasRowHeader = false;
+      let hasData = false;
+      
+      // Check if first cell is a header/label
+      const firstCell = currentRow.getCell(1);
+      if (firstCell.value && typeof firstCell.value === 'string') {
+        hasRowHeader = true;
+      }
+      
+      // Check if we have numeric data in subsequent cells
+      for (let col = 2; col <= Math.min(20, maxCol); col++) {
+        const cell = currentRow.getCell(col);
+        if (cell.value && (typeof cell.value === 'number' || !isNaN(Number(cell.value)))) {
+          hasData = true;
+          break;
+        }
+      }
+      
+      if (hasRowHeader && hasData) {
+        // Look for column headers in previous row
+        if (row > 1) {
+          const headerRow = worksheet.getRow(row - 1);
+          const columnHeaders: string[] = [];
+          let hasColumnHeaders = false;
+          
+          for (let col = 2; col <= Math.min(20, maxCol); col++) {
+            const headerCell = headerRow.getCell(col);
+            if (headerCell.value && typeof headerCell.value === 'string') {
+              columnHeaders.push(headerCell.value.toString());
+              hasColumnHeaders = true;
+            }
+          }
+          
+          if (hasColumnHeaders) {
+            // Detect end of matrix
+            let endRow = row;
+            for (let nextRow = row + 1; nextRow <= Math.min(row + 100, maxRow); nextRow++) {
+              const dataRow = worksheet.getRow(nextRow);
+              const firstCell = dataRow.getCell(1);
+              
+              if (!firstCell.value || typeof firstCell.value !== 'string') {
+                break;
+              }
+              endRow = nextRow;
+            }
+            
+            if (endRow > row + 2) {
+              templates.push({
+                startRow: row - 1,
+                endRow: endRow,
+                startCol: 1,
+                endCol: columnHeaders.length + 1,
+                headers: ['Row Label', ...columnHeaders],
+                templateType: 'matrix',
+                metadata: {
+                  hasRowHeaders: true,
+                  hasColumnHeaders: true,
+                  dataRows: endRow - row + 1
+                }
+              });
+              
+              row = endRow;
+            }
+          }
+        }
+      }
+    }
+    
+    return templates;
   }
 
   static async generateSchemas(templateId: number): Promise<void> {
@@ -176,13 +333,23 @@ export class FileProcessor {
         );
 
         try {
+          // Extract data and tabular templates from the sheet
+          const sheetData = sheet.extractedData?.data || sheet.extractedData || [];
+          const tabularTemplates = sheet.extractedData?.tabularTemplates || [];
+          
           // Process data in chunks for AI
-          const chunks = this.chunkDataForAI(sheet.extractedData || []);
+          const chunks = this.chunkDataForAI(sheetData);
           const consolidatedData = this.consolidateChunks(chunks);
 
-          console.log(`Processing sheet ${sheet.sheetName} with ${sheet.dataPointCount} data points`);
+          console.log(`Processing sheet ${sheet.sheetName} with ${sheet.dataPointCount} data points and ${tabularTemplates.length} tabular templates`);
 
-          const schema = await extractSchemaWithAI(consolidatedData, sheet.sheetName, template.templateType);
+          // Include tabular templates in the AI processing
+          const schemaInput = {
+            ...consolidatedData,
+            tabularTemplates: tabularTemplates
+          };
+
+          const schema = await extractSchemaWithAI(schemaInput, sheet.sheetName, template.templateType);
           schemas.push(schema);
 
           // Store individual sheet schema

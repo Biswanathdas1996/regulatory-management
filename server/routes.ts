@@ -263,7 +263,10 @@ async function processTemplateAsync(templateId: number) {
           sheetName: sheet.name,
           sheetIndex: sheet.index,
           dataPointCount: sheet.dataPointCount,
-          extractedData: sheet.data
+          extractedData: {
+            data: sheet.data,
+            tabularTemplates: sheet.tabularTemplates || []
+          }
         });
         
         // Update progress for each sheet stored
