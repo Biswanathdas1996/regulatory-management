@@ -10,9 +10,10 @@ interface TemplateLibraryProps {
   templates: any[];
   onTemplateSelected: (templateId: number) => void;
   onTemplateDeleted: () => void;
+  selectedTemplateId?: number | null;
 }
 
-export function TemplateLibrary({ templates, onTemplateSelected, onTemplateDeleted }: TemplateLibraryProps) {
+export function TemplateLibrary({ templates, onTemplateSelected, onTemplateDeleted, selectedTemplateId }: TemplateLibraryProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -134,12 +135,19 @@ export function TemplateLibrary({ templates, onTemplateSelected, onTemplateDelet
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {templates.map((template) => (
-                <tr key={template.id} className="hover:bg-gray-50">
+                <tr key={template.id} className={`hover:bg-gray-50 ${selectedTemplateId === template.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''}`}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       {getFileIcon(template.fileName)}
                       <div className="ml-3">
-                        <div className="text-sm font-medium text-gray-900">{template.name}</div>
+                        <div className={`text-sm font-medium ${selectedTemplateId === template.id ? 'text-blue-900' : 'text-gray-900'}`}>
+                          {template.name}
+                          {selectedTemplateId === template.id && (
+                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                              Viewing
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-gray-500">
                           {template.fileName} • {formatFileSize(template.fileSize)}
                         </div>

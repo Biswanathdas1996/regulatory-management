@@ -6,6 +6,7 @@ import { TemplateLibrary } from "@/components/TemplateLibrary";
 import { SystemStats } from "@/components/SystemStats";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { ChartLine, User } from "lucide-react";
 
 export default function Home() {
@@ -56,6 +57,29 @@ export default function Home() {
           <FileUpload onTemplateUploaded={handleTemplateUploaded} />
         </div>
 
+        {/* Selected Template Details */}
+        {selectedTemplateId && (
+          <div className="mb-8">
+            <Card className="border-2 border-blue-200 bg-blue-50">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-semibold text-gray-900">
+                    Template Details - {templates?.find(t => t.id === selectedTemplateId)?.name}
+                  </CardTitle>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setSelectedTemplateId(null)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    Close View
+                  </Button>
+                </div>
+              </CardHeader>
+            </Card>
+          </div>
+        )}
+
         {/* Processing Status */}
         {selectedTemplateId && (
           <div className="mb-8">
@@ -76,6 +100,7 @@ export default function Home() {
             templates={templates || []} 
             onTemplateSelected={handleTemplateSelected}
             onTemplateDeleted={refetchTemplates}
+            selectedTemplateId={selectedTemplateId}
           />
         </div>
 
