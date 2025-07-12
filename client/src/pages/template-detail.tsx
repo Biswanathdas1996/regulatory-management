@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,7 @@ export default function TemplateDetail() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const templateId = parseInt(params.id);
+  const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
 
   const { data: template, isLoading: templateLoading } = useQuery({
     queryKey: ['/api/templates', templateId],
@@ -163,10 +165,18 @@ export default function TemplateDetail() {
       {/* Generated Schemas Section */}
       {template.status === "completed" && schemas && schemas.length > 0 && (
         <div className="mb-8 space-y-8">
-          <SchemaDisplay templateId={templateId} />
+          <SchemaDisplay 
+            templateId={templateId} 
+            selectedSheetId={selectedSheetId}
+            onSheetChange={setSelectedSheetId}
+          />
           
           {/* Excel Viewer Section */}
-          <ExcelViewer templateId={templateId} />
+          <ExcelViewer 
+            templateId={templateId} 
+            selectedSheetId={selectedSheetId}
+            sheets={sheets}
+          />
         </div>
       )}
 

@@ -9,9 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 
 interface SchemaDisplayProps {
   templateId: number;
+  selectedSheetId?: number | null;
+  onSheetChange?: (sheetId: number | null) => void;
 }
 
-export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
+export function SchemaDisplay({ templateId, selectedSheetId, onSheetChange }: SchemaDisplayProps) {
   const [viewMode, setViewMode] = useState<'table' | 'json'>('table');
   const { toast } = useToast();
 
@@ -207,7 +209,15 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
         </div>
       </CardHeader>
       <CardContent className="pt-6">
-        <Tabs defaultValue={sheetSchemas[0]?.sheetId?.toString() || "consolidated"} className="w-full">
+        <Tabs 
+          value={selectedSheetId?.toString() || sheetSchemas[0]?.sheetId?.toString() || "consolidated"} 
+          onValueChange={(value) => {
+            if (onSheetChange) {
+              onSheetChange(value === "consolidated" ? null : parseInt(value));
+            }
+          }}
+          className="w-full"
+        >
           <div className="mb-6">
             <TabsList className="flex flex-wrap w-full gap-1 bg-gray-100/50 p-2 h-auto">
               {sheetSchemas.map((schema: any) => {

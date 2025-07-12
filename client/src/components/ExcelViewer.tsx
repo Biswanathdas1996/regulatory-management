@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 
 interface ExcelViewerProps {
   templateId: number;
+  selectedSheetId?: number | null;
+  sheets?: any[];
 }
 
 interface CellData {
@@ -41,7 +43,7 @@ interface SheetData {
   }>;
 }
 
-export function ExcelViewer({ templateId }: ExcelViewerProps) {
+export function ExcelViewer({ templateId, selectedSheetId, sheets }: ExcelViewerProps) {
   const [activeSheet, setActiveSheet] = useState(0);
   const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null);
   const [cellValues, setCellValues] = useState<Record<string, Record<string, string>>>({});
@@ -51,6 +53,20 @@ export function ExcelViewer({ templateId }: ExcelViewerProps) {
     queryKey: [`/api/templates/${templateId}/excel-data`],
     enabled: !!templateId,
   });
+
+  // Sync activeSheet with selectedSheetId
+  useEffect(() => {
+    if (selectedSheetId !== null && sheets && sheetsData) {
+      // Find the sheet index that matches the selectedSheetId
+      const selectedSheet = sheets.find(s => s.id === selectedSheetId);
+      if (selectedSheet) {
+        const sheetIndex = sheetsData.findIndex(sd => sd.sheetName === selectedSheet.sheetName);
+        if (sheetIndex !== -1 && sheetIndex !== activeSheet) {
+          setActiveSheet(sheetIndex);
+        }
+      }
+    }
+  }, [selectedSheetId, sheets, sheetsData]);
 
   const handleCellClick = (row: number, col: number, sheetName: string) => {
     const cell = sheetsData?.[activeSheet]?.data[row]?.[col];
