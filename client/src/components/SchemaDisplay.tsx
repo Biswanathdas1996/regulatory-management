@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy, Download } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Copy, Download, Table, Code, CheckCircle, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SchemaDisplayProps {
@@ -11,7 +12,7 @@ interface SchemaDisplayProps {
 }
 
 export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
-  const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<'table' | 'json'>('table');
   const { toast } = useToast();
 
   const { data: sheets } = useQuery({
@@ -22,16 +23,11 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
     queryKey: ["/api/templates", templateId, "schemas"],
   });
 
-  const { data: selectedSchema } = useQuery({
-    queryKey: ["/api/templates", templateId, "schemas", selectedSheetId],
-    enabled: selectedSheetId !== null,
-  });
-
-  const handleCopySchema = async () => {
-    if (!selectedSchema) return;
+  const handleCopySchema = async (schema: any) => {
+    if (!schema) return;
     
     try {
-      await navigator.clipboard.writeText(JSON.stringify(selectedSchema.schemaData, null, 2));
+      await navigator.clipboard.writeText(JSON.stringify(schema.schemaData, null, 2));
       toast({
         title: "Copied",
         description: "Schema copied to clipboard",
@@ -45,13 +41,13 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
     }
   };
 
-  const handleExportSchema = () => {
-    if (!selectedSchema) return;
+  const handleExportSchema = (schema: any) => {
+    if (!schema) return;
     
-    const dataStr = JSON.stringify(selectedSchema.schemaData, null, 2);
+    const dataStr = JSON.stringify(schema.schemaData, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
     
-    const exportFileDefaultName = `schema_${selectedSchema.id}.json`;
+    const exportFileDefaultName = `schema_${schema.id}.json`;
     
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
@@ -59,12 +55,105 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
     linkElement.click();
   };
 
+  const renderTableView = (schema: any) => {
+    const fields = schema.schemaData.required_fields || [];
+    const calculatedFields = schema.schemaData.calculated_fields || [];
+    
+    return (
+      <div className="space-y-4">
+        {fields.length > 0 && (
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900 mb-2">Required Fields</h4>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Field</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Required</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {fields.map((field: any, index: number) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {field.field_name}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        <Badge variant="secondary" className="text-xs">
+                          {field.data_type}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-2 text-sm text-gray-500">
+                        {field.description}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-sm">
+                        {field.is_required ? (
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-gray-300" />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        
+        {calculatedFields.length > 0 && (
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900 mb-2">Calculated Fields</h4>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Field</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Formula</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {calculatedFields.map((field: any, index: number) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {field.field_name}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap font-mono text-xs text-gray-600">
+                        {field.formula}
+                      </td>
+                      <td className="px-3 py-2 text-sm text-gray-500">
+                        {field.description}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderJsonView = (schema: any) => {
+    return (
+      <div className="bg-gray-900 rounded-lg p-4 max-h-96 overflow-y-auto">
+        <pre className="text-green-400 font-mono text-sm overflow-x-auto">
+          {JSON.stringify(schema.schemaData, null, 2)}
+        </pre>
+      </div>
+    );
+  };
+
   // Show loading state if no schemas available yet
   if (!schemas || schemas.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">Generated Schema</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-900">Generated Schemas</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
@@ -81,77 +170,90 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-gray-900">Generated Schema</CardTitle>
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
+          <CardTitle className="text-lg font-semibold text-gray-900">Generated Schemas</CardTitle>
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant={viewMode === 'table' ? 'default' : 'outline'}
               size="sm"
-              onClick={handleCopySchema}
-              disabled={!selectedSchema}
+              onClick={() => setViewMode('table')}
             >
-              <Copy className="mr-1 h-4 w-4" />
-              Copy
+              <Table className="h-4 w-4" />
             </Button>
-            <Button
+            <Button 
+              variant={viewMode === 'json' ? 'default' : 'outline'}
               size="sm"
-              onClick={handleExportSchema}
-              disabled={!selectedSchema}
+              onClick={() => setViewMode('json')}
             >
-              <Download className="mr-1 h-4 w-4" />
-              Export
+              <Code className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue={sheetSchemas[0]?.sheetId?.toString() || "consolidated"}>
-          <TabsList className="grid w-full grid-cols-auto">
-            {sheetSchemas.map((schema: any) => {
-              const sheet = sheets?.find((s: any) => s.id === schema.sheetId);
-              return (
+        <Tabs defaultValue={sheetSchemas[0]?.sheetId?.toString() || "consolidated"} className="w-full">
+          <div className="flex items-center justify-between mb-4">
+            <TabsList className="grid grid-cols-auto">
+              {sheetSchemas.map((schema: any) => {
+                const sheet = sheets?.find((s: any) => s.id === schema.sheetId);
+                return (
+                  <TabsTrigger 
+                    key={schema.sheetId} 
+                    value={schema.sheetId.toString()}
+                    className="text-xs px-3 py-1"
+                  >
+                    {sheet?.sheetName || `Sheet ${schema.sheetId}`}
+                  </TabsTrigger>
+                );
+              })}
+              {consolidatedSchema && (
                 <TabsTrigger 
-                  key={schema.sheetId} 
-                  value={schema.sheetId.toString()}
-                  onClick={() => setSelectedSheetId(schema.sheetId)}
+                  value="consolidated"
+                  className="text-xs px-3 py-1"
                 >
-                  {sheet?.sheetName || `Sheet ${schema.sheetId}`}
+                  Consolidated
                 </TabsTrigger>
-              );
-            })}
-            {consolidatedSchema && (
-              <TabsTrigger 
-                value="consolidated"
-                onClick={() => setSelectedSheetId(null)}
-              >
-                Consolidated
-              </TabsTrigger>
-            )}
-          </TabsList>
+              )}
+            </TabsList>
+          </div>
 
           {sheetSchemas.map((schema: any) => {
             const sheet = sheets?.find((s: any) => s.id === schema.sheetId);
             return (
-              <TabsContent key={schema.sheetId} value={schema.sheetId.toString()}>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-gray-900">
-                      {sheet?.sheetName || `Sheet ${schema.sheetId}`} Schema
-                    </h3>
-                    <div className="flex items-center space-x-4">
-                      <span className="text-xs text-gray-500">
-                        {schema.schemaData.required_fields?.length || 0} key fields identified
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        AI Confidence: {schema.aiConfidence}%
-                      </span>
+              <TabsContent key={schema.sheetId} value={schema.sheetId.toString()} className="mt-0">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Badge variant="secondary" className="text-xs">
+                        {schema.schemaData.required_fields?.length || 0} fields
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {schema.aiConfidence}% confidence
+                      </Badge>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleCopySchema(schema)}
+                        className="h-8 px-2"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleExportSchema(schema)}
+                        className="h-8 px-2"
+                      >
+                        <Download className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="bg-white rounded border p-3 font-mono text-sm text-gray-800 max-h-96 overflow-y-auto">
-                    <pre className="whitespace-pre-wrap">
-                      {JSON.stringify(schema.schemaData, null, 2)}
-                    </pre>
+                  
+                  <div className="border rounded-lg p-3 bg-white">
+                    {viewMode === 'table' ? renderTableView(schema) : renderJsonView(schema)}
                   </div>
                 </div>
               </TabsContent>
@@ -159,20 +261,39 @@ export function SchemaDisplay({ templateId }: SchemaDisplayProps) {
           })}
 
           {consolidatedSchema && (
-            <TabsContent value="consolidated">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-900">
-                    Consolidated Schema
-                  </h3>
-                  <span className="text-xs text-gray-500">
-                    AI Confidence: {consolidatedSchema.aiConfidence}%
-                  </span>
+            <TabsContent value="consolidated" className="mt-0">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Badge variant="secondary" className="text-xs">
+                      Consolidated
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {consolidatedSchema.aiConfidence}% confidence
+                    </Badge>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleCopySchema(consolidatedSchema)}
+                      className="h-8 px-2"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleExportSchema(consolidatedSchema)}
+                      className="h-8 px-2"
+                    >
+                      <Download className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="bg-white rounded border p-3 font-mono text-sm text-gray-800 max-h-96 overflow-y-auto">
-                  <pre className="whitespace-pre-wrap">
-                    {JSON.stringify(consolidatedSchema.schemaData, null, 2)}
-                  </pre>
+                
+                <div className="border rounded-lg p-3 bg-white">
+                  {viewMode === 'table' ? renderTableView(consolidatedSchema) : renderJsonView(consolidatedSchema)}
                 </div>
               </div>
             </TabsContent>
