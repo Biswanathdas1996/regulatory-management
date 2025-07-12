@@ -71,8 +71,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/templates/with-rules", async (req, res) => {
     try {
       const templates = await storage.getTemplates();
-      // Filter templates that have validation rules
-      const templatesWithRules = templates.filter(t => t.validationRulesPath);
+      // Get templates that have validation rules in the database
+      const templatesWithRules = [];
+      
+      for (const template of templates) {
+        const rules = await storage.getValidationRules(template.id);
+        if (rules.length > 0) {
+          templatesWithRules.push({
+            ...template,
+            rulesCount: rules.length
+          });
+        }
+      }
+      
       res.json(templatesWithRules);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch templates" });

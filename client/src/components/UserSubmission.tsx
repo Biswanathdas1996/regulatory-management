@@ -164,7 +164,7 @@ export function UserSubmission() {
         <CardHeader>
           <CardTitle>Submit Your Filled Template</CardTitle>
           <CardDescription>
-            Select the template type and upload your filled Excel or CSV file for validation
+            Select from available templates with validation rules configured, then upload your filled Excel or CSV file for validation
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -183,11 +183,22 @@ export function UserSubmission() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {templates?.map((template: any) => (
-                          <SelectItem key={template.id} value={template.id.toString()}>
-                            {template.name} {template.validationRulesPath && "(with validation)"}
-                          </SelectItem>
-                        ))}
+                        {templates && templates.length > 0 ? (
+                          templates.map((template: any) => (
+                            <SelectItem key={template.id} value={template.id.toString()}>
+                              <div className="flex items-center justify-between w-full">
+                                <span>{template.name}</span>
+                                <Badge variant="secondary" className="ml-2">
+                                  {template.rulesCount} rules
+                                </Badge>
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="text-center py-4 text-sm text-muted-foreground">
+                            No templates with validation rules available
+                          </div>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
