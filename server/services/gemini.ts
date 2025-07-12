@@ -175,7 +175,18 @@ Return consolidated analysis with cross-sheet relationships and validation rules
               properties: {
                 template_type: { type: "string" },
                 total_sheets: { type: "number" },
-                key_fields: { type: "array", items: { type: "object" } },
+                key_fields: { 
+                  type: "array", 
+                  items: { 
+                    type: "object",
+                    properties: {
+                      field_name: { type: "string" },
+                      sheet_name: { type: "string" },
+                      description: { type: "string" }
+                    },
+                    required: ["field_name", "sheet_name"]
+                  } 
+                },
                 summary: { type: "string" }
               }
             },
