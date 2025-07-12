@@ -408,29 +408,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         workbook.eachSheet((worksheet, sheetId) => {
           const sheetData: any[][] = [];
+          const mergedCells: any[] = [];
           
-          // Convert worksheet to array format for react-spreadsheet
-          worksheet.eachRow((row, rowNumber) => {
-            const rowData: any[] = [];
-            row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-              rowData.push({
-                value: cell.value !== undefined && cell.value !== null ? String(cell.value) : ""
-              });
+          // Get merged cell ranges using the model property
+          if (worksheet.model && worksheet.model.merges) {
+            worksheet.model.merges.forEach((merge: string) => {
+              // Parse merge range (e.g., "A1:B2")
+              const match = merge.match(/([A-Z]+)(\d+):([A-Z]+)(\d+)/);
+              if (match) {
+                // Convert column letters to index (handle multi-character columns)
+                const colToIndex = (col: string) => {
+                  let index = 0;
+                  for (let i = 0; i < col.length; i++) {
+                    index = index * 26 + (col.charCodeAt(i) - 64);
+                  }
+                  return index - 1;
+                };
+                
+                const startCol = colToIndex(match[1]);
+                const startRow = parseInt(match[2]) - 1;
+                const endCol = colToIndex(match[3]);
+                const endRow = parseInt(match[4]) - 1;
+                
+                mergedCells.push({
+                  top: startRow,
+                  left: startCol,
+                  bottom: endRow,
+                  right: endCol
+                });
+              }
             });
-            sheetData.push(rowData);
-          });
+          }
           
-          // Ensure all rows have the same number of columns
-          const maxCols = Math.max(...sheetData.map(row => row.length));
-          sheetData.forEach(row => {
-            while (row.length < maxCols) {
-              row.push({ value: "" });
+          // Convert worksheet to array format
+          const maxRow = worksheet.rowCount || 0;
+          const maxCol = worksheet.columnCount || 0;
+          
+          for (let rowNumber = 1; rowNumber <= maxRow; rowNumber++) {
+            const row = worksheet.getRow(rowNumber);
+            const rowData: any[] = [];
+            
+            for (let colNumber = 1; colNumber <= maxCol; colNumber++) {
+              const cell = row.getCell(colNumber);
+              
+              // Check if this cell is part of a merged range
+              let isMerged = false;
+              let mergeInfo = null;
+              
+              for (const merge of mergedCells) {
+                if (rowNumber - 1 >= merge.top && rowNumber - 1 <= merge.bottom &&
+                    colNumber - 1 >= merge.left && colNumber - 1 <= merge.right) {
+                  isMerged = true;
+                  mergeInfo = {
+                    ...merge,
+                    isTopLeft: rowNumber - 1 === merge.top && colNumber - 1 === merge.left
+                  };
+                  break;
+                }
+              }
+              
+              // Extract cell styling safely
+              let backgroundColor = null;
+              let textColor = null;
+              
+              if (cell.style?.fill && 'type' in cell.style.fill) {
+                const fill = cell.style.fill as any;
+                if (fill.type === 'pattern' && fill.fgColor?.argb) {
+                  backgroundColor = `#${fill.fgColor.argb.substring(2)}`;
+                }
+              }
+              
+              if (cell.style?.font?.color && 'argb' in cell.style.font.color) {
+                const color = cell.style.font.color as any;
+                if (color.argb) {
+                  textColor = `#${color.argb.substring(2)}`;
+                }
+              }
+              
+              rowData.push({
+                value: cell.value !== undefined && cell.value !== null ? String(cell.value) : "",
+                merged: isMerged,
+                mergeInfo: mergeInfo,
+                style: {
+                  backgroundColor,
+                  color: textColor,
+                  fontWeight: cell.style?.font?.bold ? 'bold' : 'normal',
+                  textAlign: cell.style?.alignment?.horizontal || 'left',
+                  verticalAlign: cell.style?.alignment?.vertical || 'middle'
+                }
+              });
             }
-          });
+            sheetData.push(rowData);
+          }
           
           sheetsData.push({
             sheetName: worksheet.name,
-            data: sheetData
+            data: sheetData,
+            mergedCells: mergedCells
           });
         });
         
