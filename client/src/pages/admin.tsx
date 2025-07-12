@@ -274,7 +274,7 @@ export default function AdminPanel() {
               </CardHeader>
               <CardContent>
                 <div className="flex justify-end mb-4">
-                  <Button onClick={() => navigate("/")}>
+                  <Button onClick={() => navigate("/templates")}>
                     Go to Template Manager
                   </Button>
                 </div>

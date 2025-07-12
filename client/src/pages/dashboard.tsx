@@ -107,6 +107,9 @@ export default function UserDashboard() {
             <h1 className="text-2xl font-bold text-gray-900">User Dashboard</h1>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">Welcome, {user?.username}</span>
+              <Button variant="outline" onClick={() => navigate("/templates")}>
+                Browse Templates
+              </Button>
               <Button variant="outline" onClick={() => navigate("/")}>
                 Logout
               </Button>

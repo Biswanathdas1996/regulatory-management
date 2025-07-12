@@ -10,6 +10,7 @@ import Login from "@/pages/login";
 import AdminPanel from "@/pages/admin";
 import Dashboard from "@/pages/dashboard";
 import TemplateDetail from "@/pages/template-detail";
+import TemplatesPage from "@/pages/templates";
 
 function PrivateRoute({ component: Component, adminOnly = false, ...rest }: any) {
   const { user, isLoading } = useAuth();
@@ -44,6 +45,9 @@ function Router() {
       </Route>
       <Route path="/dashboard">
         {() => <PrivateRoute component={Dashboard} />}
+      </Route>
+      <Route path="/templates">
+        {() => <PrivateRoute component={TemplatesPage} />}
       </Route>
       <Route path="/template/:id">
         {(params) => <PrivateRoute component={TemplateDetail} params={params} />}
