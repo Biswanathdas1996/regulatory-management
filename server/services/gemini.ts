@@ -80,7 +80,7 @@ Return a JSON schema with the following structure:
 }`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.0-flash-lite",
       config: {
         systemInstruction: systemPrompt,
         responseMimeType: "application/json",
@@ -163,16 +163,46 @@ ${JSON.stringify(schemas, null, 2)}
 Return consolidated analysis with cross-sheet relationships and validation rules.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.0-flash-lite",
       config: {
         systemInstruction: systemPrompt,
         responseMimeType: "application/json",
         responseSchema: {
           type: "object",
           properties: {
-            consolidated_schema: { type: "object" },
-            cross_sheet_relationships: { type: "array" },
-            validation_rules: { type: "array" }
+            consolidated_schema: { 
+              type: "object",
+              properties: {
+                template_type: { type: "string" },
+                total_sheets: { type: "number" },
+                key_fields: { type: "array", items: { type: "object" } },
+                summary: { type: "string" }
+              }
+            },
+            cross_sheet_relationships: { 
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  source_sheet: { type: "string" },
+                  target_sheet: { type: "string" },
+                  relationship_type: { type: "string" },
+                  fields: { type: "array", items: { type: "string" } }
+                }
+              }
+            },
+            validation_rules: { 
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  rule_name: { type: "string" },
+                  description: { type: "string" },
+                  applies_to: { type: "string" },
+                  validation_type: { type: "string" }
+                }
+              }
+            }
           },
           required: ["consolidated_schema", "cross_sheet_relationships", "validation_rules"]
         }

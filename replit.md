@@ -66,6 +66,7 @@ Preferred communication style: Simple, everyday language.
 
 ### AI Services
 - **Google Gemini AI**: Primary AI service for schema extraction and enhancement
+- **Model**: Using gemini-2.0-flash-lite for efficient processing
 - **API Integration**: RESTful integration with streaming support for large datasets
 
 ### Database Services
