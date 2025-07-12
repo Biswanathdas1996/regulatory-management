@@ -70,6 +70,12 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
     },
   });
 
+  // Fetch schemas to get field names
+  const { data: schemas = [] } = useQuery({
+    queryKey: [`/api/templates/${templateId}/schemas`],
+    enabled: !!templateId,
+  });
+
   // Fetch validation rules
   const { data: rules = [], isLoading, refetch } = useQuery({
     queryKey: ['/api/templates', templateId, 'validation-rules', selectedSheetId],
@@ -297,6 +303,33 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
         return "Enter a custom validation expression";
       default:
         return "";
+    }
+  };
+
+  // Get field name from schema based on cell reference
+  const getFieldName = (cellRef: string, sheetId?: number | null) => {
+    if (!schemas || schemas.length === 0) return null;
+    
+    // Find the relevant schema for the sheet
+    const relevantSchema = schemas.find(s => 
+      sheetId ? s.sheetId === sheetId : !s.sheetId
+    );
+    
+    if (!relevantSchema) return null;
+    
+    try {
+      const schemaData = JSON.parse(relevantSchema.schemaJson);
+      const fields = [
+        ...(schemaData.required_fields || []),
+        ...(schemaData.calculated_fields || [])
+      ];
+      
+      // Find field with matching cell reference
+      const field = fields.find(f => f.cell_reference === cellRef);
+      return field?.field_name || null;
+    } catch (error) {
+      console.error('Error parsing schema:', error);
+      return null;
     }
   };
 
@@ -589,7 +622,16 @@ export function ValidationRulesManager({ templateId, sheets }: ValidationRulesMa
                           <span className="text-sm text-muted-foreground">All sheets</span>
                         )}
                       </TableCell>
-                      <TableCell className="font-mono text-sm">{rule.field}</TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="font-mono text-sm">{rule.field}</div>
+                          {getFieldName(rule.field, rule.sheetId) && (
+                            <div className="text-xs text-muted-foreground">
+                              {getFieldName(rule.field, rule.sheetId)}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge className={getRuleTypeColor(rule.ruleType)}>
                           {rule.ruleType}

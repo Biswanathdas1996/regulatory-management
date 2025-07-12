@@ -39,6 +39,20 @@ The application validates submissions against predefined rules with 100% accurac
   - Merges range validation rules to find overall min/max values
   - Returns metadata about chunks processed
 
+### Real-time Progress Tracking for Rule Generation (January 13, 2025)
+- Added sessionId-based progress tracking for AI rule generation
+- Implemented progress bar UI showing chunk processing status (current/total chunks)
+- Background processing with Map-based storage for progress data
+- Frontend polls progress endpoint every second for real-time updates
+- Progress bar displays processing status with smooth animations
+- Automatic cleanup of progress data after completion
+
+### Field Name Display in Validation Rules (January 13, 2025)
+- Enhanced validation rules table to show field names alongside cell references
+- Field names are retrieved from template schemas and displayed below cell references
+- Helps users understand which field each validation rule applies to
+- Supports both sheet-specific and template-wide field lookups
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
