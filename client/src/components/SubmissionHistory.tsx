@@ -118,10 +118,12 @@ export function SubmissionHistory({ userId, templateId, showAllSubmissions = fal
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Eye className="h-5 w-5" />
+    <Card className="border-0 shadow-sm">
+      <CardHeader className="pb-4 border-b border-gray-100">
+        <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
+          <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center mr-3">
+            <Eye className="h-4 w-4 text-blue-600" />
+          </div>
           {showAllSubmissions ? "All Submissions" : "Submission History"}
         </CardTitle>
       </CardHeader>

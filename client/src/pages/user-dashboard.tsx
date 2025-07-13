@@ -132,59 +132,67 @@ export default function UserDashboardPage() {
 
           {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
+            <Card className="border-0 shadow-sm hover:shadow-lg transition-all duration-200">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Total Submissions
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-gray-600">Total Submissions</CardTitle>
+                  <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="text-3xl font-bold">{totalSubmissions}</div>
-                <p className="text-sm text-gray-500 mt-1">
-                  {recentSubmissions.length} in last 7 days
+                <div className="text-3xl font-bold text-gray-900">{totalSubmissions}</div>
+                <p className="text-sm text-gray-500 mt-2">
+                  <span className="text-blue-600 font-medium">+{recentSubmissions.length}</span> in last 7 days
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-0 shadow-sm hover:shadow-lg transition-all duration-200">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Success Rate
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-gray-600">Success Rate</CardTitle>
+                  <div className="h-10 w-10 rounded-lg bg-green-50 flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="text-3xl font-bold text-green-600">{successRate}%</div>
-                <Progress value={successRate} className="mt-2" />
+                <Progress value={successRate} className="mt-3 h-2" />
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-0 shadow-sm hover:shadow-lg transition-all duration-200">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Failed Submissions
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-gray-600">Failed Submissions</CardTitle>
+                  <div className="h-10 w-10 rounded-lg bg-red-50 flex items-center justify-center">
+                    <XCircle className="h-5 w-5 text-red-600" />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="text-3xl font-bold text-red-600">{failedSubmissions}</div>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-500 mt-2">
                   {Math.round((failedSubmissions / Math.max(totalSubmissions, 1)) * 100)}% of total
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-0 shadow-sm hover:shadow-lg transition-all duration-200">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center">
-                  <Activity className="h-4 w-4 mr-2" />
-                  Active Validations
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-gray-600">Active Validations</CardTitle>
+                  <div className="h-10 w-10 rounded-lg bg-orange-50 flex items-center justify-center">
+                    <Activity className="h-5 w-5 text-orange-600" />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="text-3xl font-bold text-yellow-600">{validatingSubmissions}</div>
-                <p className="text-sm text-gray-500 mt-1">
+                <div className="text-3xl font-bold text-orange-600">{validatingSubmissions}</div>
+                <p className="text-sm text-gray-500 mt-2">
                   Currently processing
                 </p>
               </CardContent>
@@ -193,20 +201,22 @@ export default function UserDashboardPage() {
 
           {/* Main Content Tabs */}
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid grid-cols-4 w-full max-w-2xl">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="submissions">Submissions</TabsTrigger>
-              <TabsTrigger value="templates">Templates</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsList className="grid grid-cols-4 w-full max-w-2xl bg-gray-100/50 p-1 rounded-lg">
+              <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md">Overview</TabsTrigger>
+              <TabsTrigger value="submissions" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md">Submissions</TabsTrigger>
+              <TabsTrigger value="templates" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md">Templates</TabsTrigger>
+              <TabsTrigger value="analytics" className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md">Analytics</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Recent Activity */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Calendar className="h-5 w-5 mr-2" />
+                <Card className="border-0 shadow-sm">
+                  <CardHeader className="pb-4 border-b border-gray-100">
+                    <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
+                      <div className="h-8 w-8 rounded-lg bg-purple-50 flex items-center justify-center mr-3">
+                        <Calendar className="h-4 w-4 text-purple-600" />
+                      </div>
                       Recent Activity
                     </CardTitle>
                   </CardHeader>
@@ -216,7 +226,7 @@ export default function UserDashboardPage() {
                     ) : (
                       <div className="space-y-3">
                         {recentSubmissions.slice(0, 5).map((submission: any) => (
-                          <div key={submission.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div key={submission.id} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors">
                             <div className="flex items-center space-x-3">
                               {getStatusIcon(submission.status)}
                               <div>
@@ -237,10 +247,12 @@ export default function UserDashboardPage() {
                 </Card>
 
                 {/* Monthly Trend */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <TrendingUp className="h-5 w-5 mr-2" />
+                <Card className="border-0 shadow-sm">
+                  <CardHeader className="pb-4 border-b border-gray-100">
+                    <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
+                      <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center mr-3">
+                        <TrendingUp className="h-4 w-4 text-indigo-600" />
+                      </div>
                       Monthly Trend
                     </CardTitle>
                   </CardHeader>
