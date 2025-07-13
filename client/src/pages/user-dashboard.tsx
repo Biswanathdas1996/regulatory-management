@@ -14,21 +14,16 @@ import {
   Calendar, 
   Clock,
   BarChart3,
-  User,
   Download,
   Upload,
-  Activity,
-  Home,
-  History,
-  Menu
+  Activity
 } from "lucide-react";
 import { format, subDays, isWithinInterval } from "date-fns";
 import { Link } from "wouter";
-import { useState } from "react";
+import UserLayout from "@/components/UserLayout";
 
 export default function UserDashboardPage() {
   const userId = 1; // TODO: Get from authenticated user
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { data: submissions, isLoading: submissionsLoading } = useQuery({
     queryKey: ["/api/submissions", userId],
@@ -121,114 +116,19 @@ export default function UserDashboardPage() {
     }
   };
 
-  const menuItems = [
-    {
-      name: "Dashboard",
-      icon: Home,
-      href: "/user-dashboard",
-      current: true
-    },
-    {
-      name: "New Submission",
-      icon: Upload,
-      href: "/user-submission",
-      current: false
-    },
-    {
-      name: "Submission History",
-      icon: History,
-      href: "/user-submission",
-      current: false
-    },
-    {
-      name: "Templates",
-      icon: FileText,
-      href: "/template-management",
-      current: false
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:inset-0`}>
-        <div className="flex items-center justify-between h-16 px-4 border-b">
-          <div className="flex items-center space-x-2">
-            <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
-              <User className="text-white text-sm" />
-            </div>
-            <span className="font-semibold text-gray-900">User Portal</span>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <XCircle className="h-4 w-4" />
+    <UserLayout 
+      title="Dashboard" 
+      subtitle="Track your template submissions and validation results"
+      headerActions={
+        <Link to="/user-submission">
+          <Button>
+            <Upload className="h-4 w-4 mr-2" />
+            New Submission
           </Button>
-        </div>
-        
-        <nav className="mt-8">
-          <div className="px-4 space-y-2">
-            {menuItems.map((item) => {
-              const IconComponent = item.icon;
-              return (
-                <Link key={item.name} to={item.href}>
-                  <div className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg cursor-pointer transition-colors ${
-                    item.current
-                      ? 'bg-primary text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}>
-                    <IconComponent className="h-5 w-5 mr-3" />
-                    {item.name}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-      </div>
-
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Main content */}
-      <div className="lg:ml-64">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center space-x-4">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="lg:hidden"
-                  onClick={() => setSidebarOpen(true)}
-                >
-                  <Menu className="h-4 w-4" />
-                </Button>
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                  <p className="text-gray-600 mt-2">
-                    Track your template submissions and validation results
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4">
-                <Link to="/user-submission">
-                  <Button>
-                    <Upload className="h-4 w-4 mr-2" />
-                    New Submission
-                  </Button>
-                </Link>
-              </div>
-            </div>
+        </Link>
+      }
+    >
 
           {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -542,9 +442,6 @@ export default function UserDashboardPage() {
               </div>
             </TabsContent>
           </Tabs>
-          </div>
-        </div>
-      </div>
-    </div>
+    </UserLayout>
   );
 }
