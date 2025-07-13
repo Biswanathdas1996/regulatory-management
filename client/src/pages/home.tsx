@@ -118,11 +118,6 @@ export default function Home() {
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </Link>
-                  <Link href="/user-dashboard">
-                    <Button variant="outline" className="w-full h-10 border border-emerald-300 text-emerald-700 hover:bg-emerald-50 font-medium rounded-lg transition-all duration-200 text-sm">
-                      View Demo
-                    </Button>
-                  </Link>
                 </div>
               </CardContent>
             </Card>
