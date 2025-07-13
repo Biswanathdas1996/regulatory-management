@@ -20,35 +20,6 @@ export default function Home() {
 
           {/* Main Navigation Cards */}
           <div className="grid md:grid-cols-2 gap-8 mb-12">
-            {/* Template Management Card */}
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardContent className="text-center pt-6">
-                <p className="text-gray-600 mb-6">
-                  Upload and manage Excel/CSV templates with validation rules. View processing status and manage template library.
-                </p>
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Templates & Validation Rules
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <FileText className="h-4 w-4 mr-2" />
-                    Manage Template Library
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Settings className="h-4 w-4 mr-2" />
-                    View Processing Stats
-                  </div>
-                </div>
-                <Link href="/template-management">
-                  <Button className="w-full">
-                    Go to Template Management
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
             {/* User Dashboard Card */}
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader className="text-center pb-4">
