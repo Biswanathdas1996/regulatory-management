@@ -16,6 +16,7 @@ import AdminSubmissionsPage from "@/pages/admin-submissions";
 import AdminTemplatesPage from "@/pages/admin-templates";
 import AdminLoginPage from "@/pages/admin-login";
 import UserLoginPage from "@/pages/user-login";
+import SubmissionViewPage from "@/pages/submission-view";
 
 function Router() {
   return (
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/admin-templates" component={AdminTemplatesPage} />
       <Route path="/admin-login" component={AdminLoginPage} />
       <Route path="/user-login" component={UserLoginPage} />
+      <Route path="/submission-view/:id" component={SubmissionViewPage} />
       <Route component={NotFound} />
     </Switch>
   );

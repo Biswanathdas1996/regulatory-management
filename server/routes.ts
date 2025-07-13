@@ -15,9 +15,15 @@ import {
   templateTypes,
 } from "@shared/schema";
 import { z } from "zod";
+import bcrypt from "bcrypt";
+
+// Extend Request type to include authenticated user property
+interface AuthenticatedRequest extends Request {
+  user?: { id: number; username: string; role: string };
+}
 
 // Extend Request type to include file property
-interface MulterRequest extends Request {
+interface MulterRequest extends AuthenticatedRequest {
   file?: any;
   files?: any;
 }
@@ -71,6 +77,70 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication middleware
+  app.use((req: AuthenticatedRequest, res, next) => {
+    const sessionUser = (req.session as any)?.user;
+    if (sessionUser) {
+      req.user = sessionUser;
+    }
+    next();
+  });
+
+  // Add authentication middleware checking function
+  function requireAuth(req: AuthenticatedRequest, res: any, next: any) {
+    if (!req.user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    next();
+  }
+
+  // Authentication routes
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      const user = await storage.getUserByUsername(username);
+
+      if (!user || !(await bcrypt.compare(password, user.password))) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      const role = username.startsWith("admin") ? "admin" : "user";
+      (req.session as any).user = {
+        id: user.id,
+        username: user.username,
+        role,
+      };
+
+      res.json({
+        id: user.id,
+        username: user.username,
+        role,
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Failed to login" });
+    }
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Logout error:", err);
+        res.status(500).json({ error: "Failed to logout" });
+      } else {
+        res.json({ message: "Successfully logged out" });
+      }
+    });
+  });
+
+  // Get current user
+  app.get("/api/auth/me", async (req: AuthenticatedRequest, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    res.json(req.user);
+  });
+
   // Get all templates
   app.get("/api/templates", async (req, res) => {
     try {
@@ -733,11 +803,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (error: any) {
         console.error("Error importing validation rules from Excel:", error);
-        res
-          .status(500)
-          .json({
-            error: error.message || "Failed to import validation rules",
-          });
+        res.status(500).json({
+          error: error.message || "Failed to import validation rules",
+        });
       }
     }
   );
@@ -1163,7 +1231,7 @@ Only return the JSON array, no additional text.
 
       // Check if file exists
       if (!fs.existsSync(submission.filePath)) {
-        return res.status(404).json({ error: "File not found on server" });
+        return res.status(404).json({ error: "File not found" });
       }
 
       // Set headers for file download
@@ -1238,157 +1306,130 @@ Only return the JSON array, no additional text.
 
       if (ext === ".xlsx" || ext === ".xls") {
         await workbook.xlsx.readFile(template.filePath);
-
-        const sheetsData: any[] = [];
-
-        workbook.eachSheet((worksheet, sheetId) => {
-          const sheetData: any[][] = [];
-          const mergedCells: any[] = [];
-
-          // Get merged cell ranges using the model property
-          if (worksheet.model && worksheet.model.merges) {
-            worksheet.model.merges.forEach((merge: string) => {
-              // Parse merge range (e.g., "A1:B2")
-              const match = merge.match(/([A-Z]+)(\d+):([A-Z]+)(\d+)/);
-              if (match) {
-                // Convert column letters to index (handle multi-character columns)
-                const colToIndex = (col: string) => {
-                  let index = 0;
-                  for (let i = 0; i < col.length; i++) {
-                    index = index * 26 + (col.charCodeAt(i) - 64);
-                  }
-                  return index - 1;
-                };
-
-                const startCol = colToIndex(match[1]);
-                const startRow = parseInt(match[2]) - 1;
-                const endCol = colToIndex(match[3]);
-                const endRow = parseInt(match[4]) - 1;
-
-                mergedCells.push({
-                  top: startRow,
-                  left: startCol,
-                  bottom: endRow,
-                  right: endCol,
-                });
-              }
-            });
-          }
-
-          // Convert worksheet to array format
-          const maxRow = worksheet.rowCount || 0;
-          const maxCol = worksheet.columnCount || 0;
-
-          for (let rowNumber = 1; rowNumber <= maxRow; rowNumber++) {
-            const row = worksheet.getRow(rowNumber);
-            const rowData: any[] = [];
-
-            for (let colNumber = 1; colNumber <= maxCol; colNumber++) {
-              const cell = row.getCell(colNumber);
-
-              // Check if this cell is part of a merged range
-              let isMerged = false;
-              let mergeInfo = null;
-
-              for (const merge of mergedCells) {
-                if (
-                  rowNumber - 1 >= merge.top &&
-                  rowNumber - 1 <= merge.bottom &&
-                  colNumber - 1 >= merge.left &&
-                  colNumber - 1 <= merge.right
-                ) {
-                  isMerged = true;
-                  mergeInfo = {
-                    ...merge,
-                    isTopLeft:
-                      rowNumber - 1 === merge.top &&
-                      colNumber - 1 === merge.left,
-                  };
-                  break;
-                }
-              }
-
-              // Extract cell styling safely
-              let backgroundColor = null;
-              let textColor = null;
-
-              if (cell.style?.fill && "type" in cell.style.fill) {
-                const fill = cell.style.fill as any;
-                if (fill.type === "pattern" && fill.fgColor?.argb) {
-                  backgroundColor = `#${fill.fgColor.argb.substring(2)}`;
-                }
-              }
-
-              if (cell.style?.font?.color && "argb" in cell.style.font.color) {
-                const color = cell.style.font.color as any;
-                if (color.argb) {
-                  textColor = `#${color.argb.substring(2)}`;
-                }
-              }
-
-              rowData.push({
-                value:
-                  cell.value !== undefined && cell.value !== null
-                    ? String(cell.value)
-                    : "",
-                merged: isMerged,
-                mergeInfo: mergeInfo,
-                style: {
-                  backgroundColor,
-                  color: textColor,
-                  fontWeight: cell.style?.font?.bold ? "bold" : "normal",
-                  textAlign: cell.style?.alignment?.horizontal || "left",
-                  verticalAlign: cell.style?.alignment?.vertical || "middle",
-                },
-              });
-            }
-            sheetData.push(rowData);
-          }
-
-          sheetsData.push({
-            sheetName: worksheet.name,
-            data: sheetData,
-            mergedCells: mergedCells,
-          });
-        });
-
-        res.json(sheetsData);
       } else if (ext === ".csv") {
-        // For CSV files, create a single sheet
-        const data: any[][] = [];
-        const stream = fs.createReadStream(template.filePath);
-
-        stream
-          .pipe(csv())
-          .on("data", (row: any) => {
-            const rowData = Object.values(row).map((value: any) => ({
-              value: value !== undefined && value !== null ? String(value) : "",
-            }));
-            data.push(rowData);
-          })
-          .on("end", () => {
-            res.json([
-              {
-                sheetName: "Sheet1",
-                data,
-              },
-            ]);
-          })
-          .on("error", (error) => {
-            console.error("CSV parsing error:", error);
-            res.status(500).json({ error: "Failed to parse CSV file" });
-          });
+        await workbook.csv.readFile(template.filePath);
       } else {
-        res.status(400).json({ error: "Unsupported file format" });
+        return res.status(400).json({ error: "Unsupported file type" });
       }
+
+      // Get all worksheets data
+      const sheetData = [];
+      for (const sheet of sheets) {
+        const worksheet = workbook.getWorksheet(sheet.sheetName);
+        if (worksheet) {
+          const rows: any[][] = [];
+          worksheet.eachRow((row, rowNumber) => {
+            if (rowNumber <= 100) {
+              // Limit to first 100 rows for preview
+              // Convert row.values to array and handle object cases
+              const rowArray = Array.isArray(row.values)
+                ? row.values
+                : Object.values(row.values);
+              rows.push(rowArray);
+            }
+          });
+
+          sheetData.push({
+            id: sheet.id,
+            name: sheet.sheetName,
+            data: rows.slice(1), // Remove header row
+            totalRows: worksheet.rowCount,
+            totalCols: worksheet.columnCount,
+          });
+        }
+      }
+
+      res.json(sheetData);
     } catch (error) {
-      console.error("Excel data fetch error:", error);
-      res.status(500).json({ error: "Failed to fetch Excel data" });
+      console.error("Error reading Excel file:", error);
+      res.status(500).json({ error: "Failed to read template file" });
     }
   });
 
-  const httpServer = createServer(app);
-  return httpServer;
+  // Get comments for a submission
+  app.get(
+    "/api/submissions/:id/comments",
+    async (req: AuthenticatedRequest, res) => {
+      // Check authentication first
+      // if (!req.user) {
+      //   return res.status(401).json({ error: "Authentication required" });
+      // }
+
+      try {
+        const submissionId = parseInt(req.params.id);
+
+        // Get the submission to verify it exists and check permissions
+        const submission = await storage.getSubmission(submissionId);
+        if (!submission) {
+          return res.status(404).json({ error: "Submission not found" });
+        }
+
+        // Get comments with user information
+        const comments = await storage.getCommentsWithUsers(submissionId);
+        res.json(comments);
+      } catch (error) {
+        console.error("Error fetching submission comments:", error);
+        res.status(500).json({ error: "Failed to fetch comments" });
+      }
+    }
+  );
+
+  // Add comment to a submission
+  app.post(
+    "/api/submissions/:id/comments",
+    async (req: AuthenticatedRequest, res) => {
+      // Check authentication first
+      const { content, parentCommentId, user } = req.body;
+      if (!user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      try {
+        const submissionId = parseInt(req.params.id);
+
+        if (
+          !content ||
+          typeof content !== "string" ||
+          content.trim().length === 0
+        ) {
+          return res.status(400).json({ error: "Comment content is required" });
+        }
+
+        // Get the submission to verify it exists and check permissions
+        const submission = await storage.getSubmission(submissionId);
+        if (!submission) {
+          return res.status(404).json({ error: "Submission not found" });
+        }
+
+        // Check if user has access to this submission
+        if (user.role !== "admin" && user.id !== submission.userId) {
+          return res.status(403).json({ error: "Access denied" });
+        }
+
+        // Create comment
+        const comment = await storage.createComment({
+          submissionId,
+          userId: user.id,
+          parentCommentId: parentCommentId || null,
+          text: content.trim(),
+        });
+
+        // Get the comment with user information
+        const commentWithUser = {
+          ...comment,
+          username: user.username,
+        };
+
+        res.json(commentWithUser);
+      } catch (error) {
+        console.error("Error creating submission comment:", error);
+        res.status(500).json({ error: "Failed to create comment" });
+      }
+    }
+  );
+
+  const server = createServer(app);
+  return server;
 }
 
 // Background validation function
@@ -1396,55 +1437,41 @@ async function validateSubmissionAsync(submissionId: number) {
   try {
     const submission = await storage.getSubmission(submissionId);
     if (!submission) {
-      throw new Error("Submission not found");
-    }
-
-    // Update status to validating
-    await storage.updateSubmissionStatus(submissionId, "validating");
-
-    // Get validation rules for the template
-    const rules = await storage.getValidationRules(submission.templateId);
-
-    if (rules.length === 0) {
-      // No validation rules - mark as passed
-      await storage.updateSubmissionStatus(submissionId, "passed", 0, 0);
+      console.error(`Submission ${submissionId} not found`);
       return;
     }
 
-    // Run validation with progress tracking
-    const context = {
-      submissionId,
-      filePath: submission.filePath,
-      rules,
-      onProgress: async (progress: number, message?: string) => {
-        // You could store progress in database or use WebSockets for real-time updates
-        console.log(
-          `Validation progress for submission ${submissionId}: ${progress}% - ${message}`
-        );
-      },
-    };
-
-    const { results, summary } = await ValidationEngine.validateSubmission(
-      context
-    );
-
-    // Store validation results in batches for better performance
-    const batchSize = 100;
-    for (let i = 0; i < results.length; i += batchSize) {
-      const batch = results.slice(i, i + batchSize);
-      await storage.createValidationResults(batch);
+    // Get template and validation rules
+    const template = await storage.getTemplate(submission.templateId);
+    if (!template) {
+      console.error(
+        `Template ${submission.templateId} not found for submission ${submissionId}`
+      );
+      return;
     }
 
-    // Update submission status
-    const status = summary.errors > 0 ? "failed" : "passed";
+    const rules = await storage.getValidationRules(template.id);
+
+    // Validate the submission file
+    const validationResult = await ValidationEngine.validateSubmission({
+      filePath: submission.filePath,
+      rules,
+      submissionId,
+    });
+
+    // Store validation results
+    await storage.createValidationResults(validationResult.results);
+
+    // Update submission status based on whether there are any error-level issues
+    const hasErrors = validationResult.results.some(
+      (r) => r.severity === "error"
+    );
     await storage.updateSubmissionStatus(
       submissionId,
-      status,
-      summary.errors,
-      summary.warnings
+      hasErrors ? "failed" : "passed"
     );
   } catch (error) {
-    console.error("Validation error:", error);
+    console.error(`Error validating submission ${submissionId}:`, error);
     await storage.updateSubmissionStatus(submissionId, "failed");
   }
 }

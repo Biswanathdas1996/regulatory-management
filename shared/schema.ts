@@ -1,6 +1,24 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  json,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Comments table for submission discussions
+export const comments = pgTable("comments", {
+  id: serial("id").primaryKey(),
+  submissionId: integer("submission_id").notNull(),
+  userId: integer("user_id").notNull(),
+  parentCommentId: integer("parent_comment_id"), // for replies
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -23,7 +41,9 @@ export const templates = pgTable("templates", {
 
 export const templateSheets = pgTable("template_sheets", {
   id: serial("id").primaryKey(),
-  templateId: integer("template_id").references(() => templates.id).notNull(),
+  templateId: integer("template_id")
+    .references(() => templates.id)
+    .notNull(),
   sheetName: text("sheet_name").notNull(),
   sheetIndex: integer("sheet_index").notNull(),
   dataPointCount: integer("data_point_count").notNull(),
@@ -33,7 +53,9 @@ export const templateSheets = pgTable("template_sheets", {
 
 export const templateSchemas = pgTable("template_schemas", {
   id: serial("id").primaryKey(),
-  templateId: integer("template_id").references(() => templates.id).notNull(),
+  templateId: integer("template_id")
+    .references(() => templates.id)
+    .notNull(),
   sheetId: integer("sheet_id").references(() => templateSheets.id),
   schemaData: json("schema_data").notNull(),
   aiConfidence: integer("ai_confidence").notNull(),
@@ -43,7 +65,9 @@ export const templateSchemas = pgTable("template_schemas", {
 
 export const processingStatus = pgTable("processing_status", {
   id: serial("id").primaryKey(),
-  templateId: integer("template_id").references(() => templates.id).notNull(),
+  templateId: integer("template_id")
+    .references(() => templates.id)
+    .notNull(),
   step: text("step").notNull(), // upload, extraction, ai_processing, schema_generation
   status: text("status").notNull(), // pending, in_progress, completed, failed
   message: text("message"),
@@ -54,7 +78,9 @@ export const processingStatus = pgTable("processing_status", {
 // Validation rules for templates (sheet-specific)
 export const validationRules = pgTable("validation_rules", {
   id: serial("id").primaryKey(),
-  templateId: integer("template_id").references(() => templates.id).notNull(),
+  templateId: integer("template_id")
+    .references(() => templates.id)
+    .notNull(),
   sheetId: integer("sheet_id").references(() => templateSheets.id), // Made optional for backward compatibility
   ruleType: text("rule_type").notNull(), // required, format, range, custom
   field: text("field").notNull(), // Field name or cell reference
@@ -67,8 +93,12 @@ export const validationRules = pgTable("validation_rules", {
 // User submissions
 export const submissions = pgTable("submissions", {
   id: serial("id").primaryKey(),
-  templateId: integer("template_id").references(() => templates.id).notNull(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  templateId: integer("template_id")
+    .references(() => templates.id)
+    .notNull(),
+  userId: integer("user_id")
+    .references(() => users.id)
+    .notNull(),
   fileName: text("file_name").notNull(),
   filePath: text("file_path").notNull(),
   fileSize: integer("file_size").notNull(),
@@ -83,8 +113,12 @@ export const submissions = pgTable("submissions", {
 // Validation results for each submission
 export const validationResults = pgTable("validation_results", {
   id: serial("id").primaryKey(),
-  submissionId: integer("submission_id").references(() => submissions.id).notNull(),
-  ruleId: integer("rule_id").references(() => validationRules.id).notNull(),
+  submissionId: integer("submission_id")
+    .references(() => submissions.id)
+    .notNull(),
+  ruleId: integer("rule_id")
+    .references(() => validationRules.id)
+    .notNull(),
   field: text("field").notNull(),
   value: text("value"),
   passed: boolean("passed").notNull(),
@@ -99,7 +133,7 @@ export const templateTypes = [
   "liabilities",
   "stock-mar",
   "stock-mdr",
-  "treasury"
+  "treasury",
 ] as const;
 
 export const insertTemplateSchema = createInsertSchema(templates).pick({
@@ -111,7 +145,9 @@ export const insertTemplateSchema = createInsertSchema(templates).pick({
   validationRulesPath: true,
 });
 
-export const insertTemplateSheetSchema = createInsertSchema(templateSheets).pick({
+export const insertTemplateSheetSchema = createInsertSchema(
+  templateSheets
+).pick({
   templateId: true,
   sheetName: true,
   sheetIndex: true,
@@ -119,7 +155,9 @@ export const insertTemplateSheetSchema = createInsertSchema(templateSheets).pick
   extractedData: true,
 });
 
-export const insertTemplateSchemaSchema = createInsertSchema(templateSchemas).pick({
+export const insertTemplateSchemaSchema = createInsertSchema(
+  templateSchemas
+).pick({
   templateId: true,
   sheetId: true,
   schemaData: true,
@@ -127,7 +165,9 @@ export const insertTemplateSchemaSchema = createInsertSchema(templateSchemas).pi
   extractionNotes: true,
 });
 
-export const insertProcessingStatusSchema = createInsertSchema(processingStatus).pick({
+export const insertProcessingStatusSchema = createInsertSchema(
+  processingStatus
+).pick({
   templateId: true,
   step: true,
   status: true,
@@ -135,7 +175,9 @@ export const insertProcessingStatusSchema = createInsertSchema(processingStatus)
   progress: true,
 });
 
-export const insertValidationRuleSchema = createInsertSchema(validationRules).pick({
+export const insertValidationRuleSchema = createInsertSchema(
+  validationRules
+).pick({
   templateId: true,
   sheetId: true,
   ruleType: true,
@@ -154,7 +196,9 @@ export const insertSubmissionSchema = createInsertSchema(submissions).pick({
   reportingPeriod: true,
 });
 
-export const insertValidationResultSchema = createInsertSchema(validationResults).pick({
+export const insertValidationResultSchema = createInsertSchema(
+  validationResults
+).pick({
   submissionId: true,
   ruleId: true,
   field: true,
@@ -162,6 +206,14 @@ export const insertValidationResultSchema = createInsertSchema(validationResults
   passed: true,
   errorMessage: true,
   severity: true,
+});
+
+// Comment related schemas and types
+export const insertCommentSchema = createInsertSchema(comments).pick({
+  submissionId: true,
+  userId: true,
+  parentCommentId: true,
+  text: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -172,15 +224,19 @@ export type InsertTemplateSheet = z.infer<typeof insertTemplateSheetSchema>;
 export type TemplateSheet = typeof templateSheets.$inferSelect;
 export type InsertTemplateSchema = z.infer<typeof insertTemplateSchemaSchema>;
 export type TemplateSchema = typeof templateSchemas.$inferSelect;
-export type InsertProcessingStatus = z.infer<typeof insertProcessingStatusSchema>;
+export type InsertProcessingStatus = z.infer<
+  typeof insertProcessingStatusSchema
+>;
 export type ProcessingStatus = typeof processingStatus.$inferSelect;
 export type InsertValidationRule = z.infer<typeof insertValidationRuleSchema>;
 export type ValidationRule = typeof validationRules.$inferSelect;
 export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
 export type Submission = typeof submissions.$inferSelect;
-export type InsertValidationResult = z.infer<typeof insertValidationResultSchema>;
+export type InsertValidationResult = z.infer<
+  typeof insertValidationResultSchema
+>;
 export type ValidationResult = typeof validationResults.$inferSelect;
-export type TemplateType = typeof templateTypes[number];
+export type TemplateType = (typeof templateTypes)[number];
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,

@@ -2,8 +2,23 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Eye, Download, CheckCircle, XCircle, Clock, AlertCircle, Trash2 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Eye,
+  Download,
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertCircle,
+  Trash2,
+} from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -14,20 +29,26 @@ interface SubmissionHistoryProps {
   showAllSubmissions?: boolean;
 }
 
-export function SubmissionHistory({ userId, templateId, showAllSubmissions = false }: SubmissionHistoryProps) {
+export function SubmissionHistory({
+  userId,
+  templateId,
+  showAllSubmissions = false,
+}: SubmissionHistoryProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const { data: submissions, isLoading } = useQuery({
-    queryKey: showAllSubmissions ? ["/api/admin/submissions"] : ["/api/submissions", userId, templateId],
+    queryKey: showAllSubmissions
+      ? ["/api/admin/submissions"]
+      : ["/api/submissions", userId, templateId],
     queryFn: async () => {
       if (showAllSubmissions) {
         const response = await fetch("/api/admin/submissions");
         return response.json();
       } else {
         const params = new URLSearchParams();
-        if (userId) params.append('userId', userId.toString());
-        if (templateId) params.append('templateId', templateId.toString());
+        if (userId) params.append("userId", userId.toString());
+        if (templateId) params.append("templateId", templateId.toString());
         const response = await fetch(`/api/submissions?${params}`);
         return response.json();
       }
@@ -37,9 +58,7 @@ export function SubmissionHistory({ userId, templateId, showAllSubmissions = fal
 
   const deleteSubmissionMutation = useMutation({
     mutationFn: async (submissionId: number) => {
-      return apiRequest(`/api/submissions/${submissionId}`, {
-        method: 'DELETE',
-      });
+      return apiRequest("DELETE", `/api/submissions/${submissionId}`);
     },
     onSuccess: () => {
       toast({
@@ -47,8 +66,10 @@ export function SubmissionHistory({ userId, templateId, showAllSubmissions = fal
         description: "Submission deleted successfully",
       });
       // Invalidate and refetch submissions
-      queryClient.invalidateQueries({ 
-        queryKey: showAllSubmissions ? ["/api/admin/submissions"] : ["/api/submissions", userId, templateId] 
+      queryClient.invalidateQueries({
+        queryKey: showAllSubmissions
+          ? ["/api/admin/submissions"]
+          : ["/api/submissions", userId, templateId],
       });
     },
     onError: (error: any) => {
@@ -61,7 +82,11 @@ export function SubmissionHistory({ userId, templateId, showAllSubmissions = fal
   });
 
   const handleDeleteSubmission = (submissionId: number, fileName: string) => {
-    if (window.confirm(`Are you sure you want to delete "${fileName}"? This action cannot be undone.`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${fileName}"? This action cannot be undone.`
+      )
+    ) {
       deleteSubmissionMutation.mutate(submissionId);
     }
   };
@@ -93,11 +118,11 @@ export function SubmissionHistory({ userId, templateId, showAllSubmissions = fal
   };
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   if (isLoading) {
@@ -156,12 +181,13 @@ export function SubmissionHistory({ userId, templateId, showAllSubmissions = fal
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {submission.templateId}
+                        {submission.templateName ||
+                          submission.templateTitle ||
+                          submission.template_id ||
+                          submission.templateId}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      {submission.reportingPeriod}
-                    </TableCell>
+                    <TableCell>{submission.reportingPeriod}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(submission.status)}
@@ -178,7 +204,8 @@ export function SubmissionHistory({ userId, templateId, showAllSubmissions = fal
                       )}
                       {submission.status === "failed" && (
                         <div className="text-sm text-red-600">
-                          {submission.validationErrors || 0} errors, {submission.validationWarnings || 0} warnings
+                          {submission.validationErrors || 0} errors,{" "}
+                          {submission.validationWarnings || 0} warnings
                         </div>
                       )}
                       {submission.status === "validating" && (
@@ -191,7 +218,10 @@ export function SubmissionHistory({ userId, templateId, showAllSubmissions = fal
                       {formatFileSize(submission.fileSize)}
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
-                      {format(new Date(submission.submittedAt), 'MMM dd, yyyy HH:mm')}
+                      {format(
+                        new Date(submission.submittedAt),
+                        "MMM dd, yyyy HH:mm"
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -199,26 +229,32 @@ export function SubmissionHistory({ userId, templateId, showAllSubmissions = fal
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            // Navigate to validation results view
-                            if (submission.status === "passed" || submission.status === "failed") {
-                              window.location.href = `/validation-results/${submission.id}`;
-                            }
+                            window.location.href = `/submission-view/${submission.id}`;
                           }}
-                          disabled={submission.status === "validating" || submission.status === "pending"}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => window.open(`/api/submissions/${submission.id}/download`, '_blank')}
+                          onClick={() =>
+                            window.open(
+                              `/api/submissions/${submission.id}/download`,
+                              "_blank"
+                            )
+                          }
                         >
                           <Download className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDeleteSubmission(submission.id, submission.fileName)}
+                          onClick={() =>
+                            handleDeleteSubmission(
+                              submission.id,
+                              submission.fileName
+                            )
+                          }
                           disabled={deleteSubmissionMutation.isPending}
                         >
                           <Trash2 className="h-4 w-4 text-red-500" />
