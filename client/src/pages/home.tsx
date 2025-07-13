@@ -22,13 +22,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             {/* Template Management Card */}
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardHeader className="text-center pb-4">
-                <div className="mx-auto mb-4 h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Settings className="h-8 w-8 text-blue-600" />
-                </div>
-                <CardTitle className="text-2xl">Template Management</CardTitle>
-              </CardHeader>
-              <CardContent className="text-center">
+              <CardContent className="text-center pt-6">
                 <p className="text-gray-600 mb-6">
                   Upload and manage Excel/CSV templates with validation rules. View processing status and manage template library.
                 </p>
