@@ -22,6 +22,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CheckCircle,
   XCircle,
@@ -32,6 +33,10 @@ import {
   RefreshCw,
   Upload,
   CloudUpload,
+  Clock,
+  User,
+  MessageSquare,
+  FileCheck,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
@@ -66,6 +71,28 @@ export default function SubmissionViewPage() {
     queryFn: async () => {
       const response = await fetch(`/api/submissions/${submissionId}/results`);
       if (!response.ok) throw new Error("Failed to fetch results");
+      return response.json();
+    },
+  });
+
+  // Get all submissions for the same template to show related uploads
+  const { data: relatedSubmissions } = useQuery({
+    queryKey: [`/api/submissions`, submission?.templateId, submission?.userId],
+    queryFn: async () => {
+      if (!submission) return [];
+      const response = await fetch(`/api/submissions?templateId=${submission.templateId}&userId=${submission.userId}`);
+      if (!response.ok) throw new Error("Failed to fetch related submissions");
+      return response.json();
+    },
+    enabled: !!submission,
+  });
+
+  // Get comments for activity timeline
+  const { data: comments } = useQuery({
+    queryKey: [`/api/submissions/${submissionId}/comments`],
+    queryFn: async () => {
+      const response = await fetch(`/api/submissions/${submissionId}/comments`);
+      if (!response.ok) throw new Error("Failed to fetch comments");
       return response.json();
     },
   });
@@ -249,6 +276,108 @@ export default function SubmissionViewPage() {
   const warningCount = Array.isArray(results)
     ? results.filter((r: any) => !r.passed && r.severity === "warning").length
     : 0;
+
+  // Generate timeline items for file uploads
+  const fileTimelineItems = relatedSubmissions
+    ? [...relatedSubmissions]
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .map((sub: any) => ({
+          id: sub.id,
+          type: 'file_upload',
+          icon: sub.id === submissionId ? FileCheck : Upload,
+          title: sub.id === submissionId ? 'Current File Upload' : 'Previous File Upload',
+          description: `${sub.fileName} (${(sub.fileSize / 1024).toFixed(1)} KB)`,
+          timestamp: sub.createdAt,
+          status: sub.status,
+          isCurrent: sub.id === submissionId,
+          submissionId: sub.id,
+        }))
+    : [];
+
+  // Generate timeline items for all activities (comments + status changes)
+  const activityTimelineItems = [
+    // File upload activities
+    ...fileTimelineItems.map((item: any) => ({
+      ...item,
+      type: 'file_upload',
+    })),
+    // Comments and system activities
+    ...(comments || []).map((comment: any) => ({
+      id: `comment-${comment.id}`,
+      type: 'comment',
+      icon: comment.systemGenerated ? FileText : MessageSquare,
+      title: comment.systemGenerated ? 'System Activity' : `Comment by ${comment.username}`,
+      description: comment.text,
+      timestamp: comment.createdAt,
+      status: null,
+      isCurrent: false,
+      isSystem: comment.systemGenerated,
+    })),
+  ].sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { color: "bg-yellow-100 text-yellow-800", label: "Pending" },
+      passed: { color: "bg-green-100 text-green-800", label: "Passed" },
+      failed: { color: "bg-red-100 text-red-800", label: "Failed" },
+      approved: { color: "bg-blue-100 text-blue-800", label: "Approved" },
+      rejected: { color: "bg-red-100 text-red-800", label: "Rejected" },
+      returned: { color: "bg-orange-100 text-orange-800", label: "Returned" },
+    };
+    const config = statusConfig[status as keyof typeof statusConfig] || { color: "bg-gray-100 text-gray-800", label: status };
+    return (
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+        {config.label}
+      </span>
+    );
+  };
+
+  const TimelineItem = ({ item, isLast }: { item: any; isLast: boolean }) => {
+    const IconComponent = item.icon;
+    const isCurrentFile = item.isCurrent;
+    
+    return (
+      <div className="relative flex items-start space-x-3">
+        {/* Timeline line */}
+        {!isLast && (
+          <div className="absolute left-4 top-8 w-0.5 h-16 bg-gray-200" />
+        )}
+        
+        {/* Icon */}
+        <div className={`relative flex items-center justify-center w-8 h-8 rounded-full ${
+          isCurrentFile 
+            ? 'bg-blue-600 text-white' 
+            : item.isSystem 
+              ? 'bg-gray-400 text-white'
+              : 'bg-gray-200 text-gray-600'
+        }`}>
+          <IconComponent className="w-4 h-4" />
+        </div>
+        
+        {/* Content */}
+        <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex items-center justify-between">
+            <p className={`text-sm font-medium ${isCurrentFile ? 'text-blue-900' : 'text-gray-900'}`}>
+              {item.title}
+            </p>
+            {item.status && getStatusBadge(item.status)}
+          </div>
+          <p className="text-sm text-gray-500">{item.description}</p>
+          <div className="flex items-center space-x-2 text-xs text-gray-400">
+            <Clock className="w-3 h-3" />
+            <span>{format(new Date(item.timestamp), "MMM d, yyyy 'at' h:mm a")}</span>
+            {item.type === 'file_upload' && item.submissionId && item.submissionId !== submissionId && (
+              <Link to={`/submission-view/${item.submissionId}`}>
+                <Button variant="link" size="sm" className="h-auto p-0 text-xs text-blue-600">
+                  View Details
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -609,6 +738,61 @@ export default function SubmissionViewPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Timeline and Activity Section */}
+            <div className="mt-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Activity Timeline</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Tabs defaultValue="all-activity" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="all-activity">All Activity</TabsTrigger>
+                      <TabsTrigger value="file-uploads">File Uploads</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="all-activity" className="mt-6">
+                      <div className="space-y-6">
+                        {activityTimelineItems.length > 0 ? (
+                          activityTimelineItems.map((item, index) => (
+                            <TimelineItem 
+                              key={item.id} 
+                              item={item} 
+                              isLast={index === activityTimelineItems.length - 1} 
+                            />
+                          ))
+                        ) : (
+                          <div className="text-center py-8 text-gray-500">
+                            <FileText className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                            <p>No activity recorded yet</p>
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="file-uploads" className="mt-6">
+                      <div className="space-y-6">
+                        {fileTimelineItems.length > 0 ? (
+                          fileTimelineItems.map((item, index) => (
+                            <TimelineItem 
+                              key={item.id} 
+                              item={item} 
+                              isLast={index === fileTimelineItems.length - 1} 
+                            />
+                          ))
+                        ) : (
+                          <div className="text-center py-8 text-gray-500">
+                            <Upload className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                            <p>No file uploads found</p>
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Comments Section */}
             <div className="mt-8">
