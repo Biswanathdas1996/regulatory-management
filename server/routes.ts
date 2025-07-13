@@ -945,6 +945,16 @@ Only return the JSON array, no additional text.
     }
   });
 
+  // Get all submissions for admin view
+  app.get("/api/admin/submissions", async (req, res) => {
+    try {
+      const submissions = await storage.getSubmissions();
+      res.json(submissions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch submissions" });
+    }
+  });
+
   // Get submission details
   app.get("/api/submissions/:id", async (req, res) => {
     try {
@@ -969,6 +979,33 @@ Only return the JSON array, no additional text.
       res.json(results);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch validation results" });
+    }
+  });
+
+  // Download submission file
+  app.get("/api/submissions/:id/download", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const submission = await storage.getSubmission(id);
+      
+      if (!submission) {
+        return res.status(404).json({ error: "Submission not found" });
+      }
+
+      // Check if file exists
+      if (!fs.existsSync(submission.filePath)) {
+        return res.status(404).json({ error: "File not found on server" });
+      }
+
+      // Set headers for file download
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${submission.fileName}"`);
+      
+      // Stream the file
+      const fileStream = fs.createReadStream(submission.filePath);
+      fileStream.pipe(res);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to download file" });
     }
   });
 

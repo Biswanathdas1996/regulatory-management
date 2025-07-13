@@ -1,11 +1,12 @@
 import { UserSubmission } from "@/components/UserSubmission";
+import { SubmissionHistory } from "@/components/SubmissionHistory";
 import { User } from "lucide-react";
 
 export default function UserSubmissionPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -23,7 +24,14 @@ export default function UserSubmissionPage() {
           </div>
 
           {/* Main Content */}
-          <UserSubmission />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <UserSubmission />
+            </div>
+            <div>
+              <SubmissionHistory userId={1} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

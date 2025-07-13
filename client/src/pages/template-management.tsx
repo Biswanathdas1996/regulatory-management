@@ -4,7 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileUpload } from "@/components/FileUpload";
 import { TemplateLibrary } from "@/components/TemplateLibrary";
 import { SystemStats } from "@/components/SystemStats";
-import { Settings, Upload, FileText, BarChart3 } from "lucide-react";
+import { SubmissionHistory } from "@/components/SubmissionHistory";
+import { Settings, Upload, FileText, BarChart3, FileCheck } from "lucide-react";
 
 export default function TemplateManagement() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
@@ -49,7 +50,7 @@ export default function TemplateManagement() {
 
           {/* Main Content */}
           <Tabs defaultValue="upload" className="w-full">
-            <TabsList className="grid grid-cols-3 w-full max-w-md">
+            <TabsList className="grid grid-cols-4 w-full max-w-2xl">
               <TabsTrigger value="upload" className="flex items-center gap-2">
                 <Upload className="h-4 w-4" />
                 Upload
@@ -57,6 +58,10 @@ export default function TemplateManagement() {
               <TabsTrigger value="library" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
                 Library
+              </TabsTrigger>
+              <TabsTrigger value="submissions" className="flex items-center gap-2">
+                <FileCheck className="h-4 w-4" />
+                Submissions
               </TabsTrigger>
               <TabsTrigger value="stats" className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
@@ -75,6 +80,10 @@ export default function TemplateManagement() {
                 onTemplateDeleted={refetchTemplates}
                 selectedTemplateId={selectedTemplateId}
               />
+            </TabsContent>
+
+            <TabsContent value="submissions" className="space-y-8">
+              <SubmissionHistory showAllSubmissions={true} />
             </TabsContent>
 
             <TabsContent value="stats" className="space-y-8">

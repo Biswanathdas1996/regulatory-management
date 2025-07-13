@@ -37,6 +37,20 @@ The application validates submissions against predefined rules with 100% accurac
   - Displays up to 10 failed cells per rule with values
   - Provides count of total failed checks vs total checks per rule
 
+### Enhanced Submission Management System (January 13, 2025)
+- All user-submitted documents are now stored on the server with database records
+- Added comprehensive submission tracking with status updates (pending, validating, passed, failed)
+- Implemented SubmissionHistory component showing:
+  - Real-time submission status updates
+  - File download capabilities for submitted documents
+  - Validation results summary with error/warning counts
+  - File size and submission timestamp information
+  - Admin view for all submissions across all users
+- Added submission management tab to template-management page
+- Enhanced user-submission page with side-by-side submission form and history
+- Added file download endpoint for retrieving submitted documents
+- Background validation processing with detailed results storage
+
 ## Recent Changes (January 13, 2025)
 
 ### Enhanced Validation Rules Management
