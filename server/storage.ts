@@ -66,6 +66,7 @@ export interface IStorage {
   getSubmission(id: number): Promise<Submission | undefined>;
   getSubmissions(userId?: number, templateId?: number): Promise<Submission[]>;
   updateSubmissionStatus(id: number, status: string, errors?: number, warnings?: number): Promise<void>;
+  deleteSubmission(id: number): Promise<void>;
   
   // Validation result methods
   createValidationResult(result: InsertValidationResult): Promise<ValidationResult>;
@@ -322,6 +323,10 @@ export class DatabaseStorage implements IStorage {
 
   async deleteValidationResults(submissionId: number): Promise<void> {
     await db.delete(validationResults).where(eq(validationResults.submissionId, submissionId));
+  }
+
+  async deleteSubmission(id: number): Promise<void> {
+    await db.delete(submissions).where(eq(submissions.id, id));
   }
 }
 

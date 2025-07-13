@@ -1,10 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Eye, Download, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
+import { Eye, Download, CheckCircle, XCircle, Clock, AlertCircle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface SubmissionHistoryProps {
   userId?: number;
@@ -13,10 +15,56 @@ interface SubmissionHistoryProps {
 }
 
 export function SubmissionHistory({ userId, templateId, showAllSubmissions = false }: SubmissionHistoryProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
   const { data: submissions, isLoading } = useQuery({
-    queryKey: showAllSubmissions ? ["/api/admin/submissions"] : ["/api/submissions", { userId, templateId }],
+    queryKey: showAllSubmissions ? ["/api/admin/submissions"] : ["/api/submissions", userId, templateId],
+    queryFn: async () => {
+      if (showAllSubmissions) {
+        const response = await fetch("/api/admin/submissions");
+        return response.json();
+      } else {
+        const params = new URLSearchParams();
+        if (userId) params.append('userId', userId.toString());
+        if (templateId) params.append('templateId', templateId.toString());
+        const response = await fetch(`/api/submissions?${params}`);
+        return response.json();
+      }
+    },
     refetchInterval: 5000, // Refresh every 5 seconds to show status updates
   });
+
+  const deleteSubmissionMutation = useMutation({
+    mutationFn: async (submissionId: number) => {
+      return apiRequest(`/api/submissions/${submissionId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Submission deleted successfully",
+      });
+      // Invalidate and refetch submissions
+      queryClient.invalidateQueries({ 
+        queryKey: showAllSubmissions ? ["/api/admin/submissions"] : ["/api/submissions", userId, templateId] 
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete submission",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteSubmission = (submissionId: number, fileName: string) => {
+    if (window.confirm(`Are you sure you want to delete "${fileName}"? This action cannot be undone.`)) {
+      deleteSubmissionMutation.mutate(submissionId);
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -148,8 +196,13 @@ export function SubmissionHistory({ userId, templateId, showAllSubmissions = fal
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => window.open(`/api/submissions/${submission.id}/results`, '_blank')}
-                          disabled={submission.status === "validating"}
+                          onClick={() => {
+                            // Navigate to validation results view
+                            if (submission.status === "passed" || submission.status === "failed") {
+                              window.location.href = `/validation-results/${submission.id}`;
+                            }
+                          }}
+                          disabled={submission.status === "validating" || submission.status === "pending"}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -159,6 +212,14 @@ export function SubmissionHistory({ userId, templateId, showAllSubmissions = fal
                           onClick={() => window.open(`/api/submissions/${submission.id}/download`, '_blank')}
                         >
                           <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteSubmission(submission.id, submission.fileName)}
+                          disabled={deleteSubmissionMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </div>
                     </TableCell>

@@ -1009,6 +1009,34 @@ Only return the JSON array, no additional text.
     }
   });
 
+  // Delete submission
+  app.delete("/api/submissions/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const submission = await storage.getSubmission(id);
+      
+      if (!submission) {
+        return res.status(404).json({ error: "Submission not found" });
+      }
+
+      // Delete the file from disk if it exists
+      if (fs.existsSync(submission.filePath)) {
+        fs.unlinkSync(submission.filePath);
+      }
+
+      // Delete validation results first (foreign key constraint)
+      await storage.deleteValidationResults(id);
+      
+      // Delete submission record
+      await storage.deleteSubmission(id);
+
+      res.json({ message: "Submission deleted successfully" });
+    } catch (error) {
+      console.error("Delete submission error:", error);
+      res.status(500).json({ error: "Failed to delete submission" });
+    }
+  });
+
   // Generate example validation rules file
   app.get("/api/validation-rules/example", (req, res) => {
     const example = ValidationRulesParser.generateExampleRules();
