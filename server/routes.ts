@@ -55,6 +55,21 @@ const uploadStorage = multer.diskStorage({
   },
 });
 
+// Configure multer for validation file uploads
+const validationStorage = multer.diskStorage({
+  destination: (req: any, file: any, cb: any) => {
+    cb(null, "validation/");
+  },
+  filename: (req: any, file: any, cb: any) => {
+    const templateId = req.params.templateId;
+    const timestamp = Date.now();
+    cb(
+      null,
+      `template-${templateId}-validation-${timestamp}${path.extname(file.originalname)}`
+    );
+  },
+});
+
 const upload = multer({
   storage: uploadStorage,
   limits: {
@@ -70,6 +85,27 @@ const upload = multer({
       cb(
         new Error(
           "Invalid file type. Only Excel, CSV, and TXT files are allowed."
+        )
+      );
+    }
+  },
+});
+
+const validationUpload = multer({
+  storage: validationStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit for validation files
+  },
+  fileFilter: (req: any, file: any, cb: any) => {
+    const allowedTypes = [".txt", ".xlsx", ".xls"];
+    const ext = path.extname(file.originalname).toLowerCase();
+
+    if (allowedTypes.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(
+        new Error(
+          "Invalid file type. Only TXT and Excel files are allowed for validation rules."
         )
       );
     }
@@ -628,6 +664,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error("Upload error:", error);
         res.status(500).json({ error: "Failed to upload template" });
+      }
+    }
+  );
+
+  // Upload validation file for existing template
+  app.post(
+    "/api/templates/:id/validation-file",
+    validationUpload.single("validationFile"),
+    async (req: MulterRequest, res) => {
+      try {
+        const templateId = parseInt(req.params.id);
+        
+        if (!req.file) {
+          return res.status(400).json({ error: "No validation file uploaded" });
+        }
+
+        // Check if template exists
+        const template = await storage.getTemplate(templateId);
+        if (!template) {
+          return res.status(404).json({ error: "Template not found" });
+        }
+
+        const validationFile = req.file;
+        const filePath = validationFile.path;
+
+        try {
+          // Update template with validation file path and mark as uploaded
+          await storage.updateTemplateValidationRulesPath(templateId, filePath);
+          await storage.updateValidationFileUploaded(templateId, true);
+
+          // Parse and store validation rules
+          const fileExtension = path.extname(validationFile.originalname).toLowerCase();
+          let rules: any[] = [];
+
+          if (fileExtension === '.txt') {
+            // Parse text file rules
+            rules = await ValidationRulesParser.parseRulesFile(filePath, templateId);
+          } else if (fileExtension === '.xlsx' || fileExtension === '.xls') {
+            // Parse Excel file rules (implement similar to existing Excel import)
+            const workbook = new ExcelJS.Workbook();
+            await workbook.xlsx.readFile(filePath);
+            const worksheet = workbook.getWorksheet(1);
+
+            if (worksheet) {
+              const sheets = await storage.getTemplateSheets(templateId);
+              const sheetMap = new Map(sheets.map((s) => [s.sheetName.toLowerCase(), s.id]));
+              
+              rules = [];
+              let headerRow: string[] = [];
+
+              worksheet.eachRow((row, rowNumber) => {
+                if (rowNumber === 1) {
+                  headerRow = row.values as string[];
+                  headerRow = headerRow.slice(1);
+                } else {
+                  const values = row.values as any[];
+                  const rowData = values.slice(1);
+
+                  if (rowData.length >= 6) {
+                    const [sheet, field, ruleType, condition, errorMessage, severity] = rowData;
+                    
+                    if (field && ruleType && condition && errorMessage) {
+                      let sheetId = null;
+                      if (sheet && sheet.toLowerCase() !== "all sheets") {
+                        sheetId = sheetMap.get(sheet.toLowerCase()) || null;
+                      }
+
+                      rules.push({
+                        templateId,
+                        sheetId,
+                        ruleType: ruleType.toLowerCase(),
+                        field: field.toString(),
+                        condition: condition.toString(),
+                        errorMessage: errorMessage.toString(),
+                        severity: (severity?.toString()?.toLowerCase() || "error") === "warning" ? "warning" : "error",
+                      });
+                    }
+                  }
+                }
+              });
+            }
+          }
+
+          // Save rules to database if any were parsed
+          if (rules.length > 0) {
+            await storage.createValidationRules(rules);
+          }
+
+          res.json({
+            message: "Validation file uploaded successfully",
+            templateId,
+            filePath,
+            rulesCreated: rules.length,
+            validationFileUploaded: true,
+          });
+
+        } catch (parseError) {
+          console.error("Failed to parse validation file:", parseError);
+          
+          // Still mark file as uploaded but with warning
+          await storage.updateTemplateValidationRulesPath(templateId, filePath);
+          await storage.updateValidationFileUploaded(templateId, true);
+          
+          res.json({
+            message: "Validation file uploaded but parsing failed",
+            templateId,
+            filePath,
+            rulesCreated: 0,
+            validationFileUploaded: true,
+            warning: "File uploaded but could not parse validation rules. Please check file format.",
+          });
+        }
+
+      } catch (error) {
+        console.error("Validation file upload error:", error);
+        res.status(500).json({ error: "Failed to upload validation file" });
       }
     }
   );

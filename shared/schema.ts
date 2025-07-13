@@ -37,6 +37,7 @@ export const templates = pgTable("templates", {
   filePath: text("file_path").notNull(),
   fileSize: integer("file_size").notNull(),
   validationRulesPath: text("validation_rules_path"), // Path to validation rules .txt file
+  validationFileUploaded: boolean("validation_file_uploaded").default(false), // Track if validation file is uploaded
   status: text("status").notNull().default("active"), // active, inactive
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

@@ -45,6 +45,7 @@ export interface IStorage {
   getTemplates(): Promise<Template[]>;
   updateTemplateStatus(id: number, status: string): Promise<void>;
   updateTemplateValidationRulesPath(id: number, path: string): Promise<void>;
+  updateValidationFileUploaded(id: number, uploaded: boolean): Promise<void>;
   deleteTemplate(id: number): Promise<void>;
 
   // Template sheet methods
@@ -193,6 +194,13 @@ export class DatabaseStorage implements IStorage {
     await db
       .update(templates)
       .set({ validationRulesPath: path, updatedAt: new Date() })
+      .where(eq(templates.id, id));
+  }
+
+  async updateValidationFileUploaded(id: number, uploaded: boolean): Promise<void> {
+    await db
+      .update(templates)
+      .set({ validationFileUploaded: uploaded, updatedAt: new Date() })
       .where(eq(templates.id, id));
   }
 

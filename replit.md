@@ -10,6 +10,17 @@ The application validates submissions against predefined IFSCA-compliant rules w
 
 ## Recent Changes (January 13, 2025)
 
+### Validation File Upload Feature (January 13, 2025)
+- Added validation file upload functionality to ValidationRulesManager component
+- Created new database field `validation_file_uploaded` in templates table to track upload status
+- Implemented backend API endpoint `/api/templates/:id/validation-file` for file uploads
+- Added dedicated `validation/` folder on server for storing validation files
+- Enhanced frontend with "Upload Validation File" button and dialog
+- Supports both TXT and Excel validation file formats with automatic parsing
+- Templates are automatically marked as "with rules" when validation files are uploaded
+- Files are stored with structured naming: `template-{id}-validation-{timestamp}.ext`
+- Added comprehensive error handling and success notifications for upload process
+
 ### IFSCA Landing Page Transformation (January 13, 2025)
 - Transformed landing page to IFSCA Regulatory Reports Management Platform branding
 - Updated hero section with IFSCA-specific messaging and GIFT City references
