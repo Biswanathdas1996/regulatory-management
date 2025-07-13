@@ -19,8 +19,10 @@ export function ProcessingStatus({ templateId }: ProcessingStatusProps) {
     if (existingIndex === -1) {
       acc.push(status);
     } else {
-      // Replace with newer status (assuming they're ordered by time)
-      acc[existingIndex] = status;
+      // Replace with newer status based on ID (higher ID = more recent)
+      if (status.id > acc[existingIndex].id) {
+        acc[existingIndex] = status;
+      }
     }
     return acc;
   }, []) || [];
@@ -95,18 +97,27 @@ export function ProcessingStatus({ templateId }: ProcessingStatusProps) {
 
   // Calculate overall progress
   const calculateOverallProgress = () => {
-    const totalSteps = stepOrder.length;
+    if (sortedStatuses.length === 0) return 0;
+    
     const completedSteps = sortedStatuses.filter(s => s.status === "completed").length;
     const inProgressSteps = sortedStatuses.filter(s => s.status === "in_progress").length;
+    const totalSteps = sortedStatuses.length; // Use actual steps present, not theoretical max
     
-    if (completedSteps === totalSteps) return 100;
+    // If all available steps are completed, show 100%
+    if (completedSteps === totalSteps && inProgressSteps === 0) {
+      return 100;
+    }
+    
+    // If there are in-progress steps, calculate partial progress
     if (inProgressSteps > 0) {
       const inProgressStep = sortedStatuses.find(s => s.status === "in_progress");
       const stepProgress = inProgressStep?.progress || 0;
       const baseProgress = (completedSteps / totalSteps) * 100;
-      const currentStepProgress = (stepProgress / totalSteps);
+      const currentStepProgress = (stepProgress / 100) * (100 / totalSteps);
       return Math.min(100, baseProgress + currentStepProgress);
     }
+    
+    // Calculate based on completed steps out of total present steps
     return (completedSteps / totalSteps) * 100;
   };
 

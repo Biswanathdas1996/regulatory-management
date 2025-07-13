@@ -63,8 +63,6 @@ export default function TemplateManagement() {
           />
         </TabsContent>
 
-        
-
         <TabsContent value="stats" className="space-y-8">
           <SystemStats stats={stats} />
         </TabsContent>
