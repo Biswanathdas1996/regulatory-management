@@ -10,6 +10,16 @@ The application validates submissions against predefined IFSCA-compliant rules w
 
 ## Recent Changes (January 13, 2025)
 
+### Admin Rejection Modal with Reason Input (January 13, 2025)
+- Added comprehensive admin rejection modal on validation results page
+- Modal appears when admin clicks "Reject" or "Return to User" buttons
+- Required reason input field with textarea for detailed feedback
+- Different modal titles and descriptions for reject vs return actions
+- Reason validation ensures admin must provide feedback before action
+- Modal cancellation resets state and clears input field
+- Success confirmation with appropriate messaging for each action type
+- Enhanced user experience with contextual placeholders and styling
+
 ### Simplified Validation Rules Management (January 13, 2025)
 - Completely simplified ValidationRulesManager component to only handle file uploads
 - Removed all manual rule creation, editing, display, and management functionality

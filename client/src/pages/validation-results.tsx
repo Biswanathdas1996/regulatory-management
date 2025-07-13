@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "wouter";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   CheckCircle,
   XCircle,
@@ -28,6 +39,15 @@ import { CommentSection } from "@/components/CommentSection";
 export default function ValidationResultsPage() {
   const { id } = useParams<{ id: string }>();
   const submissionId = parseInt(id || "0");
+  
+  // State for admin rejection modal
+  const [actionDialogOpen, setActionDialogOpen] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState<number | null>(null);
+  const [actionType, setActionType] = useState<'reject' | 'return'>('reject');
+  const [rejectionReason, setRejectionReason] = useState("");
+  
+  // Debug logging for dialog state
+  console.log("Dialog state:", { actionDialogOpen, selectedSubmission, actionType });
 
   const { data: submission, isLoading: submissionLoading } = useQuery({
     queryKey: [`/api/submissions/${submissionId}`],
@@ -47,7 +67,16 @@ export default function ValidationResultsPage() {
     },
   });
 
-  const handleAction = async (action: string) => {
+  const handleAction = async (action: string, reason?: string) => {
+    if (action === 'reject' || action === 'return') {
+      // For reject/return actions, open modal first
+      setActionType(action as 'reject' | 'return');
+      setSelectedSubmission(submissionId);
+      setActionDialogOpen(true);
+      return;
+    }
+    
+    // For approve action, proceed directly
     try {
       const response = await fetch(
         `/api/submissions/${submissionId}/${action}`,
@@ -56,11 +85,44 @@ export default function ValidationResultsPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ feedback: "What the hell you submitted?" }),
+          body: JSON.stringify({ feedback: reason || "" }),
         }
       );
       if (!response.ok) throw new Error("Action failed");
       alert(`Submission ${action} successfully.`);
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to perform action. Please try again.");
+    }
+  };
+
+  const handleActionConfirm = async () => {
+    if (!selectedSubmission || !rejectionReason.trim()) {
+      alert("Please provide a reason for this action.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/submissions/${selectedSubmission}/${actionType}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ feedback: rejectionReason }),
+        }
+      );
+      if (!response.ok) throw new Error("Action failed");
+      
+      alert(`Submission ${actionType === 'reject' ? 'rejected' : 'returned to user'} successfully.`);
+      
+      // Reset state and close modal
+      setActionDialogOpen(false);
+      setSelectedSubmission(null);
+      setRejectionReason("");
+      
       window.location.reload();
     } catch (error) {
       console.error(error);
@@ -460,6 +522,57 @@ export default function ValidationResultsPage() {
           </div>
         </div>
       </AdminLayout>
+
+      {/* Admin Action Modal */}
+      <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === 'reject' ? 'Reject Submission' : 'Return to User'}
+            </DialogTitle>
+            <DialogDescription>
+              {actionType === 'reject' 
+                ? 'Please provide a reason for rejecting this submission. This will be visible to the user.'
+                : 'Please provide a reason for returning this submission to the user for revision.'
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="reason">Reason *</Label>
+              <Textarea
+                id="reason"
+                placeholder={
+                  actionType === 'reject' 
+                    ? 'e.g., Data validation errors, missing required information...'
+                    : 'e.g., Please correct the following issues and resubmit...'
+                }
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setActionDialogOpen(false);
+                setRejectionReason("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={actionType === 'reject' ? 'destructive' : 'default'}
+              onClick={handleActionConfirm}
+              disabled={!rejectionReason.trim()}
+            >
+              {actionType === 'reject' ? 'Reject Submission' : 'Return to User'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
