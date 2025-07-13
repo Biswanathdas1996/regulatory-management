@@ -150,9 +150,7 @@ export default function AdminLoginPage() {
 
             {/* Demo Credentials */}
             <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-xs text-gray-500 text-center">
-                Demo: Use any username containing "admin"
-              </p>
+              <p className="text-xs text-gray-500 text-center">Demo: username: "admin", Password: "admin123"</p>
             </div>
           </CardContent>
         </Card>
