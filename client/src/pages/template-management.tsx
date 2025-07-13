@@ -6,7 +6,7 @@ import { TemplateLibrary } from "@/components/TemplateLibrary";
 import { SystemStats } from "@/components/SystemStats";
 import { SubmissionHistory } from "@/components/SubmissionHistory";
 import { Upload, FileText, BarChart3, FileCheck } from "lucide-react";
-import UserLayout from "@/components/UserLayout";
+import AdminLayout from "@/components/AdminLayout";
 
 export default function TemplateManagement() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
@@ -31,7 +31,7 @@ export default function TemplateManagement() {
   };
   
   return (
-    <UserLayout 
+    <AdminLayout 
       title="Template Management" 
       subtitle="Upload and manage Excel/CSV templates with validation rules"
     >
@@ -76,6 +76,6 @@ export default function TemplateManagement() {
           <SystemStats stats={stats} />
         </TabsContent>
       </Tabs>
-    </UserLayout>
+    </AdminLayout>
   );
 }

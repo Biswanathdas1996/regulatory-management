@@ -11,6 +11,9 @@ import UserSubmissionPage from "@/pages/user-submission";
 import ValidationResultsPage from "@/pages/validation-results";
 import UserDashboardPage from "@/pages/user-dashboard";
 import SubmissionHistoryPage from "@/pages/submission-history";
+import AdminDashboardPage from "@/pages/admin-dashboard";
+import AdminSubmissionsPage from "@/pages/admin-submissions";
+import AdminTemplatesPage from "@/pages/admin-templates";
 
 function Router() {
   return (
@@ -22,6 +25,9 @@ function Router() {
       <Route path="/user-dashboard" component={UserDashboardPage} />
       <Route path="/submission-history" component={SubmissionHistoryPage} />
       <Route path="/validation-results/:id" component={ValidationResultsPage} />
+      <Route path="/admin-dashboard" component={AdminDashboardPage} />
+      <Route path="/admin-submissions" component={AdminSubmissionsPage} />
+      <Route path="/admin-templates" component={AdminTemplatesPage} />
       <Route component={NotFound} />
     </Switch>
   );

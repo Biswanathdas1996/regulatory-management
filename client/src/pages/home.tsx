@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Settings, Upload, FileText, User, ArrowRight } from "lucide-react";
+import { Settings, Upload, FileText, User, ArrowRight, Shield } from "lucide-react";
 
 export default function Home() {
   return (
@@ -90,6 +90,41 @@ export default function Home() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Admin Access Card */}
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer mb-12">
+            <CardHeader className="text-center pb-4">
+              <div className="mx-auto mb-4 h-16 w-16 bg-red-100 rounded-full flex items-center justify-center">
+                <Shield className="h-8 w-8 text-red-600" />
+              </div>
+              <CardTitle className="text-2xl">Admin Dashboard</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-gray-600 mb-6">
+                Access system-wide analytics, manage all templates, and monitor user submissions across the platform.
+              </p>
+              <div className="grid md:grid-cols-3 gap-3 mb-6">
+                <div className="flex items-center text-sm text-gray-500">
+                  <Settings className="h-4 w-4 mr-2" />
+                  System Analytics
+                </div>
+                <div className="flex items-center text-sm text-gray-500">
+                  <FileText className="h-4 w-4 mr-2" />
+                  All Submissions
+                </div>
+                <div className="flex items-center text-sm text-gray-500">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Template Library
+                </div>
+              </div>
+              <Link href="/admin-dashboard">
+                <Button variant="destructive" className="w-full">
+                  Go to Admin Dashboard
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
 
           {/* Quick Access Info */}
           <div className="text-center">

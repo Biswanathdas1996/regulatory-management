@@ -945,6 +945,16 @@ Only return the JSON array, no additional text.
     }
   });
 
+  // Admin endpoint to get all submissions
+  app.get("/api/admin/submissions", async (req, res) => {
+    try {
+      const submissions = await storage.getSubmissions();
+      res.json(submissions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch submissions" });
+    }
+  });
+
   // Get all submissions for admin view
   app.get("/api/admin/submissions", async (req, res) => {
     try {
