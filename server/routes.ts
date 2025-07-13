@@ -1830,6 +1830,92 @@ Only return the JSON array, no additional text.
     }
   );
 
+  // Re-upload file for returned submission
+  app.post(
+    "/api/submissions/:id/reupload",
+    upload.single("file"),
+    async (req: MulterRequest, res) => {
+      try {
+        const submissionId = parseInt(req.params.id);
+        const file = req.file;
+
+        if (!file) {
+          return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        // Verify the submission exists and is in "returned" status
+        const submission = await storage.getSubmission(submissionId);
+        if (!submission) {
+          return res.status(404).json({ error: "Submission not found" });
+        }
+
+        if (submission.status !== "returned") {
+          return res.status(400).json({ 
+            error: "Can only re-upload files for submissions that have been returned" 
+          });
+        }
+
+        // Verify file type
+        const allowedTypes = [
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "application/vnd.ms-excel",
+          "text/csv",
+        ];
+
+        if (!allowedTypes.includes(file.mimetype)) {
+          fs.unlinkSync(file.path);
+          return res
+            .status(400)
+            .json({ error: "Only Excel and CSV files are allowed" });
+        }
+
+        // Get template to check if it has validation rules
+        const template = await storage.getTemplate(submission.templateId);
+        if (!template) {
+          fs.unlinkSync(file.path);
+          return res.status(404).json({ error: "Template not found" });
+        }
+
+        // Create new submission record for the re-uploaded file
+        const newSubmission = await storage.createSubmission({
+          userId: submission.userId,
+          templateId: submission.templateId,
+          fileName: file.originalname,
+          filePath: file.path,
+          fileSize: file.size,
+          reportingPeriod: submission.reportingPeriod,
+          status: "pending",
+        });
+
+        // Add comment indicating this is a re-upload
+        await storage.createComment({
+          submissionId: newSubmission.id,
+          userId: submission.userId,
+          text: `File re-uploaded to address issues from submission #${submissionId}`,
+          systemGenerated: true,
+        });
+
+        // Start validation if template has rules
+        if (template.validationFileUploaded) {
+          // Update submission status to validating
+          await storage.updateSubmissionStatus(newSubmission.id, "pending");
+          
+          // Start async validation
+          validateSubmissionAsync(newSubmission.id);
+        }
+
+        res.json({
+          message: "File re-uploaded successfully",
+          submissionId: newSubmission.id,
+          hasValidationRules: template.validationFileUploaded,
+        });
+      } catch (error) {
+        console.error("Re-upload error:", error);
+        res.status(500).json({ error: "Failed to re-upload file" });
+      }
+    }
+  );
+
   // Get validation results for a submission
   app.get("/api/submissions/:id/results", async (req, res) => {
     try {

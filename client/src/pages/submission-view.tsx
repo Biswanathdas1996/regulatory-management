@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "wouter";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,15 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import {
   CheckCircle,
   XCircle,
   AlertTriangle,
@@ -20,15 +30,27 @@ import {
   FileText,
   Download,
   RefreshCw,
+  Upload,
+  CloudUpload,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
 import UserLayout from "@/components/UserLayout";
 import { CommentSection } from "@/components/CommentSection";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SubmissionViewPage() {
   const { id } = useParams<{ id: string }>();
   const submissionId = parseInt(id || "0");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // State for file re-upload functionality
+  const [reuploadDialogOpen, setReuploadDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [validationPhase, setValidationPhase] = useState<'idle' | 'uploading' | 'validating' | 'complete'>('idle');
 
   const { data: submission, isLoading: submissionLoading } = useQuery({
     queryKey: [`/api/submissions/${submissionId}`],
@@ -47,6 +69,112 @@ export default function SubmissionViewPage() {
       return response.json();
     },
   });
+
+  // Re-upload mutation
+  const reuploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      setValidationPhase('uploading');
+      setUploadProgress(0);
+      
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("templateId", submission.templateId.toString());
+      formData.append("reportingPeriod", submission.reportingPeriod);
+
+      // Simulate upload progress
+      const uploadInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 80) {
+            clearInterval(uploadInterval);
+            return 80;
+          }
+          return prev + 20;
+        });
+      }, 300);
+
+      const response = await fetch(`/api/submissions/${submissionId}/reupload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      clearInterval(uploadInterval);
+      setUploadProgress(100);
+      setValidationPhase('validating');
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Re-upload failed");
+      }
+
+      return response.json();
+    },
+    onSuccess: async (data) => {
+      toast({
+        title: "Success",
+        description: "File re-uploaded successfully. Validation in progress...",
+      });
+      
+      // Simulate validation time and then refresh data
+      setTimeout(async () => {
+        setValidationPhase('complete');
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: [`/api/submissions/${submissionId}`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/submissions/${submissionId}/results`] });
+        setReuploadDialogOpen(false);
+        setSelectedFile(null);
+        setValidationPhase('idle');
+        setUploadProgress(0);
+      }, 2000);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to re-upload file",
+        variant: "destructive",
+      });
+      setValidationPhase('idle');
+      setUploadProgress(0);
+    }
+  });
+
+  // File handling functions
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      setSelectedFile(files[0]);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setSelectedFile(files[0]);
+    }
+  };
+
+  const handleReupload = () => {
+    if (!selectedFile) {
+      toast({
+        title: "Error",
+        description: "Please select a file to upload",
+        variant: "destructive",
+      });
+      return;
+    }
+    reuploadMutation.mutate(selectedFile);
+  };
 
   if (submissionLoading || resultsLoading) {
     return (
@@ -123,6 +251,7 @@ export default function SubmissionViewPage() {
     : 0;
 
   return (
+    <>
     <UserLayout
       title="Submission Details"
       subtitle="View your submission and validation results"
@@ -158,6 +287,16 @@ export default function SubmissionViewPage() {
                 </p>
               </div>
               <div className="flex items-center gap-4">
+                {submission.status === "returned" && (
+                  <Button
+                    variant="default"
+                    onClick={() => setReuploadDialogOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Re-upload File
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() =>
@@ -479,5 +618,122 @@ export default function SubmissionViewPage() {
         </div>
       </div>
     </UserLayout>
+
+    {/* Re-upload Modal */}
+    <Dialog open={reuploadDialogOpen} onOpenChange={setReuploadDialogOpen}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Re-upload Corrected File</DialogTitle>
+          <DialogDescription>
+            Upload your corrected file to address the issues identified in the previous submission.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4 py-4">
+          {/* File Upload Area */}
+          <div
+            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${
+              isDragging ? "border-primary bg-blue-50" : "border-gray-300"
+            }`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <div className="mb-4">
+              <CloudUpload className="mx-auto h-10 w-10 text-gray-400" />
+            </div>
+            <div className="mb-4">
+              <p className="text-lg font-medium text-gray-900">Drop your corrected file here</p>
+              <p className="text-sm text-gray-500 mt-1">Supports Excel (.xlsx) and CSV files</p>
+            </div>
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById("reupload-file-input")?.click()}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Choose File
+              </Button>
+              <input
+                id="reupload-file-input"
+                type="file"
+                accept=".xlsx,.csv"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
+            {selectedFile && (
+              <p className="text-sm text-gray-600 mt-2">
+                Selected: {selectedFile.name}
+              </p>
+            )}
+          </div>
+
+          {/* Upload Progress */}
+          {reuploadMutation.isPending && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">
+                  {validationPhase === 'uploading' && 'Uploading file...'}
+                  {validationPhase === 'validating' && 'Validating against rules...'}
+                  {validationPhase === 'complete' && 'Validation complete!'}
+                </span>
+                <span className="text-sm text-gray-500">{uploadProgress}%</span>
+              </div>
+              <Progress value={uploadProgress} className="w-full" />
+              
+              {/* Phase indicators */}
+              <div className="flex items-center space-x-4 text-xs text-gray-500">
+                <div className={`flex items-center ${validationPhase === 'uploading' ? 'text-blue-600' : uploadProgress >= 100 ? 'text-green-600' : 'text-gray-400'}`}>
+                  <div className={`w-2 h-2 rounded-full mr-1 ${validationPhase === 'uploading' ? 'bg-blue-600' : uploadProgress >= 100 ? 'bg-green-600' : 'bg-gray-400'}`}></div>
+                  Upload
+                </div>
+                <div className={`flex items-center ${validationPhase === 'validating' ? 'text-blue-600' : validationPhase === 'complete' ? 'text-green-600' : 'text-gray-400'}`}>
+                  <div className={`w-2 h-2 rounded-full mr-1 ${validationPhase === 'validating' ? 'bg-blue-600' : validationPhase === 'complete' ? 'bg-green-600' : 'bg-gray-400'}`}></div>
+                  Validate
+                </div>
+                <div className={`flex items-center ${validationPhase === 'complete' ? 'text-green-600' : 'text-gray-400'}`}>
+                  <div className={`w-2 h-2 rounded-full mr-1 ${validationPhase === 'complete' ? 'bg-green-600' : 'bg-gray-400'}`}></div>
+                  Complete
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setReuploadDialogOpen(false);
+              setSelectedFile(null);
+            }}
+            disabled={reuploadMutation.isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleReupload}
+            disabled={!selectedFile || reuploadMutation.isPending}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            {reuploadMutation.isPending ? (
+              <>
+                {validationPhase === 'uploading' && 'Uploading...'}
+                {validationPhase === 'validating' && 'Validating...'}
+                {validationPhase === 'complete' && 'Complete!'}
+              </>
+            ) : (
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                Re-upload File
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
