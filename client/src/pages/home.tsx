@@ -79,96 +79,93 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 pb-16">
-        <div className="max-w-6xl mx-auto">
-
+      <div className="container mx-auto px-4 pb-12">
+        <div className="max-w-5xl mx-auto">
           {/* Main Access Cards */}
-          <div className="grid lg:grid-cols-2 gap-8 mb-16">
+          <div className="grid lg:grid-cols-2 gap-6 mb-12">
             {/* Financial Institution Portal */}
-            <Card className="group hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
-              <CardHeader className="text-center pb-6 pt-8">
-                <div className="mx-auto mb-6 h-20 w-20 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-110 transition-transform duration-300">
-                  <Building2 className="h-10 w-10 text-white" />
+            <Card className="group hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm overflow-hidden">
+              <CardHeader className="text-center pb-4 pt-6">
+                <div className="mx-auto mb-4 h-16 w-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-105 transition-transform duration-300">
+                  <Building2 className="h-8 w-8 text-white" />
                 </div>
-                <CardTitle className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
+                <CardTitle className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
                   Institution Portal
                 </CardTitle>
-                <p className="text-gray-500 mt-2">For GIFT City financial institutions</p>
+                <p className="text-gray-500 text-sm">For GIFT City financial institutions</p>
               </CardHeader>
-              <CardContent className="px-8 pb-8">
-                <p className="text-gray-600 mb-8 text-center leading-relaxed">
-                  Submit regulatory reports, track compliance status, and access real-time validation results 
-                  for all IFSCA mandatory reporting requirements.
+              <CardContent className="px-6 pb-6">
+                <p className="text-gray-600 mb-6 text-center text-sm leading-relaxed">
+                  Submit regulatory reports, track compliance status, and access real-time validation results.
                 </p>
-                <div className="grid grid-cols-1 gap-4 mb-8">
-                  <div className="flex items-center p-3 bg-emerald-50 rounded-lg">
-                    <FileText className="h-5 w-5 text-emerald-600 mr-3 flex-shrink-0" />
-                    <span className="text-sm text-gray-700 font-medium">Quarterly & Annual Report Submission</span>
+                <div className="grid grid-cols-1 gap-2 mb-6">
+                  <div className="flex items-center p-2.5 bg-emerald-50 rounded-lg">
+                    <FileText className="h-4 w-4 text-emerald-600 mr-2.5 flex-shrink-0" />
+                    <span className="text-xs text-gray-700 font-medium">Report Submission</span>
                   </div>
-                  <div className="flex items-center p-3 bg-emerald-50 rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-emerald-600 mr-3 flex-shrink-0" />
-                    <span className="text-sm text-gray-700 font-medium">Real-time Compliance Validation</span>
+                  <div className="flex items-center p-2.5 bg-emerald-50 rounded-lg">
+                    <CheckCircle className="h-4 w-4 text-emerald-600 mr-2.5 flex-shrink-0" />
+                    <span className="text-xs text-gray-700 font-medium">Real-time Validation</span>
                   </div>
-                  <div className="flex items-center p-3 bg-emerald-50 rounded-lg">
-                    <TrendingUp className="h-5 w-5 text-emerald-600 mr-3 flex-shrink-0" />
-                    <span className="text-sm text-gray-700 font-medium">Submission History & Analytics</span>
+                  <div className="flex items-center p-2.5 bg-emerald-50 rounded-lg">
+                    <TrendingUp className="h-4 w-4 text-emerald-600 mr-2.5 flex-shrink-0" />
+                    <span className="text-xs text-gray-700 font-medium">Analytics Dashboard</span>
                   </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <Link href="/user-login">
-                    <Button className="w-full h-12 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold rounded-lg shadow-lg shadow-emerald-500/25 transition-all duration-200">
-                      Access Institution Portal
-                      <ArrowRight className="h-5 w-5 ml-2" />
+                    <Button className="w-full h-10 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-medium rounded-lg shadow-md shadow-emerald-500/25 transition-all duration-200 text-sm">
+                      Access Portal
+                      <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </Link>
                   <Link href="/user-dashboard">
-                    <Button variant="outline" className="w-full h-12 border-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-semibold rounded-lg transition-all duration-200">
-                      View Demo Dashboard
+                    <Button variant="outline" className="w-full h-10 border border-emerald-300 text-emerald-700 hover:bg-emerald-50 font-medium rounded-lg transition-all duration-200 text-sm">
+                      View Demo
                     </Button>
                   </Link>
                 </div>
               </CardContent>
             </Card>
 
-            {/* IFSCA Admin Console */}
-            <Card className="group hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 border-0 bg-white/80 backdrop-blur-sm">
-              <CardHeader className="text-center pb-6 pt-8">
-                <div className="mx-auto mb-6 h-20 w-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-110 transition-transform duration-300">
-                  <Shield className="h-10 w-10 text-white" />
+            {/* IFSCA User Console */}
+            <Card className="group hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 border-0 bg-white/90 backdrop-blur-sm overflow-hidden">
+              <CardHeader className="text-center pb-4 pt-6">
+                <div className="mx-auto mb-4 h-16 w-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:scale-105 transition-transform duration-300">
+                  <Shield className="h-8 w-8 text-white" />
                 </div>
-                <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+                <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
                   IFSCA User Console
                 </CardTitle>
-                <p className="text-gray-500 mt-2">For regulatory administrators</p>
+                <p className="text-gray-500 text-sm">For regulatory administrators</p>
               </CardHeader>
-              <CardContent className="px-8 pb-8">
-                <p className="text-gray-600 mb-8 text-center leading-relaxed">
-                  Manage regulatory templates, configure validation rules, monitor compliance submissions, 
-                  and oversee the entire GIFT City financial reporting ecosystem.
+              <CardContent className="px-6 pb-6">
+                <p className="text-gray-600 mb-6 text-center text-sm leading-relaxed">
+                  Manage templates, configure validation rules, and monitor compliance submissions.
                 </p>
-                <div className="grid grid-cols-1 gap-4 mb-8">
-                  <div className="flex items-center p-3 bg-blue-50 rounded-lg">
-                    <Settings className="h-5 w-5 text-blue-600 mr-3 flex-shrink-0" />
-                    <span className="text-sm text-gray-700 font-medium">Regulatory Template Configuration</span>
+                <div className="grid grid-cols-1 gap-2 mb-6">
+                  <div className="flex items-center p-2.5 bg-blue-50 rounded-lg">
+                    <Settings className="h-4 w-4 text-blue-600 mr-2.5 flex-shrink-0" />
+                    <span className="text-xs text-gray-700 font-medium">Template Configuration</span>
                   </div>
-                  <div className="flex items-center p-3 bg-blue-50 rounded-lg">
-                    <BarChart3 className="h-5 w-5 text-blue-600 mr-3 flex-shrink-0" />
-                    <span className="text-sm text-gray-700 font-medium">GIFT City Compliance Monitoring</span>
+                  <div className="flex items-center p-2.5 bg-blue-50 rounded-lg">
+                    <BarChart3 className="h-4 w-4 text-blue-600 mr-2.5 flex-shrink-0" />
+                    <span className="text-xs text-gray-700 font-medium">Compliance Monitoring</span>
                   </div>
-                  <div className="flex items-center p-3 bg-blue-50 rounded-lg">
-                    <Upload className="h-5 w-5 text-blue-600 mr-3 flex-shrink-0" />
-                    <span className="text-sm text-gray-700 font-medium">Institution Submission Oversight</span>
+                  <div className="flex items-center p-2.5 bg-blue-50 rounded-lg">
+                    <Upload className="h-4 w-4 text-blue-600 mr-2.5 flex-shrink-0" />
+                    <span className="text-xs text-gray-700 font-medium">Submission Oversight</span>
                   </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <Link href="/admin-login">
-                    <Button className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg shadow-blue-500/25 transition-all duration-200">
-                      IFSCA User Access
-                      <ArrowRight className="h-5 w-5 ml-2" />
+                    <Button className="w-full h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg shadow-md shadow-blue-500/25 transition-all duration-200 text-sm">
+                      IFSCA Access
+                      <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </Link>
                   <Link href="/template-management">
-                    <Button variant="outline" className="w-full h-12 border-2 border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold rounded-lg transition-all duration-200">
+                    <Button variant="outline" className="w-full h-10 border border-blue-300 text-blue-700 hover:bg-blue-50 font-medium rounded-lg transition-all duration-200 text-sm">
                       Manage Templates
                     </Button>
                   </Link>
@@ -177,73 +174,54 @@ export default function Home() {
             </Card>
           </div>
 
-          {/* IFSCA Regulatory Information */}
-          <div className="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-2xl p-8 border border-emerald-200/50 mb-12">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">GIFT City Regulatory Compliance</h3>
-              <p className="text-gray-600">Supporting IFSCA's vision for world-class financial services</p>
+          {/* Compact Info Grid */}
+          <div className="grid md:grid-cols-2 gap-6 mb-10">
+            {/* Regulatory Compliance */}
+            <div className="bg-gradient-to-br from-emerald-50 to-blue-50 rounded-xl p-6 border border-emerald-200/50">
+              <div className="flex items-center mb-4">
+                <Scale className="h-6 w-6 text-emerald-600 mr-3" />
+                <h3 className="text-lg font-bold text-gray-900">IFSCA Compliance</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="h-12 w-12 bg-emerald-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <Building2 className="h-6 w-6 text-emerald-600" />
+                  </div>
+                  <p className="text-xs font-medium text-gray-700">GIFT City</p>
+                </div>
+                <div className="text-center">
+                  <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <Globe className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <p className="text-xs font-medium text-gray-700">Global Standards</p>
+                </div>
+              </div>
             </div>
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="h-16 w-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Scale className="h-8 w-8 text-emerald-600" />
-                </div>
-                <h4 className="font-semibold text-gray-900 mb-2">IFSCA Authorized</h4>
-                <p className="text-sm text-gray-600">Fully compliant with International Financial Services Centres Authority regulations</p>
+
+            {/* Performance Metrics */}
+            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-200/50">
+              <div className="flex items-center mb-4">
+                <BarChart3 className="h-6 w-6 text-blue-600 mr-3" />
+                <h3 className="text-lg font-bold text-gray-900">Platform Stats</h3>
               </div>
-              <div className="text-center">
-                <div className="h-16 w-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Building2 className="h-8 w-8 text-blue-600" />
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-emerald-600">99.9%</div>
+                  <div className="text-xs text-gray-600">Uptime</div>
                 </div>
-                <h4 className="font-semibold text-gray-900 mb-2">GIFT City Integration</h4>
-                <p className="text-sm text-gray-600">Seamless integration with Gujarat International Finance Tec-City infrastructure</p>
-              </div>
-              <div className="text-center">
-                <div className="h-16 w-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Globe className="h-8 w-8 text-purple-600" />
+                <div>
+                  <div className="text-2xl font-bold text-blue-600">100%</div>
+                  <div className="text-xs text-gray-600">Accuracy</div>
                 </div>
-                <h4 className="font-semibold text-gray-900 mb-2">Global Standards</h4>
-                <p className="text-sm text-gray-600">Aligned with international financial reporting and regulatory standards</p>
               </div>
             </div>
           </div>
 
-          {/* Performance Metrics */}
-          <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-200/50">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Platform Performance</h3>
-              <p className="text-gray-600">Reliable infrastructure for critical regulatory reporting</p>
-            </div>
-            <div className="grid md:grid-cols-4 gap-8 text-center">
-              <div>
-                <div className="text-3xl font-bold text-emerald-600 mb-2">99.9%</div>
-                <div className="text-sm text-gray-600">System Uptime</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-blue-600 mb-2">100%</div>
-                <div className="text-sm text-gray-600">Validation Accuracy</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-purple-600 mb-2">24/7</div>
-                <div className="text-sm text-gray-600">Support Coverage</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-orange-600 mb-2">{"<"}2s</div>
-                <div className="text-sm text-gray-600">Report Processing</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer CTA */}
-          <div className="text-center mt-16">
-            <p className="text-gray-500 text-lg">
-              Ready to enhance your IFSCA regulatory reporting?
-            </p>
-            <p className="text-gray-400 text-sm mt-2">
-              Choose your portal above to access the comprehensive compliance platform
-            </p>
-            <div className="mt-6 text-xs text-gray-400">
-              Authorized by International Financial Services Centres Authority (IFSCA) | GIFT City, Gujarat, India
+          {/* Compact Footer */}
+          <div className="text-center">
+            <p className="text-gray-500 mb-2">Ready to enhance your IFSCA regulatory reporting?</p>
+            <div className="text-xs text-gray-400">
+              Authorized by IFSCA | GIFT City, Gujarat, India
             </div>
           </div>
         </div>
