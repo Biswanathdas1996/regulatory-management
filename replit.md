@@ -1,14 +1,24 @@
-# Financial Template Validation System
+# IFSCA Regulatory Reports Management Platform
 
 ## Overview
 
-This is a full-stack web application for financial template validation. The system provides two distinct workflows: 
-1. **Admin Workflow**: Upload Excel/CSV templates with corresponding validation rules (.txt files)
-2. **User Workflow**: Download templates, fill them out, and submit for validation
+This is a comprehensive digital solution for GIFT City financial institutions to submit, validate, and manage regulatory reports with 100% accuracy and real-time compliance monitoring. The platform is specifically designed for IFSCA (International Financial Services Centres Authority) regulatory requirements and provides two distinct workflows:
+1. **Institution Portal**: For GIFT City financial institutions to submit regulatory reports and track compliance
+2. **IFSCA Admin Console**: For regulatory administrators to manage templates and monitor submissions
 
-The application validates submissions against predefined rules with 100% accuracy, flagging violations or confirming success.
+The application validates submissions against predefined IFSCA-compliant rules with 100% accuracy, ensuring regulatory compliance and flagging violations in real-time.
 
 ## Recent Changes (January 13, 2025)
+
+### IFSCA Landing Page Transformation (January 13, 2025)
+- Transformed landing page to IFSCA Regulatory Reports Management Platform branding
+- Updated hero section with IFSCA-specific messaging and GIFT City references
+- Changed color scheme from blue to emerald/blue gradient for regulatory authority feel
+- Added IFSCA compliance indicators and regulatory information section
+- Updated portal names: "Institution Portal" for financial institutions, "IFSCA Admin Console" for regulators
+- Enhanced features grid with IFSCA-specific capabilities (regulatory templates, compliance monitoring, audit trail)
+- Added GIFT City regulatory compliance section with authorization indicators
+- Updated performance metrics and footer with IFSCA authorization disclaimer
 
 ### Migration to Replit Environment (January 13, 2025)
 - Successfully migrated project from Replit Agent to standard Replit environment
