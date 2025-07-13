@@ -158,11 +158,6 @@ export default function Home() {
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </Link>
-                  <Link href="/template-management">
-                    <Button variant="outline" className="w-full h-10 border border-blue-300 text-blue-700 hover:bg-blue-50 font-medium rounded-lg transition-all duration-200 text-sm">
-                      Manage Templates
-                    </Button>
-                  </Link>
                 </div>
               </CardContent>
             </Card>
