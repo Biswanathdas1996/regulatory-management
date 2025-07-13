@@ -166,9 +166,7 @@ export default function UserLoginPage() {
 
             {/* Demo Credentials */}
             <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-xs text-gray-500 text-center">
-                Demo: Use any valid email format
-              </p>
+              <p className="text-xs text-gray-500 text-center">Demo: Username:  "Biswanath"  Password: "123456"</p>
             </div>
           </CardContent>
         </Card>
