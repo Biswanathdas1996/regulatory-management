@@ -945,11 +945,24 @@ Only return the JSON array, no additional text.
     }
   });
 
-  // Admin endpoint to get all submissions
+  // Admin endpoint to get all successful submissions with user details
   app.get("/api/admin/submissions", async (req, res) => {
     try {
       const submissions = await storage.getSubmissions();
-      res.json(submissions);
+      
+      // Filter only successful submissions and add user information
+      const successfulSubmissions = [];
+      for (const submission of submissions) {
+        if (submission.status === "passed") {
+          const user = await storage.getUser(submission.userId);
+          successfulSubmissions.push({
+            ...submission,
+            userName: user?.username || `User ${submission.userId}`,
+          });
+        }
+      }
+      
+      res.json(successfulSubmissions);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch submissions" });
     }
