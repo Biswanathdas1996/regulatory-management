@@ -779,6 +779,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
+  // Download validation file for a template
+  app.get("/api/templates/:id/validation-file/download", async (req, res) => {
+    try {
+      const templateId = parseInt(req.params.id);
+      
+      // Check if template exists
+      const template = await storage.getTemplate(templateId);
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+
+      // Check if validation file exists
+      if (!template.validationRulesPath || !template.validationFileUploaded) {
+        return res.status(404).json({ error: "No validation file found for this template" });
+      }
+
+      // Check if file exists on disk
+      if (!fs.existsSync(template.validationRulesPath)) {
+        return res.status(404).json({ error: "Validation file not found on disk" });
+      }
+
+      // Extract filename from path
+      const filename = path.basename(template.validationRulesPath);
+      
+      // Set appropriate headers
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Type', 'application/octet-stream');
+      
+      // Stream the file to response
+      const fileStream = fs.createReadStream(template.validationRulesPath);
+      fileStream.pipe(res);
+      
+    } catch (error) {
+      console.error("Validation file download error:", error);
+      res.status(500).json({ error: "Failed to download validation file" });
+    }
+  });
+
   // Get processing status
   app.get("/api/templates/:id/status", async (req, res) => {
     try {

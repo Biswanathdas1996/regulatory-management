@@ -5,16 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, Upload, CheckCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { FileText, Upload, CheckCircle, Download, FileCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
 interface ValidationRulesManagerProps {
   templateId: number;
+  template?: any;
   sheets?: any[];
 }
 
-export function ValidationRulesManager({ templateId }: ValidationRulesManagerProps) {
+export function ValidationRulesManager({ templateId, template }: ValidationRulesManagerProps) {
   const { toast } = useToast();
   const [showValidationUploadDialog, setShowValidationUploadDialog] = useState(false);
   const [validationFile, setValidationFile] = useState<File | null>(null);
@@ -49,6 +51,35 @@ export function ValidationRulesManager({ templateId }: ValidationRulesManagerPro
     },
   });
 
+  // Download validation file function
+  const downloadValidationFile = async () => {
+    try {
+      const response = await fetch(`/api/templates/${templateId}/validation-file/download`);
+      if (!response.ok) {
+        throw new Error('Failed to download validation file');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      
+      // Extract filename from validation rules path
+      const filename = template?.validationRulesPath?.split('/').pop() || 'validation-rules.txt';
+      a.download = filename;
+      
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({ title: "Success", description: "Validation file downloaded successfully" });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to download validation file", variant: "destructive" });
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -68,13 +99,58 @@ export function ValidationRulesManager({ templateId }: ValidationRulesManagerPro
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-center py-8">
-          <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
-          <p className="text-lg font-medium text-gray-900">Validation Rules Management</p>
-          <p className="text-sm text-gray-500 mt-1">
-            Upload validation files to configure rules for this template
-          </p>
-        </div>
+        {template?.validationFileUploaded && template?.validationRulesPath ? (
+          <div className="space-y-4">
+            {/* Uploaded File Display */}
+            <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <FileCheck className="h-8 w-8 text-green-600" />
+                <div>
+                  <h3 className="font-medium text-green-900">Validation File Uploaded</h3>
+                  <p className="text-sm text-green-700">
+                    {template.validationRulesPath.split('/').pop()}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="text-green-700 border-green-300">
+                  Active Rules
+                </Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={downloadValidationFile}
+                  className="text-green-700 border-green-300 hover:bg-green-50"
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Download
+                </Button>
+              </div>
+            </div>
+            
+            {/* Upload New File Section */}
+            <div className="text-center py-6 border-t border-gray-200">
+              <p className="text-sm text-gray-600 mb-3">
+                Want to update the validation rules?
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => setShowValidationUploadDialog(true)}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Upload New Validation File
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
+            <p className="text-lg font-medium text-gray-900">Validation Rules Management</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Upload validation files to configure rules for this template
+            </p>
+          </div>
+        )}
       </CardContent>
 
       {/* Validation File Upload Dialog */}
