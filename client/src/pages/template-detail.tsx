@@ -4,7 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, FileText, Database, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  FileText,
+  Database,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+} from "lucide-react";
 import { ProcessingStatus } from "@/components/ProcessingStatus";
 import { SchemaDisplay } from "@/components/SchemaDisplay";
 import { ExcelViewer } from "@/components/ExcelViewer";
@@ -17,17 +25,17 @@ export default function TemplateDetail() {
   const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
 
   const { data: template, isLoading: templateLoading } = useQuery({
-    queryKey: ['/api/templates', templateId],
+    queryKey: ["/api/templates", templateId],
     enabled: !!templateId,
   });
 
   const { data: sheets } = useQuery({
-    queryKey: ['/api/templates', templateId, 'sheets'],
+    queryKey: ["/api/templates", templateId, "sheets"],
     enabled: !!templateId,
   });
 
   const { data: schemas } = useQuery({
-    queryKey: ['/api/templates', templateId, 'schemas'],
+    queryKey: ["/api/templates", templateId, "schemas"],
     enabled: !!templateId,
   });
 
@@ -48,8 +56,12 @@ export default function TemplateDetail() {
       <div className="container mx-auto p-6">
         <div className="text-center py-12">
           <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Template Not Found</h2>
-          <p className="text-gray-600 mb-4">The template you're looking for doesn't exist or has been removed.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Template Not Found
+          </h2>
+          <p className="text-gray-600 mb-4">
+            The template you're looking for doesn't exist or has been removed.
+          </p>
           <Button onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Templates
@@ -91,30 +103,34 @@ export default function TemplateDetail() {
       <div className="mb-8">
         <Button
           variant="ghost"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/template-management")}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Templates
         </Button>
-        
+
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-blue-100 rounded-lg">
               <FileText className="h-8 w-8 text-blue-600" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{template.name}</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {template.name}
+              </h1>
               <p className="text-gray-600 mt-1">
-                {template.templateType} • Uploaded {new Date(template.createdAt).toLocaleDateString()}
+                {template.templateType} • Uploaded{" "}
+                {new Date(template.createdAt).toLocaleDateString()}
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             {getStatusIcon(template.status)}
             <Badge className={getStatusColor(template.status)}>
-              {template.status.charAt(0).toUpperCase() + template.status.slice(1)}
+              {template.status.charAt(0).toUpperCase() +
+                template.status.slice(1)}
             </Badge>
           </div>
         </div>
@@ -140,19 +156,27 @@ export default function TemplateDetail() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">File Size</p>
-              <p className="text-lg text-gray-900">{template.fileSize ? `${(template.fileSize / 1024).toFixed(1)} KB` : 'N/A'}</p>
+              <p className="text-lg text-gray-900">
+                {template.fileSize
+                  ? `${(template.fileSize / 1024).toFixed(1)} KB`
+                  : "N/A"}
+              </p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Sheets</p>
               <p className="text-lg text-gray-900">{sheets?.length || 0}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Schemas Generated</p>
+              <p className="text-sm font-medium text-gray-500">
+                Schemas Generated
+              </p>
               <p className="text-lg text-gray-900">{schemas?.length || 0}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Last Updated</p>
-              <p className="text-lg text-gray-900">{new Date(template.updatedAt).toLocaleDateString()}</p>
+              <p className="text-lg text-gray-900">
+                {new Date(template.updatedAt).toLocaleDateString()}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -163,46 +187,52 @@ export default function TemplateDetail() {
         <ProcessingStatus templateId={templateId} />
       </div>
 
-      {/* Generated Schemas Section */}
-      {template.status === "completed" && schemas && schemas.length > 0 && (
-        <div className="mb-8 space-y-8">
-          <SchemaDisplay 
-            templateId={templateId} 
-            selectedSheetId={selectedSheetId}
-            onSheetChange={setSelectedSheetId}
-          />
-          
-          {/* Excel Viewer Section */}
-          <ExcelViewer 
-            templateId={templateId} 
+      {/* Excel Viewer Section - Always show if we have sheets data */}
+      {sheets && sheets.length > 0 && (
+        <div className="mb-8">
+          <ExcelViewer
+            templateId={templateId}
             selectedSheetId={selectedSheetId}
             sheets={sheets}
           />
         </div>
       )}
 
+      {/* Generated Schemas Section - Show if available */}
+      {schemas && schemas.length > 0 && (
+        <div className="mb-8">
+          <SchemaDisplay
+            templateId={templateId}
+            selectedSheetId={selectedSheetId}
+            onSheetChange={setSelectedSheetId}
+          />
+        </div>
+      )}
+
       {/* Validation Rules Section */}
       <div className="mb-8">
-        <ValidationRulesManager 
-          templateId={templateId}
-          sheets={sheets}
-        />
+        <ValidationRulesManager templateId={templateId} sheets={sheets} />
       </div>
 
       {/* No Schemas Message */}
-      {template.status === "completed" && (!schemas || schemas.length === 0) && (
-        <Card>
-          <CardContent className="py-12">
-            <div className="text-center">
-              <Database className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Schemas Generated</h3>
-              <p className="text-gray-600">
-                This template has been processed but no schemas were generated. This might indicate an issue with the file format or content.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {template.status === "completed" &&
+        (!schemas || schemas.length === 0) && (
+          <Card>
+            <CardContent className="py-12">
+              <div className="text-center">
+                <Database className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No Schemas Generated
+                </h3>
+                <p className="text-gray-600">
+                  This template has been processed but no schemas were
+                  generated. This might indicate an issue with the file format
+                  or content.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
     </div>
   );
 }
