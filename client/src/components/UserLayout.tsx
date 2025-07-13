@@ -45,8 +45,8 @@ export default function UserLayout({
     {
       name: "Submission History",
       icon: History,
-      href: "/user-submission",
-      current: location === "/user-submission"
+      href: "/submission-history",
+      current: location === "/submission-history"
     },
     {
       name: "Templates",

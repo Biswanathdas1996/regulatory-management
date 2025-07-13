@@ -74,6 +74,14 @@ The application validates submissions against predefined rules with 100% accurac
 - Added smooth animations and hover effects for better user experience
 - Maintained existing functionality while improving overall navigation experience
 
+### Dedicated Submission History Page (January 13, 2025)
+- Created new dedicated submission history page at `/submission-history`
+- Applied consistent UserLayout with sidebar navigation
+- Integrated existing SubmissionHistory component with proper title and subtitle
+- Updated routing system to include the new page
+- Enhanced navigation by separating submission history from user submission form
+- Improved user experience with focused, dedicated page for submission management
+
 ### Enhanced Validation Rules Management
 - Added a visual Validation Rules Manager component on template detail pages
 - Implemented CRUD operations for validation rules with pagination
