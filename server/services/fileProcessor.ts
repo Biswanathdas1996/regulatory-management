@@ -337,11 +337,36 @@ export class FileProcessor {
           const sheetData = sheet.extractedData?.data || sheet.extractedData || [];
           const tabularTemplates = sheet.extractedData?.tabularTemplates || [];
           
+          console.log(`Processing sheet ${sheet.sheetName} with ${sheet.dataPointCount} data points and ${tabularTemplates.length} tabular templates`);
+          console.log(`Sheet data sample:`, JSON.stringify(sheetData.slice(0, 3), null, 2));
+
+          // Check if there's enough data for AI processing
+          if (sheetData.length === 0) {
+            console.log(`Skipping AI processing for ${sheet.sheetName} - no data available`);
+            // Create a basic schema for empty sheets
+            const basicSchema = {
+              sheetName: sheet.sheetName,
+              required_fields: [],
+              calculated_fields: [],
+              ai_confidence: 0,
+              extraction_notes: "No data available in this sheet for schema extraction"
+            };
+            schemas.push(basicSchema);
+
+            // Store basic schema
+            await storage.createTemplateSchema({
+              templateId,
+              sheetId: sheet.id,
+              schemaData: basicSchema,
+              aiConfidence: 0,
+              extractionNotes: "No data available for schema extraction"
+            });
+            continue;
+          }
+
           // Process data in chunks for AI
           const chunks = this.chunkDataForAI(sheetData);
           const consolidatedData = this.consolidateChunks(chunks);
-
-          console.log(`Processing sheet ${sheet.sheetName} with ${sheet.dataPointCount} data points and ${tabularTemplates.length} tabular templates`);
 
           // Include tabular templates in the AI processing
           const schemaInput = {
@@ -349,7 +374,9 @@ export class FileProcessor {
             tabularTemplates: tabularTemplates
           };
 
+          console.log(`Calling AI for sheet ${sheet.sheetName} with input:`, JSON.stringify(schemaInput, null, 2));
           const schema = await extractSchemaWithAI(schemaInput, sheet.sheetName, template.templateType);
+          console.log(`AI returned schema for ${sheet.sheetName}:`, JSON.stringify(schema, null, 2));
           schemas.push(schema);
 
           // Store individual sheet schema
