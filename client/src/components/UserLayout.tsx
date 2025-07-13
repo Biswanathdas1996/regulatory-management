@@ -48,12 +48,6 @@ export default function UserLayout({
       href: "/submission-history",
       current: location === "/submission-history",
     },
-    {
-      name: "Templates",
-      icon: FileText,
-      href: "/template-management",
-      current: location === "/template-management",
-    },
   ];
 
   return (

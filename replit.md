@@ -10,6 +10,17 @@ The application validates submissions against predefined IFSCA-compliant rules w
 
 ## Recent Changes (January 13, 2025)
 
+### Home Page Modernization and Template Access Removal (January 13, 2025)
+- Redesigned main content section to be 60% more compact with modern styling
+- Applied refined gradients, better spacing, and cleaner typography throughout
+- Consolidated regulatory info and performance metrics into efficient 2-column grid
+- Enhanced visual elements with smaller icons, buttons, and optimized card layouts
+- Removed "View Demo" button from Institution Portal card on home page
+- Removed "Manage Templates" button from IFSCA User Console card on home page
+- Removed "Templates" menu item from Reporting Entity User dashboard sidebar
+- Streamlined navigation to focus on core submission workflows for reporting entities
+- Maintained all essential functionality while improving overall aesthetics and user flow
+
 ### Comprehensive Terminology Update (January 13, 2025)
 - Updated all application text references throughout the entire codebase
 - "Admin" → "IFSCA User" across all components, pages, and interfaces
