@@ -32,6 +32,7 @@ export const templates = pgTable("templates", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   templateType: text("template_type").notNull(),
+  jsonSchema: text("json_schema"),
   fileName: text("file_name").notNull(),
   filePath: text("file_path").notNull(),
   fileSize: integer("file_size").notNull(),

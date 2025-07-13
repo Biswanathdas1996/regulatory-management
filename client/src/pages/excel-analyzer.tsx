@@ -94,7 +94,7 @@ export default function ExcelAnalyzerPage() {
       return response.json();
     },
     onSuccess: (data) => {
-      setAnalysisData(data);
+      setAnalysisData(cleanseAnalysisData(data));
     },
   });
 
@@ -167,6 +167,20 @@ export default function ExcelAnalyzerPage() {
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const cleanseAnalysisData = (data: ExcelAnalysisData): ExcelAnalysisData => {
+    return {
+      ...data,
+      sheets: data.sheets.map((sheet) => ({
+        ...sheet,
+        cells: sheet.cells.map((cell) => {
+          // Remove the style property from each cell
+          const { style, ...cellWithoutStyle } = cell;
+          return cellWithoutStyle;
+        }),
+      })),
+    };
   };
 
   return (
