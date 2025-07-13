@@ -64,7 +64,7 @@ export default function UserLoginPage() {
               <User className="h-8 w-8 text-white" />
             </div>
             <CardTitle className="text-2xl font-bold text-gray-900">
-              User Login
+              Reporting Entity User Login
             </CardTitle>
             <p className="text-gray-600">Access your submission dashboard</p>
           </CardHeader>

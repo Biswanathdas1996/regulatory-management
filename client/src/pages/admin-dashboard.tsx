@@ -100,7 +100,7 @@ export default function AdminDashboardPage() {
 
   return (
     <AdminLayout
-      title="Admin Dashboard"
+      title="IFSCA User Dashboard"
       subtitle="System overview and performance metrics"
     >
       {/* System Metrics */}
@@ -181,7 +181,7 @@ export default function AdminDashboardPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-medium text-gray-600">
-                Active Users
+                Active Reporting Entities
               </CardTitle>
               <div className="h-10 w-10 rounded-lg bg-indigo-50 flex items-center justify-center">
                 <Users className="h-5 w-5 text-indigo-600" />

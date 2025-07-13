@@ -133,7 +133,7 @@ export default function UserDashboardPage() {
 
   return (
     <UserLayout
-      title="Dashboard"
+      title="Reporting Entity Dashboard"
       subtitle="Track your template submissions and validation results"
       headerActions={
         <Link to="/user-submission">

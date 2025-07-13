@@ -10,6 +10,17 @@ The application validates submissions against predefined IFSCA-compliant rules w
 
 ## Recent Changes (January 13, 2025)
 
+### Comprehensive Terminology Update (January 13, 2025)
+- Updated all application text references throughout the entire codebase
+- "Admin" → "IFSCA User" across all components, pages, and interfaces
+- "User" → "Reporting Entity User" for consistency with regulatory context
+- Updated sidebar navigation in AdminLayout: "User Management" → "Reporting Entity Management"  
+- Modified login pages, dashboard titles, and role badges with new terminology
+- Updated Header component dropdown menus and user account references
+- Enhanced admin login placeholder text to "Enter IFSCA username"
+- Applied changes to user management role labels and system-wide UI text
+- Maintained GIFT City regulatory context throughout all user-facing elements
+
 ### Admin Rejection Modal with Reason Input (January 13, 2025)
 - Added comprehensive admin rejection modal on validation results page
 - Modal appears when admin clicks "Reject" or "Return to User" buttons

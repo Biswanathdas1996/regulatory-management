@@ -72,7 +72,7 @@ export default function UserLayout({
                 <User className="text-white text-lg" />
               </div>
               <div>
-                <h2 className="font-bold text-gray-900 text-lg">User Portal</h2>
+                <h2 className="font-bold text-gray-900 text-lg">Reporting Entity Portal</h2>
                 <p className="text-xs text-gray-500">
                   Financial Validation System
                 </p>
@@ -124,7 +124,7 @@ export default function UserLayout({
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-900">
-                  User Account
+                  Reporting Entity Account
                 </p>
                 <p className="text-xs text-gray-500">ID: #00001</p>
               </div>

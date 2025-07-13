@@ -57,7 +57,7 @@ export default function AdminLayout({
       current: location === "/admin-templates",
     },
     {
-      name: "User Management",
+      name: "Reporting Entity Management",
       href: "/user-management",
       icon: Users,
       current: location === "/user-management",
@@ -107,7 +107,7 @@ export default function AdminLayout({
                 <Shield className="text-white text-sm" />
               </div>
               <div>
-                <h2 className="font-bold text-gray-900">Admin Portal</h2>
+                <h2 className="font-bold text-gray-900">IFSCA User Portal</h2>
                 <p className="text-xs text-gray-500">System Management</p>
               </div>
             </div>

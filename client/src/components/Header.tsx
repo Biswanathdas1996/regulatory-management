@@ -48,13 +48,13 @@ export const Header: React.FC = () => {
             <Link to="/admin-login">
               <Button variant="outline" size="sm">
                 <Shield className="h-4 w-4 mr-2" />
-                Admin
+                IFSCA User
               </Button>
             </Link>
             <Link to="/user-login">
               <Button size="sm">
                 <User className="h-4 w-4 mr-2" />
-                User Login
+                Reporting Entity Login
               </Button>
             </Link>
           </div>
@@ -128,7 +128,7 @@ export const Header: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600 hidden sm:block">
-            {user.role === "admin" ? "Administrator" : "User"}
+            {user.role === "admin" ? "IFSCA User" : "Reporting Entity User"}
           </span>
 
           <DropdownMenu>
@@ -148,7 +148,7 @@ export const Header: React.FC = () => {
                     {user.username}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user.role === "admin" ? "Administrator" : "User Account"}
+                    {user.role === "admin" ? "IFSCA User" : "Reporting Entity Account"}
                   </p>
                 </div>
               </DropdownMenuLabel>

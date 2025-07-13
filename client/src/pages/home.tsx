@@ -137,7 +137,7 @@ export default function Home() {
                   <Shield className="h-10 w-10 text-white" />
                 </div>
                 <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                  IFSCA Admin Console
+                  IFSCA User Console
                 </CardTitle>
                 <p className="text-gray-500 mt-2">For regulatory administrators</p>
               </CardHeader>
@@ -163,7 +163,7 @@ export default function Home() {
                 <div className="space-y-3">
                   <Link href="/admin-login">
                     <Button className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg shadow-blue-500/25 transition-all duration-200">
-                      IFSCA Admin Access
+                      IFSCA User Access
                       <ArrowRight className="h-5 w-5 ml-2" />
                     </Button>
                   </Link>

@@ -64,7 +64,7 @@ export default function AdminLoginPage() {
               <Shield className="h-8 w-8 text-white" />
             </div>
             <CardTitle className="text-2xl font-bold text-gray-900">
-              Admin Login
+              IFSCA User Login
             </CardTitle>
             <p className="text-gray-600">Access the administrative dashboard</p>
           </CardHeader>
@@ -83,7 +83,7 @@ export default function AdminLoginPage() {
                       <FormLabel>Username</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Enter admin username"
+                          placeholder="Enter IFSCA username"
                           {...field}
                           className="h-11"
                         />

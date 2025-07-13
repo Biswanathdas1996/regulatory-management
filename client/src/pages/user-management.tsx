@@ -219,13 +219,13 @@ export default function UserManagementPage() {
 
   const getRoleBadge = (role: number) => {
     if (role === 1) {
-      return <Badge className="bg-red-100 text-red-800">Admin</Badge>;
+      return <Badge className="bg-red-100 text-red-800">IFSCA User</Badge>;
     }
-    return <Badge variant="outline">User</Badge>;
+    return <Badge variant="outline">Reporting Entity User</Badge>;
   };
 
   const getRoleLabel = (role: number) => {
-    return role === 1 ? "Admin" : "User";
+    return role === 1 ? "IFSCA User" : "Reporting Entity User";
   };
 
   if (isLoading) {
@@ -244,7 +244,7 @@ export default function UserManagementPage() {
 
   return (
     <AdminLayout
-      title="User Management"
+      title="Reporting Entity Management"
       subtitle="Manage system users and roles"
     >
       <div className="space-y-6">
