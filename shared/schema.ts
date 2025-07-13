@@ -24,6 +24,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  role: integer("role").default(0),
 });
 
 export const templates = pgTable("templates", {
@@ -237,8 +238,11 @@ export type InsertValidationResult = z.infer<
 >;
 export type ValidationResult = typeof validationResults.$inferSelect;
 export type TemplateType = (typeof templateTypes)[number];
+export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type Comment = typeof comments.$inferSelect;
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  role: true,
 });

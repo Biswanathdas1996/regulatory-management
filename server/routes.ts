@@ -94,6 +94,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   }
 
+  // Admin middleware to check if user is admin
+  function requireAdmin(req: AuthenticatedRequest, res: any, next: any) {
+    if (!req.user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    next();
+  }
+
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {
@@ -104,7 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      const role = username.startsWith("admin") ? "admin" : "user";
+      const role = user.role === 1 ? "admin" : "user";
       (req.session as any).user = {
         id: user.id,
         username: user.username,
@@ -140,6 +151,198 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     res.json(req.user);
   });
+
+  // User management endpoints (Admin only)
+  // Get all users (Admin only)
+  app.get(
+    "/api/admin/users",
+    requireAuth,
+    requireAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const users = await storage.getAllUsers();
+        // Don't return passwords
+        const safeUsers = users.map((user) => ({
+          id: user.id,
+          username: user.username,
+          role: user.role || 0, // Keep as number: 0 for user, 1 for admin
+        }));
+        res.json(safeUsers);
+      } catch (error) {
+        console.error("Get users error:", error);
+        res.status(500).json({ error: "Failed to fetch users" });
+      }
+    }
+  );
+
+  // Create new user (Admin only)
+  app.post(
+    "/api/admin/users",
+    requireAuth,
+    requireAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const { username, password, role } = req.body;
+
+        // Validate required fields
+        if (!username || !password) {
+          return res
+            .status(400)
+            .json({ error: "Username and password are required" });
+        }
+
+        // Validate username format
+        if (username.length < 3 || username.length > 50) {
+          return res.status(400).json({
+            error: "Username must be between 3 and 50 characters",
+          });
+        }
+
+        // Validate password strength
+        if (password.length < 6) {
+          return res
+            .status(400)
+            .json({ error: "Password must be at least 6 characters long" });
+        }
+
+        // Validate role - frontend sends 0 or 1
+        const userRole = role === 1 ? 1 : 0;
+
+        // Check if username already exists
+        const existingUser = await storage.getUserByUsername(username);
+        if (existingUser) {
+          return res.status(409).json({ error: "Username already exists" });
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create user
+        const newUser = await storage.createUser({
+          username,
+          password: hashedPassword,
+          role: userRole,
+        });
+
+        // Return user without password
+        res.status(201).json({
+          id: newUser.id,
+          username: newUser.username,
+          role: newUser.role || 0, // Keep as number: 0 for user, 1 for admin
+          message: "User created successfully",
+        });
+      } catch (error) {
+        console.error("Create user error:", error);
+        res.status(500).json({ error: "Failed to create user" });
+      }
+    }
+  );
+
+  // Update user (Admin only)
+  app.put(
+    "/api/admin/users/:id",
+    requireAuth,
+    requireAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const userId = parseInt(req.params.id);
+        const { username, password, role } = req.body;
+
+        // Check if user exists
+        const existingUser = await storage.getUser(userId);
+        if (!existingUser) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        // Prepare update data
+        const updateData: Partial<any> = {};
+
+        if (username !== undefined) {
+          if (username.length < 3 || username.length > 50) {
+            return res.status(400).json({
+              error: "Username must be between 3 and 50 characters",
+            });
+          }
+
+          // Check if new username is already taken by another user
+          const userWithUsername = await storage.getUserByUsername(username);
+          if (userWithUsername && userWithUsername.id !== userId) {
+            return res.status(409).json({ error: "Username already exists" });
+          }
+
+          updateData.username = username;
+        }
+
+        if (password !== undefined) {
+          if (password.length < 6) {
+            return res
+              .status(400)
+              .json({ error: "Password must be at least 6 characters long" });
+          }
+          updateData.password = await bcrypt.hash(password, 10);
+        }
+
+        if (role !== undefined) {
+          updateData.role = role === 1 ? 1 : 0; // Frontend sends 0 or 1
+        }
+
+        // Update user
+        const updatedUser = await storage.updateUser(userId, updateData);
+
+        // Return user without password
+        res.json({
+          id: updatedUser.id,
+          username: updatedUser.username,
+          role: updatedUser.role || 0, // Keep as number: 0 for user, 1 for admin
+          message: "User updated successfully",
+        });
+      } catch (error) {
+        console.error("Update user error:", error);
+        res.status(500).json({ error: "Failed to update user" });
+      }
+    }
+  );
+
+  // Delete user (Admin only)
+  app.delete(
+    "/api/admin/users/:id",
+    requireAuth,
+    requireAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const userId = parseInt(req.params.id);
+
+        // Check if user exists
+        const existingUser = await storage.getUser(userId);
+        if (!existingUser) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        // Prevent admin from deleting themselves
+        if (req.user!.id === userId) {
+          return res
+            .status(400)
+            .json({ error: "Cannot delete your own account" });
+        }
+
+        // Check if user has submissions - we might want to prevent deletion or handle cleanup
+        const userSubmissions = await storage.getSubmissions(userId);
+        if (userSubmissions.length > 0) {
+          return res.status(400).json({
+            error: `Cannot delete user with ${userSubmissions.length} submissions. Please transfer or delete submissions first.`,
+          });
+        }
+
+        // Delete user
+        await storage.deleteUser(userId);
+
+        res.json({ message: "User deleted successfully" });
+      } catch (error) {
+        console.error("Delete user error:", error);
+        res.status(500).json({ error: "Failed to delete user" });
+      }
+    }
+  );
 
   // Get all templates
   app.get("/api/templates", async (req, res) => {
