@@ -211,7 +211,7 @@ export default function TemplateDetail() {
 
       {/* Validation Rules Section */}
       <div className="mb-8">
-        <ValidationRulesManager templateId={templateId} sheets={sheets} />
+        <ValidationRulesManager templateId={templateId} template={template} sheets={sheets} />
       </div>
 
       {/* No Schemas Message */}
