@@ -81,12 +81,19 @@ export default function Home() {
                     Analyze Validation Results
                   </div>
                 </div>
-                <Link href="/user-dashboard">
-                  <Button className="w-full">
-                    Go to User Dashboard
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </Link>
+                <div className="space-y-2">
+                  <Link href="/user-login">
+                    <Button className="w-full">
+                      Login to Dashboard
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </Link>
+                  <Link href="/user-dashboard">
+                    <Button variant="outline" className="w-full">
+                      Quick Access (Demo)
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -117,12 +124,19 @@ export default function Home() {
                   Template Library
                 </div>
               </div>
-              <Link href="/admin-dashboard">
-                <Button variant="destructive" className="w-full">
-                  Go to Admin Dashboard
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
+              <div className="space-y-2">
+                <Link href="/admin-login">
+                  <Button variant="destructive" className="w-full">
+                    Admin Login
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+                <Link href="/admin-dashboard">
+                  <Button variant="outline" className="w-full">
+                    Quick Access (Demo)
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
 

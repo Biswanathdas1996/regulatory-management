@@ -14,6 +14,8 @@ import SubmissionHistoryPage from "@/pages/submission-history";
 import AdminDashboardPage from "@/pages/admin-dashboard";
 import AdminSubmissionsPage from "@/pages/admin-submissions";
 import AdminTemplatesPage from "@/pages/admin-templates";
+import AdminLoginPage from "@/pages/admin-login";
+import UserLoginPage from "@/pages/user-login";
 
 function Router() {
   return (
@@ -28,6 +30,8 @@ function Router() {
       <Route path="/admin-dashboard" component={AdminDashboardPage} />
       <Route path="/admin-submissions" component={AdminSubmissionsPage} />
       <Route path="/admin-templates" component={AdminTemplatesPage} />
+      <Route path="/admin-login" component={AdminLoginPage} />
+      <Route path="/user-login" component={UserLoginPage} />
       <Route component={NotFound} />
     </Switch>
   );
