@@ -344,6 +344,171 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
+  // Excel Analysis endpoint for admin
+  app.post(
+    "/api/admin/excel-analysis",
+    requireAuth,
+    requireAdmin,
+    upload.single("excel"),
+    async (req: MulterRequest, res) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ error: "No Excel file uploaded" });
+        }
+
+        const file = req.file;
+        const filePath = file.path;
+
+        // Validate file type
+        const allowedExtensions = [".xlsx", ".xls"];
+        const fileExtension = path.extname(file.originalname).toLowerCase();
+
+        if (!allowedExtensions.includes(fileExtension)) {
+          // Clean up uploaded file
+          try {
+            fs.unlinkSync(filePath);
+          } catch (cleanupError) {
+            console.error("Failed to cleanup invalid file:", cleanupError);
+          }
+          return res.status(400).json({
+            error: "Please upload an Excel file (.xlsx or .xls)",
+          });
+        }
+
+        console.log(`Analyzing Excel file: ${file.originalname}`);
+
+        // Read the Excel file
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.readFile(filePath);
+
+        const analysisData = {
+          filename: file.originalname,
+          sheets: [] as any[],
+          totalSheets: workbook.worksheets.length,
+          analysisTimestamp: new Date().toISOString(),
+        };
+
+        // Process each worksheet
+        workbook.worksheets.forEach((worksheet, sheetIndex) => {
+          const sheetData = {
+            name: worksheet.name,
+            index: sheetIndex,
+            rowCount: worksheet.rowCount,
+            columnCount: worksheet.columnCount,
+            cells: [] as any[],
+            mergedCells: [] as any[],
+          };
+
+          // Get merged cells information (simplified for now)
+          // Note: ExcelJS merged cells API varies by version, skipping for basic functionality
+          // This can be enhanced later if needed
+
+          // Process each cell with data
+          worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+            row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+              const cellData: any = {
+                value: cell.value,
+                position: {
+                  row: rowNumber,
+                  column: colNumber,
+                  columnLetter: String.fromCharCode(64 + colNumber), // Convert to A, B, C, etc.
+                },
+                dataType: typeof cell.value,
+                mergeInfo: {
+                  isMerged: cell.isMerged || false,
+                },
+              };
+
+              // Adjust column letter for numbers > 26
+              if (colNumber > 26) {
+                const firstLetter = Math.floor((colNumber - 1) / 26);
+                const secondLetter = ((colNumber - 1) % 26) + 1;
+                cellData.position.columnLetter =
+                  String.fromCharCode(64 + firstLetter) +
+                  String.fromCharCode(64 + secondLetter);
+              }
+
+              // Determine more specific data types
+              if (cell.value instanceof Date) {
+                cellData.dataType = "date";
+              } else if (
+                typeof cell.value === "object" &&
+                cell.value !== null
+              ) {
+                if ((cell.value as any).formula) {
+                  cellData.dataType = "formula";
+                  cellData.formula = (cell.value as any).formula;
+                } else if ((cell.value as any).hyperlink) {
+                  cellData.dataType = "hyperlink";
+                  cellData.hyperlink = (cell.value as any).hyperlink;
+                } else if ((cell.value as any).text) {
+                  cellData.dataType = "rich_text";
+                  cellData.value = (cell.value as any).text;
+                }
+              }
+
+              // Check if this cell is part of a merged range (simplified)
+              // For now, we'll just mark if the cell appears to be merged based on ExcelJS
+              if (cell.isMerged) {
+                cellData.mergeInfo.isMerged = true;
+                // Note: Parent detection can be enhanced later
+              }
+
+              // Add style information if available
+              if (cell.style) {
+                cellData.style = {
+                  font: cell.font,
+                  fill: cell.fill,
+                  border: cell.border,
+                  alignment: cell.alignment,
+                };
+              }
+
+              sheetData.cells.push(cellData);
+            });
+          });
+
+          analysisData.sheets.push(sheetData);
+        });
+
+        // Clean up uploaded file
+        try {
+          fs.unlinkSync(filePath);
+        } catch (cleanupError) {
+          console.error("Failed to cleanup file:", cleanupError);
+        }
+
+        console.log(`Excel analysis completed for ${file.originalname}`);
+        console.log(
+          `Total sheets: ${
+            analysisData.totalSheets
+          }, Total cells: ${analysisData.sheets.reduce(
+            (acc, sheet) => acc + sheet.cells.length,
+            0
+          )}`
+        );
+
+        res.json(analysisData);
+      } catch (error) {
+        console.error("Excel analysis error:", error);
+
+        // Clean up uploaded file on error
+        if (req.file?.path) {
+          try {
+            fs.unlinkSync(req.file.path);
+          } catch (cleanupError) {
+            console.error("Failed to cleanup file on error:", cleanupError);
+          }
+        }
+
+        res.status(500).json({
+          error: "Failed to analyze Excel file",
+          details: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    }
+  );
+
   // Get all templates
   app.get("/api/templates", async (req, res) => {
     try {
@@ -1597,58 +1762,165 @@ Only return the JSON array, no additional text.
   app.get("/api/templates/:id/excel-data", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      console.log(`Fetching Excel data for template ID: ${id}`);
+
       const template = await storage.getTemplate(id);
 
       if (!template) {
+        console.log(`Template ${id} not found`);
         return res.status(404).json({ error: "Template not found" });
       }
 
+      console.log(
+        `Template found: ${template.name}, file path: ${template.filePath}`
+      );
+
       // Get the sheets for this template
       const sheets = await storage.getTemplateSheets(id);
+      console.log(`Found ${sheets.length} sheets for template ${id}`);
 
       if (sheets.length === 0) {
+        console.log(
+          `No sheets found for template ${id}, returning empty array`
+        );
         return res.json([]);
+      }
+
+      // Check if file exists
+      const fs = await import("fs");
+      if (!fs.existsSync(template.filePath)) {
+        console.error(`Template file not found at path: ${template.filePath}`);
+        return res.status(404).json({ error: "Template file not found" });
       }
 
       // Parse the Excel file to get data
       const workbook = new ExcelJS.Workbook();
       const ext = path.extname(template.filePath).toLowerCase();
+      console.log(`File extension: ${ext}`);
 
       if (ext === ".xlsx" || ext === ".xls") {
         await workbook.xlsx.readFile(template.filePath);
       } else if (ext === ".csv") {
         await workbook.csv.readFile(template.filePath);
       } else {
+        console.error(`Unsupported file type: ${ext}`);
         return res.status(400).json({ error: "Unsupported file type" });
       }
 
-      // Get all worksheets data
+      console.log(`Workbook loaded, worksheets: ${workbook.worksheets.length}`);
+
+      // Get all worksheets data with proper formatting for ExcelViewer
       const sheetData = [];
       for (const sheet of sheets) {
+        console.log(`Processing sheet: ${sheet.sheetName}`);
         const worksheet = workbook.getWorksheet(sheet.sheetName);
         if (worksheet) {
-          const rows: any[][] = [];
-          worksheet.eachRow((row, rowNumber) => {
-            if (rowNumber <= 100) {
-              // Limit to first 100 rows for preview
-              // Convert row.values to array and handle object cases
-              const rowArray = Array.isArray(row.values)
-                ? row.values
-                : Object.values(row.values);
-              rows.push(rowArray);
-            }
+          console.log(
+            `Worksheet found, rows: ${worksheet.rowCount}, cols: ${worksheet.columnCount}`
+          );
+          const cellData: (any | null)[][] = [];
+          const mergedCells: Array<{
+            top: number;
+            left: number;
+            bottom: number;
+            right: number;
+          }> = [];
+
+          // Get merged cell ranges
+          const mergedRanges = worksheet.model.merges || [];
+          mergedRanges.forEach((range: any) => {
+            mergedCells.push({
+              top: range.top - 1, // Convert to 0-based indexing
+              left: range.left - 1,
+              bottom: range.bottom - 1,
+              right: range.right - 1,
+            });
           });
 
-          sheetData.push({
-            id: sheet.id,
-            name: sheet.sheetName,
-            data: rows.slice(1), // Remove header row
-            totalRows: worksheet.rowCount,
-            totalCols: worksheet.columnCount,
-          });
+          // Process rows (limit to first 100 for preview)
+          for (
+            let rowNum = 1;
+            rowNum <= Math.min(100, worksheet.rowCount);
+            rowNum++
+          ) {
+            const row = worksheet.getRow(rowNum);
+            const rowData: (any | null)[] = [];
+
+            for (let colNum = 1; colNum <= worksheet.columnCount; colNum++) {
+              const cell = row.getCell(colNum);
+              let cellObj: any = null;
+
+              if (cell.value !== null && cell.value !== undefined) {
+                // Check if this cell is part of a merged range
+                const rowIndex = rowNum - 1; // 0-based
+                const colIndex = colNum - 1; // 0-based
+
+                let mergeInfo = null;
+                let isMerged = false;
+
+                for (const merge of mergedCells) {
+                  if (
+                    rowIndex >= merge.top &&
+                    rowIndex <= merge.bottom &&
+                    colIndex >= merge.left &&
+                    colIndex <= merge.right
+                  ) {
+                    isMerged = true;
+                    mergeInfo = {
+                      top: merge.top,
+                      left: merge.left,
+                      bottom: merge.bottom,
+                      right: merge.right,
+                      isTopLeft:
+                        rowIndex === merge.top && colIndex === merge.left,
+                    };
+                    break;
+                  }
+                }
+
+                cellObj = {
+                  value: cell.value,
+                  merged: isMerged,
+                  mergeInfo: mergeInfo,
+                  style: {
+                    backgroundColor:
+                      cell.style?.fill &&
+                      "fgColor" in cell.style.fill &&
+                      cell.style.fill.fgColor?.argb
+                        ? `#${cell.style.fill.fgColor.argb.slice(2)}`
+                        : null,
+                    color: cell.style?.font?.color?.argb
+                      ? `#${cell.style.font.color.argb.slice(2)}`
+                      : null,
+                    fontWeight: cell.style?.font?.bold ? "bold" : "normal",
+                    textAlign: cell.style?.alignment?.horizontal || "left",
+                    verticalAlign: cell.style?.alignment?.vertical || "middle",
+                  },
+                };
+              }
+
+              rowData.push(cellObj);
+            }
+
+            cellData.push(rowData);
+          }
+
+          const processedSheet = {
+            sheetName: sheet.sheetName,
+            data: cellData,
+            mergedCells: mergedCells,
+          };
+
+          console.log(
+            `Processed sheet ${sheet.sheetName}: ${cellData.length} rows`
+          );
+          sheetData.push(processedSheet);
+        } else {
+          console.warn(`Worksheet not found: ${sheet.sheetName}`);
         }
       }
 
+      console.log(`Returning ${sheetData.length} sheets of data`);
       res.json(sheetData);
     } catch (error) {
       console.error("Error reading Excel file:", error);

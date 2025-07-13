@@ -26,6 +26,7 @@ import AdminLoginPage from "@/pages/admin-login";
 import UserLoginPage from "@/pages/user-login";
 import SubmissionViewPage from "@/pages/submission-view";
 import UserManagementPage from "@/pages/user-management";
+import ExcelAnalyzerPage from "@/pages/excel-analyzer";
 
 function Router() {
   return (
@@ -84,6 +85,13 @@ function Router() {
         <Layout>
           <AdminRoute>
             <UserManagementPage />
+          </AdminRoute>
+        </Layout>
+      </Route>
+      <Route path="/excel-analyzer">
+        <Layout>
+          <AdminRoute>
+            <ExcelAnalyzerPage />
           </AdminRoute>
         </Layout>
       </Route>

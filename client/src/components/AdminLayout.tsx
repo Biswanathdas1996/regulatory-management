@@ -10,6 +10,7 @@ import {
   FolderOpen,
   Users,
   Shield,
+  FileSpreadsheet,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -60,6 +61,12 @@ export default function AdminLayout({
       href: "/user-management",
       icon: Users,
       current: location === "/user-management",
+    },
+    {
+      name: "Excel Analyzer",
+      href: "/excel-analyzer",
+      icon: FileSpreadsheet,
+      current: location === "/excel-analyzer",
     },
   ];
 
