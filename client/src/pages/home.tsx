@@ -77,9 +77,8 @@ export default function Home() {
           </div>
         </div>
       </div>
-
       {/* Main Content */}
-      <div className="container mx-auto px-4 pb-12">
+      <div className="container mx-auto px-4 pb-12 mt-[30px] mb-[30px]">
         <div className="max-w-5xl mx-auto">
           {/* Main Access Cards */}
           <div className="grid lg:grid-cols-2 gap-6 mb-12">
