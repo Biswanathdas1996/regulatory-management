@@ -9,6 +9,7 @@ import TemplateDetail from "@/pages/template-detail";
 import TemplateManagement from "@/pages/template-management";
 import UserSubmissionPage from "@/pages/user-submission";
 import ValidationResultsPage from "@/pages/validation-results";
+import UserDashboardPage from "@/pages/user-dashboard";
 
 function Router() {
   return (
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/template/:id" component={TemplateDetail} />
       <Route path="/template-management" component={TemplateManagement} />
       <Route path="/user-submission" component={UserSubmissionPage} />
+      <Route path="/user-dashboard" component={UserDashboardPage} />
       <Route path="/validation-results/:id" component={ValidationResultsPage} />
       <Route component={NotFound} />
     </Switch>

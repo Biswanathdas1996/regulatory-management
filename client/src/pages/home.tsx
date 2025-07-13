@@ -55,35 +55,35 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            {/* User Submission Card */}
+            {/* User Dashboard Card */}
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader className="text-center pb-4">
                 <div className="mx-auto mb-4 h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
                   <User className="h-8 w-8 text-green-600" />
                 </div>
-                <CardTitle className="text-2xl">User Submission</CardTitle>
+                <CardTitle className="text-2xl">User Dashboard</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
                 <p className="text-gray-600 mb-6">
-                  Download templates, fill them out, and submit for validation. Get detailed validation results with error reporting.
+                  Track your submission history, view performance metrics, and analyze validation results with comprehensive KPIs.
                 </p>
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center text-sm text-gray-500">
                     <FileText className="h-4 w-4 mr-2" />
-                    Download Available Templates
+                    Track Submission History
                   </div>
                   <div className="flex items-center text-sm text-gray-500">
                     <Upload className="h-4 w-4 mr-2" />
-                    Submit Filled Templates
+                    View Performance Metrics
                   </div>
                   <div className="flex items-center text-sm text-gray-500">
                     <Settings className="h-4 w-4 mr-2" />
-                    View Validation Results
+                    Analyze Validation Results
                   </div>
                 </div>
-                <Link href="/user-submission">
+                <Link href="/user-dashboard">
                   <Button className="w-full">
-                    Go to User Submission
+                    Go to User Dashboard
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </Link>
