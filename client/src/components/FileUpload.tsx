@@ -256,55 +256,7 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
               )}
             </div>
 
-            {/* Validation Rules Upload Area */}
-            <div className="border-2 border-dashed rounded-lg p-6 text-center">
-              <div className="mb-4">
-                <p className="text-lg font-medium text-gray-900">Validation Rules (Optional)</p>
-                <p className="text-sm text-gray-500 mt-1">Upload a .txt file with validation rules</p>
-                <div className="mt-2">
-                  <a
-                    href="/sample-validation-rules.txt"
-                    download="sample-validation-rules.txt"
-                    className="text-sm text-blue-600 hover:text-blue-800 underline"
-                  >
-                    Download sample validation rules file
-                  </a>
-                </div>
-              </div>
-              <FormField
-                control={form.control}
-                name="validationRulesFile"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => document.getElementById("validation-file-input")?.click()}
-                        >
-                          <FolderOpen className="mr-2 h-4 w-4" />
-                          Choose Validation Rules
-                        </Button>
-                        <input
-                          id="validation-file-input"
-                          type="file"
-                          accept=".txt"
-                          onChange={handleValidationFileSelect}
-                          className="hidden"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {form.watch("validationRulesFile") && form.watch("validationRulesFile").length > 0 && (
-                <p className="text-sm text-gray-600 mt-2">
-                  Rules: {form.watch("validationRulesFile")[0].name}
-                </p>
-              )}
-            </div>
+            
 
             {/* Upload Progress */}
             {uploadMutation.isPending && (

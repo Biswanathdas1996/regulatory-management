@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   Home,
   Upload,
   History,
   FileText,
   User,
   XCircle,
-  Menu
+  Menu,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -19,12 +19,12 @@ interface UserLayoutProps {
   headerActions?: React.ReactNode;
 }
 
-export default function UserLayout({ 
-  children, 
-  title, 
-  subtitle, 
+export default function UserLayout({
+  children,
+  title,
+  subtitle,
   showHeader = true,
-  headerActions 
+  headerActions,
 }: UserLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [location] = useLocation();
@@ -34,32 +34,28 @@ export default function UserLayout({
       name: "Dashboard",
       icon: Home,
       href: "/user-dashboard",
-      current: location === "/user-dashboard"
+      current: location === "/user-dashboard",
     },
     {
       name: "New Submission",
       icon: Upload,
       href: "/user-submission",
-      current: location === "/user-submission"
+      current: location === "/user-submission",
     },
     {
       name: "Submission History",
       icon: History,
       href: "/submission-history",
-      current: location === "/submission-history"
+      current: location === "/submission-history",
     },
-    {
-      name: "Templates",
-      icon: FileText,
-      href: "/template-management",
-      current: location === "/template-management"
-    }
   ];
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:inset-0`}>
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:inset-0`}
+      >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
           <div className="flex items-center justify-between h-20 px-6 border-b border-gray-200">
@@ -69,19 +65,21 @@ export default function UserLayout({
               </div>
               <div>
                 <h2 className="font-bold text-gray-900 text-lg">User Portal</h2>
-                <p className="text-xs text-gray-500">Financial Validation System</p>
+                <p className="text-xs text-gray-500">
+                  Financial Validation System
+                </p>
               </div>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className="lg:hidden"
               onClick={() => setSidebarOpen(false)}
             >
               <XCircle className="h-5 w-5" />
             </Button>
           </div>
-          
+
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 overflow-y-auto">
             <div className="space-y-1">
@@ -89,15 +87,17 @@ export default function UserLayout({
                 const IconComponent = item.icon;
                 return (
                   <Link key={item.name} to={item.href}>
-                    <div 
+                    <div
                       className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl cursor-pointer transition-all duration-200 ${
                         item.current
-                          ? 'bg-primary text-white shadow-md shadow-primary/20'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                          ? "bg-primary text-white shadow-md shadow-primary/20"
+                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                       }`}
                       onClick={() => setSidebarOpen(false)}
                     >
-                      <IconComponent className={`h-5 w-5 mr-3 ${item.current ? 'text-white' : 'text-gray-400'}`} />
+                      <IconComponent
+                        className={`h-5 w-5 mr-3 ${item.current ? "text-white" : "text-gray-400"}`}
+                      />
                       {item.name}
                     </div>
                   </Link>
@@ -113,7 +113,9 @@ export default function UserLayout({
                 <User className="h-4 w-4 text-gray-600" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">User Account</p>
+                <p className="text-sm font-medium text-gray-900">
+                  User Account
+                </p>
                 <p className="text-xs text-gray-500">ID: #00001</p>
               </div>
             </div>
@@ -123,7 +125,7 @@ export default function UserLayout({
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -136,8 +138,8 @@ export default function UserLayout({
             <div className="px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-20">
                 <div className="flex items-center space-x-4">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     size="icon"
                     className="lg:hidden"
                     onClick={() => setSidebarOpen(true)}
@@ -146,7 +148,9 @@ export default function UserLayout({
                   </Button>
                   <div>
                     {title && (
-                      <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+                      <h1 className="text-2xl font-bold text-gray-900">
+                        {title}
+                      </h1>
                     )}
                     {subtitle && (
                       <p className="text-gray-500 text-sm mt-1">{subtitle}</p>
@@ -160,12 +164,10 @@ export default function UserLayout({
             </div>
           </header>
         )}
-        
+
         <main className="flex-1 bg-gray-50">
           <div className="px-4 sm:px-6 lg:px-8 py-8">
-            <div className="max-w-7xl mx-auto">
-              {children}
-            </div>
+            <div className="max-w-7xl mx-auto">{children}</div>
           </div>
         </main>
       </div>
