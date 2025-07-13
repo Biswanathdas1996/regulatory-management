@@ -1,6 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY || "" });
+const ai = new GoogleGenAI({
+  apiKey: process.env.GOOGLE_API_KEY || "",
+});
 
 export interface SchemaField {
   field_name: string;
@@ -30,7 +32,7 @@ export interface ExtractedSchema {
 export async function extractSchemaWithAI(
   sheetData: any,
   sheetName: string,
-  templateType: string,
+  templateType: string
 ): Promise<ExtractedSchema> {
   try {
     const systemPrompt = `You are an expert financial data analyst specializing in extracting structured schemas from financial templates. Your task is to analyze the provided data and generate a comprehensive JSON schema that identifies key fields, their data types, validation rules, and relationships.
@@ -54,7 +56,11 @@ Focus on financial reporting requirements and regulatory compliance fields.`;
 
     const tabularInfo =
       sheetData.tabularTemplates && sheetData.tabularTemplates.length > 0
-        ? `\n\nDetected Tabular Templates:\n${JSON.stringify(sheetData.tabularTemplates, null, 2)}\n\nPLEASE PAY SPECIAL ATTENTION to these tabular structures. They represent important data patterns and should be intelligently incorporated into the schema. Consider their headers, data types, and relationships.`
+        ? `\n\nDetected Tabular Templates:\n${JSON.stringify(
+            sheetData.tabularTemplates,
+            null,
+            2
+          )}\n\nPLEASE PAY SPECIAL ATTENTION to these tabular structures. They represent important data patterns and should be intelligently incorporated into the schema. Consider their headers, data types, and relationships.`
         : "";
 
     const dataPrompt = `Analyze this financial template data and extract a comprehensive schema:
@@ -154,7 +160,7 @@ Return a JSON schema with the following structure:
 
 export async function enhanceSchemaWithAI(
   schemas: ExtractedSchema[],
-  templateType: string,
+  templateType: string
 ): Promise<{
   consolidated_schema: any;
   cross_sheet_relationships: any[];

@@ -9,7 +9,11 @@ import { storage } from "./storage";
 import { FileProcessor } from "./services/fileProcessor";
 import { ValidationRulesParser } from "./services/validationRulesParser";
 import { ValidationEngine } from "./services/validationEngine";
-import { insertTemplateSchema, insertTemplateSheetSchema, templateTypes } from "@shared/schema";
+import {
+  insertTemplateSchema,
+  insertTemplateSheetSchema,
+  templateTypes,
+} from "@shared/schema";
 import { z } from "zod";
 
 // Extend Request type to include file property
@@ -19,41 +23,51 @@ interface MulterRequest extends Request {
 }
 
 // Store generation progress
-const generationProgress = new Map<string, {
-  templateId: number;
-  sheetId: number;
-  currentChunk: number;
-  totalChunks: number;
-  status: 'processing' | 'completed' | 'error';
-  message?: string;
-}>();
+const generationProgress = new Map<
+  string,
+  {
+    templateId: number;
+    sheetId: number;
+    currentChunk: number;
+    totalChunks: number;
+    status: "processing" | "completed" | "error";
+    message?: string;
+  }
+>();
 
 // Configure multer for file uploads
 const uploadStorage = multer.diskStorage({
   destination: (req: any, file: any, cb: any) => {
-    cb(null, 'server/uploads/');
+    cb(null, "server/uploads/");
   },
   filename: (req: any, file: any, cb: any) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+    );
+  },
 });
 
-const upload = multer({ 
+const upload = multer({
   storage: uploadStorage,
   limits: {
-    fileSize: 100 * 1024 * 1024 // 100MB limit
+    fileSize: 100 * 1024 * 1024, // 100MB limit
   },
   fileFilter: (req: any, file: any, cb: any) => {
-    const allowedTypes = ['.xlsx', '.xls', '.csv', '.txt'];
+    const allowedTypes = [".xlsx", ".xls", ".csv", ".txt"];
     const ext = path.extname(file.originalname).toLowerCase();
-    
+
     if (allowedTypes.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only Excel, CSV, and TXT files are allowed.'));
+      cb(
+        new Error(
+          "Invalid file type. Only Excel, CSV, and TXT files are allowed."
+        )
+      );
     }
-  }
+  },
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -73,17 +87,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const templates = await storage.getTemplates();
       // Get templates that have validation rules in the database
       const templatesWithRules = [];
-      
+
       for (const template of templates) {
         const rules = await storage.getValidationRules(template.id);
         if (rules.length > 0) {
           templatesWithRules.push({
             ...template,
-            rulesCount: rules.length
+            rulesCount: rules.length,
           });
         }
       }
-      
+
       res.json(templatesWithRules);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch templates" });
@@ -95,11 +109,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const template = await storage.getTemplate(id);
-      
+
       if (!template) {
         return res.status(404).json({ error: "Template not found" });
       }
-      
+
       res.json(template);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch template" });
@@ -107,68 +121,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload and process template with validation rules
-  app.post("/api/templates/upload", upload.fields([
-    { name: 'template', maxCount: 1 },
-    { name: 'validationRules', maxCount: 1 }
-  ]), async (req: MulterRequest, res) => {
-    try {
-      if (!req.files?.template?.[0]) {
-        return res.status(400).json({ error: "No template file uploaded" });
-      }
-
-      const templateFile = req.files.template[0];
-      const validationFile = req.files.validationRules?.[0];
-      const { templateType, templateName } = req.body;
-      
-      // Validate template type
-      if (!templateTypes.includes(templateType)) {
-        return res.status(400).json({ error: "Invalid template type" });
-      }
-
-      // Validate template name
-      if (!templateName || templateName.trim().length === 0) {
-        return res.status(400).json({ error: "Template name is required" });
-      }
-
-      // Create template record
-      const template = await storage.createTemplate({
-        name: templateName.trim(),
-        templateType,
-        fileName: templateFile.originalname,
-        filePath: templateFile.path,
-        fileSize: templateFile.size,
-        validationRulesPath: validationFile?.path
-      });
-
-      // Parse and store validation rules if provided
-      if (validationFile) {
-        try {
-          const rules = await ValidationRulesParser.parseRulesFile(validationFile.path, template.id);
-          if (rules.length > 0) {
-            await storage.createValidationRules(rules);
-          }
-        } catch (parseError) {
-          console.error("Failed to parse validation rules:", parseError);
-          // Continue without validation rules
+  app.post(
+    "/api/templates/upload",
+    upload.fields([
+      { name: "template", maxCount: 1 },
+      { name: "validationRules", maxCount: 1 },
+    ]),
+    async (req: MulterRequest, res) => {
+      try {
+        if (!req.files?.template?.[0]) {
+          return res.status(400).json({ error: "No template file uploaded" });
         }
+
+        const templateFile = req.files.template[0];
+        const validationFile = req.files.validationRules?.[0];
+        const { templateType, templateName } = req.body;
+
+        // Validate template type
+        if (!templateTypes.includes(templateType)) {
+          return res.status(400).json({ error: "Invalid template type" });
+        }
+
+        // Validate template name
+        if (!templateName || templateName.trim().length === 0) {
+          return res.status(400).json({ error: "Template name is required" });
+        }
+
+        // Create template record
+        const template = await storage.createTemplate({
+          name: templateName.trim(),
+          templateType,
+          fileName: templateFile.originalname,
+          filePath: templateFile.path,
+          fileSize: templateFile.size,
+          validationRulesPath: validationFile?.path,
+        });
+
+        // Parse and store validation rules if provided
+        if (validationFile) {
+          try {
+            const rules = await ValidationRulesParser.parseRulesFile(
+              validationFile.path,
+              template.id
+            );
+            if (rules.length > 0) {
+              await storage.createValidationRules(rules);
+            }
+          } catch (parseError) {
+            console.error("Failed to parse validation rules:", parseError);
+            // Continue without validation rules
+          }
+        }
+
+        // Start processing in the background
+        processTemplateAsync(template.id).catch((error) => {
+          console.error(
+            `Background processing failed for template ${template.id}:`,
+            error
+          );
+        });
+
+        res.json({
+          message: "Template uploaded successfully",
+          templateId: template.id,
+          template,
+          hasValidationRules: !!validationFile,
+        });
+      } catch (error) {
+        console.error("Upload error:", error);
+        res.status(500).json({ error: "Failed to upload template" });
       }
-
-      // Start processing in the background
-      processTemplateAsync(template.id).catch(error => {
-        console.error(`Background processing failed for template ${template.id}:`, error);
-      });
-
-      res.json({ 
-        message: "Template uploaded successfully", 
-        templateId: template.id,
-        template,
-        hasValidationRules: !!validationFile
-      });
-    } catch (error) {
-      console.error("Upload error:", error);
-      res.status(500).json({ error: "Failed to upload template" });
     }
-  });
+  );
 
   // Get processing status
   app.get("/api/templates/:id/status", async (req, res) => {
@@ -207,13 +231,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/templates/:id/schemas/:sheetId?", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const sheetId = req.params.sheetId ? parseInt(req.params.sheetId) : undefined;
+      const sheetId = req.params.sheetId
+        ? parseInt(req.params.sheetId)
+        : undefined;
       const schema = await storage.getTemplateSchema(id, sheetId);
-      
+
       if (!schema) {
         return res.status(404).json({ error: "Schema not found" });
       }
-      
+
       res.json(schema);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch schema" });
@@ -235,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/templates/:id/process", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      
+
       // Check if template exists
       const template = await storage.getTemplate(id);
       if (!template) {
@@ -243,13 +269,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Start processing in background
-      processTemplateAsync(id).catch(error => {
-        console.error(`Background processing failed for template ${id}:`, error);
+      processTemplateAsync(id).catch((error) => {
+        console.error(
+          `Background processing failed for template ${id}:`,
+          error
+        );
       });
 
-      res.json({ 
-        message: "Processing started", 
-        templateId: id 
+      res.json({
+        message: "Processing started",
+        templateId: id,
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to start processing" });
@@ -260,7 +289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/templates/:id/generate-schemas", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      
+
       // Check if template exists
       const template = await storage.getTemplate(id);
       if (!template) {
@@ -268,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Start schema generation in background
-      FileProcessor.generateSchemas(id).catch(error => {
+      FileProcessor.generateSchemas(id).catch((error) => {
         console.error(`Schema generation failed for template ${id}:`, error);
       });
 
@@ -282,12 +311,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get template types
   app.get("/api/template-types", (req, res) => {
     const types = [
-      { value: "monthly-clearing", label: "Monthly Report - Clearing Corporation" },
-      { value: "quarterly-capital", label: "Quarterly Reporting Format for Capital Market Intermediaries" },
+      {
+        value: "monthly-clearing",
+        label: "Monthly Report - Clearing Corporation",
+      },
+      {
+        value: "quarterly-capital",
+        label: "Quarterly Reporting Format for Capital Market Intermediaries",
+      },
       { value: "liabilities", label: "Report on Liabilities" },
-      { value: "stock-mar", label: "Stock Exchange - Market Activity Report (MAR)" },
-      { value: "stock-mdr", label: "Stock Exchange - Market Data Report (MDR)" },
-      { value: "treasury", label: "Treasury Report" }
+      {
+        value: "stock-mar",
+        label: "Stock Exchange - Market Activity Report (MAR)",
+      },
+      {
+        value: "stock-mdr",
+        label: "Stock Exchange - Market Data Report (MDR)",
+      },
+      { value: "treasury", label: "Treasury Report" },
     ];
     res.json(types);
   });
@@ -297,16 +338,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const templates = await storage.getTemplates();
       const totalTemplates = templates.length;
-      const processed = templates.filter(t => t.status === "completed").length;
-      const processing = templates.filter(t => t.status === "processing").length;
-      const failed = templates.filter(t => t.status === "failed").length;
+      const processed = templates.filter(
+        (t) => t.status === "completed"
+      ).length;
+      const processing = templates.filter(
+        (t) => t.status === "processing"
+      ).length;
+      const failed = templates.filter((t) => t.status === "failed").length;
 
       res.json({
         totalTemplates,
         processed,
         processing,
         failed,
-        averageConfidence: 94 // This could be calculated from actual schema data
+        averageConfidence: 94, // This could be calculated from actual schema data
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch stats" });
@@ -318,11 +363,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const template = await storage.getTemplate(id);
-      
+
       if (!template) {
         return res.status(404).json({ error: "Template not found" });
       }
-      
+
       res.download(template.filePath, template.fileName);
     } catch (error) {
       res.status(500).json({ error: "Failed to download template" });
@@ -333,15 +378,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/templates/:id/validation-rules", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const sheetId = req.query.sheetId ? parseInt(req.query.sheetId as string) : undefined;
-      
+      const sheetId = req.query.sheetId
+        ? parseInt(req.query.sheetId as string)
+        : undefined;
+
       let rules = await storage.getValidationRules(id);
-      
+
       // Filter by sheet if sheetId is provided
       if (sheetId !== undefined) {
-        rules = rules.filter(rule => rule.sheetId === sheetId);
+        rules = rules.filter((rule) => rule.sheetId === sheetId);
       }
-      
+
       res.json(rules);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch validation rules" });
@@ -352,7 +399,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/templates/:id/validation-rules", async (req, res) => {
     try {
       const templateId = parseInt(req.params.id);
-      const { sheetId, ruleType, field, condition, errorMessage, severity } = req.body;
+      const { sheetId, ruleType, field, condition, errorMessage, severity } =
+        req.body;
 
       // Validate required fields
       if (!ruleType || !field || !condition || !errorMessage) {
@@ -378,7 +426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         field,
         condition,
         errorMessage,
-        severity: severity || "error"
+        severity: severity || "error",
       });
 
       res.json(rule);
@@ -402,25 +450,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if rule exists
       const existingRules = await storage.getValidationRules(templateId);
-      const ruleExists = existingRules.some(r => r.id === ruleId);
+      const ruleExists = existingRules.some((r) => r.id === ruleId);
       if (!ruleExists) {
         return res.status(404).json({ error: "Validation rule not found" });
       }
 
       // Delete old rule and create new one (since we don't have an update method)
       await storage.deleteValidationRules(templateId);
-      
+
       // Re-create all rules except the one being updated
-      const rulesToKeep = existingRules.filter(r => r.id !== ruleId);
+      const rulesToKeep = existingRules.filter((r) => r.id !== ruleId);
       const updatedRules = [
-        ...rulesToKeep.map(r => ({
+        ...rulesToKeep.map((r) => ({
           templateId: r.templateId,
           sheetId: r.sheetId,
           ruleType: r.ruleType,
           field: r.field,
           condition: r.condition,
           errorMessage: r.errorMessage,
-          severity: r.severity
+          severity: r.severity,
         })),
         {
           templateId,
@@ -429,8 +477,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           field,
           condition,
           errorMessage,
-          severity: severity || "error"
-        }
+          severity: severity || "error",
+        },
       ];
 
       await storage.createValidationRules(updatedRules);
@@ -442,109 +490,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete a validation rule
-  app.delete("/api/templates/:id/validation-rules/:ruleId", async (req, res) => {
-    try {
-      const templateId = parseInt(req.params.id);
-      const ruleId = parseInt(req.params.ruleId);
+  app.delete(
+    "/api/templates/:id/validation-rules/:ruleId",
+    async (req, res) => {
+      try {
+        const templateId = parseInt(req.params.id);
+        const ruleId = parseInt(req.params.ruleId);
 
-      // Get existing rules
-      const existingRules = await storage.getValidationRules(templateId);
-      const ruleExists = existingRules.some(r => r.id === ruleId);
-      
-      if (!ruleExists) {
-        return res.status(404).json({ error: "Validation rule not found" });
+        // Get existing rules
+        const existingRules = await storage.getValidationRules(templateId);
+        const ruleExists = existingRules.some((r) => r.id === ruleId);
+
+        if (!ruleExists) {
+          return res.status(404).json({ error: "Validation rule not found" });
+        }
+
+        // Delete all rules and recreate without the deleted one
+        await storage.deleteValidationRules(templateId);
+
+        const rulesToKeep = existingRules
+          .filter((r) => r.id !== ruleId)
+          .map((r) => ({
+            templateId: r.templateId,
+            ruleType: r.ruleType,
+            field: r.field,
+            condition: r.condition,
+            errorMessage: r.errorMessage,
+            severity: r.severity,
+          }));
+
+        if (rulesToKeep.length > 0) {
+          await storage.createValidationRules(rulesToKeep);
+        }
+
+        res.json({ message: "Validation rule deleted successfully" });
+      } catch (error) {
+        console.error("Delete validation rule error:", error);
+        res.status(500).json({ error: "Failed to delete validation rule" });
       }
-
-      // Delete all rules and recreate without the deleted one
-      await storage.deleteValidationRules(templateId);
-      
-      const rulesToKeep = existingRules
-        .filter(r => r.id !== ruleId)
-        .map(r => ({
-          templateId: r.templateId,
-          ruleType: r.ruleType,
-          field: r.field,
-          condition: r.condition,
-          errorMessage: r.errorMessage,
-          severity: r.severity
-        }));
-
-      if (rulesToKeep.length > 0) {
-        await storage.createValidationRules(rulesToKeep);
-      }
-
-      res.json({ message: "Validation rule deleted successfully" });
-    } catch (error) {
-      console.error("Delete validation rule error:", error);
-      res.status(500).json({ error: "Failed to delete validation rule" });
     }
-  });
+  );
 
   // Bulk delete validation rules
-  app.post("/api/templates/:id/validation-rules/bulk-delete", async (req, res) => {
-    try {
-      const templateId = parseInt(req.params.id);
-      const { ruleIds } = req.body;
+  app.post(
+    "/api/templates/:id/validation-rules/bulk-delete",
+    async (req, res) => {
+      try {
+        const templateId = parseInt(req.params.id);
+        const { ruleIds } = req.body;
 
-      if (!Array.isArray(ruleIds) || ruleIds.length === 0) {
-        return res.status(400).json({ error: "No rule IDs provided" });
+        if (!Array.isArray(ruleIds) || ruleIds.length === 0) {
+          return res.status(400).json({ error: "No rule IDs provided" });
+        }
+
+        // Get existing rules
+        const existingRules = await storage.getValidationRules(templateId);
+
+        // Delete all rules and recreate without the deleted ones
+        await storage.deleteValidationRules(templateId);
+
+        const rulesToKeep = existingRules
+          .filter((r) => !ruleIds.includes(r.id))
+          .map((r) => ({
+            templateId: r.templateId,
+            ruleType: r.ruleType,
+            field: r.field,
+            condition: r.condition,
+            errorMessage: r.errorMessage,
+            severity: r.severity,
+          }));
+
+        if (rulesToKeep.length > 0) {
+          await storage.createValidationRules(rulesToKeep);
+        }
+
+        res.json({ message: `${ruleIds.length} rules deleted successfully` });
+      } catch (error) {
+        console.error("Bulk delete validation rules error:", error);
+        res.status(500).json({ error: "Failed to delete rules" });
       }
-
-      // Get existing rules
-      const existingRules = await storage.getValidationRules(templateId);
-      
-      // Delete all rules and recreate without the deleted ones
-      await storage.deleteValidationRules(templateId);
-      
-      const rulesToKeep = existingRules
-        .filter(r => !ruleIds.includes(r.id))
-        .map(r => ({
-          templateId: r.templateId,
-          ruleType: r.ruleType,
-          field: r.field,
-          condition: r.condition,
-          errorMessage: r.errorMessage,
-          severity: r.severity
-        }));
-
-      if (rulesToKeep.length > 0) {
-        await storage.createValidationRules(rulesToKeep);
-      }
-
-      res.json({ message: `${ruleIds.length} rules deleted successfully` });
-    } catch (error) {
-      console.error("Bulk delete validation rules error:", error);
-      res.status(500).json({ error: "Failed to delete rules" });
     }
-  });
+  );
 
   // Import validation rules from text
   // Export validation rules to Excel
   app.post("/api/export/validation-rules", async (req, res) => {
     try {
       const { headers, rows } = req.body;
-      
+
       if (!headers || !rows) {
         return res.status(400).json({ error: "Invalid export data" });
       }
-      
+
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Validation Rules');
-      
+      const worksheet = workbook.addWorksheet("Validation Rules");
+
       // Add headers
       worksheet.addRow(headers);
-      
+
       // Style the header row
       worksheet.getRow(1).font = { bold: true };
       worksheet.getRow(1).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FFE0E0E0' }
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE0E0E0" },
       };
-      
+
       // Add data rows
       rows.forEach((row: any[]) => worksheet.addRow(row));
-      
+
       // Auto-fit columns
       worksheet.columns.forEach((column: any) => {
         let maxLength = 0;
@@ -554,139 +608,169 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         column.width = Math.min(maxLength + 2, 50);
       });
-      
+
       // Generate Excel file
       const buffer = await workbook.xlsx.writeBuffer();
-      
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', 'attachment; filename=validation-rules.xlsx');
+
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=validation-rules.xlsx"
+      );
       res.send(buffer);
     } catch (error: any) {
       console.error("Error exporting validation rules:", error);
-      res.status(500).json({ error: error.message || "Failed to export validation rules" });
+      res
+        .status(500)
+        .json({ error: error.message || "Failed to export validation rules" });
     }
   });
 
   // Import validation rules from Excel file
-  app.post("/api/templates/:id/validation-rules/import-excel", upload.single('file'), async (req: MulterRequest, res) => {
-    try {
-      const templateId = parseInt(req.params.id);
-      const file = req.file;
-      
-      if (!file) {
-        return res.status(400).json({ error: "No file provided" });
-      }
-      
-      // Check if it's an Excel file
-      if (!file.originalname.match(/\.(xlsx|xls)$/)) {
-        return res.status(400).json({ error: "Please upload an Excel file (.xlsx or .xls)" });
-      }
-      
-      // Parse Excel file
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.readFile(file.path);
-      const worksheet = workbook.getWorksheet(1);
-      
-      if (!worksheet) {
-        return res.status(400).json({ error: "No worksheet found in Excel file" });
-      }
-      
-      // Get sheets for this template to map sheet names to IDs
-      const sheets = await storage.getTemplateSheets(templateId);
-      const sheetMap = new Map(sheets.map(s => [s.sheetName.toLowerCase(), s.id]));
-      
-      // Parse rules from Excel
-      const rules: any[] = [];
-      let headerRow: string[] = [];
-      
-      worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber === 1) {
-          // Header row
-          headerRow = row.values as string[];
-          headerRow = headerRow.slice(1); // Remove empty first element
-        } else {
-          // Data row
-          const values = row.values as any[];
-          const rowData = values.slice(1); // Remove empty first element
-          
-          if (rowData.length >= 6) {
-            const sheetName = rowData[0]?.toString().toLowerCase() || 'all sheets';
-            const sheetId = sheetName === 'all sheets' ? null : sheetMap.get(sheetName) || null;
-            
-            rules.push({
-              templateId,
-              sheetId,
-              field: rowData[1]?.toString() || '',
-              ruleType: rowData[2]?.toString().toLowerCase() || 'required',
-              condition: rowData[3]?.toString() || '',
-              errorMessage: rowData[4]?.toString() || '',
-              severity: rowData[5]?.toString().toLowerCase() || 'error',
-              createdAt: new Date()
-            });
+  app.post(
+    "/api/templates/:id/validation-rules/import-excel",
+    upload.single("file"),
+    async (req: MulterRequest, res) => {
+      try {
+        const templateId = parseInt(req.params.id);
+        const file = req.file;
+
+        if (!file) {
+          return res.status(400).json({ error: "No file provided" });
+        }
+
+        // Check if it's an Excel file
+        if (!file.originalname.match(/\.(xlsx|xls)$/)) {
+          return res
+            .status(400)
+            .json({ error: "Please upload an Excel file (.xlsx or .xls)" });
+        }
+
+        // Parse Excel file
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.readFile(file.path);
+        const worksheet = workbook.getWorksheet(1);
+
+        if (!worksheet) {
+          return res
+            .status(400)
+            .json({ error: "No worksheet found in Excel file" });
+        }
+
+        // Get sheets for this template to map sheet names to IDs
+        const sheets = await storage.getTemplateSheets(templateId);
+        const sheetMap = new Map(
+          sheets.map((s) => [s.sheetName.toLowerCase(), s.id])
+        );
+
+        // Parse rules from Excel
+        const rules: any[] = [];
+        let headerRow: string[] = [];
+
+        worksheet.eachRow((row, rowNumber) => {
+          if (rowNumber === 1) {
+            // Header row
+            headerRow = row.values as string[];
+            headerRow = headerRow.slice(1); // Remove empty first element
+          } else {
+            // Data row
+            const values = row.values as any[];
+            const rowData = values.slice(1); // Remove empty first element
+
+            if (rowData.length >= 6) {
+              const sheetName =
+                rowData[0]?.toString().toLowerCase() || "all sheets";
+              const sheetId =
+                sheetName === "all sheets"
+                  ? null
+                  : sheetMap.get(sheetName) || null;
+
+              rules.push({
+                templateId,
+                sheetId,
+                field: rowData[1]?.toString() || "",
+                ruleType: rowData[2]?.toString().toLowerCase() || "required",
+                condition: rowData[3]?.toString() || "",
+                errorMessage: rowData[4]?.toString() || "",
+                severity: rowData[5]?.toString().toLowerCase() || "error",
+                createdAt: new Date(),
+              });
+            }
+          }
+        });
+
+        if (rules.length === 0) {
+          return res
+            .status(400)
+            .json({ error: "No valid rules found in Excel file" });
+        }
+
+        // Validate rule types and severity
+        const validRuleTypes = ["required", "format", "range", "custom"];
+        const validSeverities = ["error", "warning"];
+
+        for (const rule of rules) {
+          if (!validRuleTypes.includes(rule.ruleType)) {
+            rule.ruleType = "required";
+          }
+          if (!validSeverities.includes(rule.severity)) {
+            rule.severity = "error";
           }
         }
-      });
-      
-      if (rules.length === 0) {
-        return res.status(400).json({ error: "No valid rules found in Excel file" });
+
+        // Insert rules
+        const insertedRules = await storage.createValidationRules(rules);
+
+        // Clean up uploaded file
+        fs.unlinkSync(file.path);
+
+        res.json({
+          imported: insertedRules.length,
+          message: `Successfully imported ${insertedRules.length} validation rules`,
+        });
+      } catch (error: any) {
+        console.error("Error importing validation rules from Excel:", error);
+        res
+          .status(500)
+          .json({
+            error: error.message || "Failed to import validation rules",
+          });
       }
-      
-      // Validate rule types and severity
-      const validRuleTypes = ['required', 'format', 'range', 'custom'];
-      const validSeverities = ['error', 'warning'];
-      
-      for (const rule of rules) {
-        if (!validRuleTypes.includes(rule.ruleType)) {
-          rule.ruleType = 'required';
-        }
-        if (!validSeverities.includes(rule.severity)) {
-          rule.severity = 'error';
-        }
-      }
-      
-      // Insert rules
-      const insertedRules = await storage.createValidationRules(rules);
-      
-      // Clean up uploaded file
-      fs.unlinkSync(file.path);
-      
-      res.json({ 
-        imported: insertedRules.length,
-        message: `Successfully imported ${insertedRules.length} validation rules`
-      });
-    } catch (error: any) {
-      console.error("Error importing validation rules from Excel:", error);
-      res.status(500).json({ error: error.message || "Failed to import validation rules" });
     }
-  });
+  );
 
   app.post("/api/templates/:id/validation-rules/import", async (req, res) => {
     try {
       const templateId = parseInt(req.params.id);
       const { rulesText } = req.body;
 
-      if (!rulesText || typeof rulesText !== 'string') {
+      if (!rulesText || typeof rulesText !== "string") {
         return res.status(400).json({ error: "Invalid rules text provided" });
       }
 
       // Parse the rules text
       const parsedRules = ValidationRulesParser.parseRulesContent(rulesText);
-      
+
       if (parsedRules.length === 0) {
-        return res.status(400).json({ error: "No valid rules found in the provided text" });
+        return res
+          .status(400)
+          .json({ error: "No valid rules found in the provided text" });
       }
 
       // Create the rules
-      const rules = parsedRules.map(rule => ({
+      const rules = parsedRules.map((rule) => ({
         templateId,
-        ...rule
+        ...rule,
       }));
 
       await storage.createValidationRules(rules);
 
-      res.json({ 
-        message: "Rules imported successfully", 
-        imported: rules.length 
+      res.json({
+        message: "Rules imported successfully",
+        imported: rules.length,
       });
     } catch (error) {
       console.error("Import validation rules error:", error);
@@ -698,15 +782,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/generation-progress/:sessionId", async (req, res) => {
     const sessionId = req.params.sessionId;
     const progress = generationProgress.get(sessionId);
-    
+
     if (!progress) {
       return res.status(404).json({ error: "Progress not found" });
     }
-    
+
     res.json(progress);
-    
+
     // Clean up completed or errored progress after 5 minutes
-    if (progress.status === 'completed' || progress.status === 'error') {
+    if (progress.status === "completed" || progress.status === "error") {
       setTimeout(() => {
         generationProgress.delete(sessionId);
       }, 5 * 60 * 1000);
@@ -714,72 +798,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate validation rules for a specific sheet using AI
-  app.post("/api/templates/:templateId/sheets/:sheetId/generate-rules", async (req, res) => {
-    try {
-      const templateId = parseInt(req.params.templateId);
-      const sheetId = parseInt(req.params.sheetId);
-      const { sheetData, sheetName, sheetIndex } = req.body;
+  app.post(
+    "/api/templates/:templateId/sheets/:sheetId/generate-rules",
+    async (req, res) => {
+      try {
+        const templateId = parseInt(req.params.templateId);
+        const sheetId = parseInt(req.params.sheetId);
+        const { sheetData, sheetName, sheetIndex } = req.body;
 
-      if (!sheetData || !sheetName) {
-        return res.status(400).json({ error: "Sheet data and name are required" });
-      }
+        if (!sheetData || !sheetName) {
+          return res
+            .status(400)
+            .json({ error: "Sheet data and name are required" });
+        }
 
-      const CHUNK_SIZE = 50; // Process 50 rows at a time
-      const MAX_CHUNKS = 5; // Process up to 5 chunks (250 rows total)
-      const totalRows = sheetData.data.length;
-      const chunksToProcess = Math.min(Math.ceil(totalRows / CHUNK_SIZE), MAX_CHUNKS);
-      
-      // Generate unique session ID for progress tracking
-      const sessionId = `${templateId}-${sheetId}-${Date.now()}`;
-      
-      // Initialize progress tracking
-      generationProgress.set(sessionId, {
-        templateId,
-        sheetId,
-        currentChunk: 0,
-        totalChunks: chunksToProcess,
-        status: 'processing',
-        message: `Starting to process ${chunksToProcess} chunks for sheet ${sheetName}`
-      });
-      
-      // Send sessionId to frontend immediately
-      res.json({ 
-        sessionId,
-        totalChunks: chunksToProcess,
-        message: "Rule generation started"
-      });
-      
-      // Continue processing in background
-      (async () => {
-        try {
-          console.log(`Processing ${chunksToProcess} chunks for sheet ${sheetName} with ${totalRows} rows`);
-          
-          const genai = await import('@google/genai');
-          const genAI = new genai.GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-          
-          // Map to store unique rules by field and ruleType
-          const uniqueRulesMap = new Map<string, any>();
-      
-          // Process data in chunks
-          for (let i = 0; i < chunksToProcess; i++) {
-            const startIdx = i * CHUNK_SIZE;
-            const endIdx = Math.min(startIdx + CHUNK_SIZE, totalRows);
-            const chunkData = sheetData.data.slice(startIdx, endIdx);
-            
-            // Update progress
-            generationProgress.set(sessionId, {
-              templateId,
-              sheetId,
-              currentChunk: i + 1,
-              totalChunks: chunksToProcess,
-              status: 'processing',
-              message: `Processing chunk ${i + 1} of ${chunksToProcess} (rows ${startIdx + 1} to ${endIdx})`
+        const CHUNK_SIZE = 50; // Process 50 rows at a time
+        const MAX_CHUNKS = 5; // Process up to 5 chunks (250 rows total)
+        const totalRows = sheetData.data.length;
+        const chunksToProcess = Math.min(
+          Math.ceil(totalRows / CHUNK_SIZE),
+          MAX_CHUNKS
+        );
+
+        // Generate unique session ID for progress tracking
+        const sessionId = `${templateId}-${sheetId}-${Date.now()}`;
+
+        // Initialize progress tracking
+        generationProgress.set(sessionId, {
+          templateId,
+          sheetId,
+          currentChunk: 0,
+          totalChunks: chunksToProcess,
+          status: "processing",
+          message: `Starting to process ${chunksToProcess} chunks for sheet ${sheetName}`,
+        });
+
+        // Send sessionId to frontend immediately
+        res.json({
+          sessionId,
+          totalChunks: chunksToProcess,
+          message: "Rule generation started",
+        });
+
+        // Continue processing in background
+        (async () => {
+          try {
+            console.log(
+              `Processing ${chunksToProcess} chunks for sheet ${sheetName} with ${totalRows} rows`
+            );
+
+            const genai = await import("@google/genai");
+            const genAI = new genai.GoogleGenAI({
+              apiKey: process.env.GEMINI_API_KEY!,
             });
-            
-            // Skip if chunk is empty
-            if (chunkData.length === 0) continue;
-        
-        const analysisPrompt = `
+
+            // Map to store unique rules by field and ruleType
+            const uniqueRulesMap = new Map<string, any>();
+
+            // Process data in chunks
+            for (let i = 0; i < chunksToProcess; i++) {
+              const startIdx = i * CHUNK_SIZE;
+              const endIdx = Math.min(startIdx + CHUNK_SIZE, totalRows);
+              const chunkData = sheetData.data.slice(startIdx, endIdx);
+
+              // Update progress
+              generationProgress.set(sessionId, {
+                templateId,
+                sheetId,
+                currentChunk: i + 1,
+                totalChunks: chunksToProcess,
+                status: "processing",
+                message: `Processing chunk ${
+                  i + 1
+                } of ${chunksToProcess} (rows ${startIdx + 1} to ${endIdx})`,
+              });
+
+              // Skip if chunk is empty
+              if (chunkData.length === 0) continue;
+
+              const analysisPrompt = `
 Analyze this Excel sheet data chunk and generate validation rules.
 
 Sheet Name: ${sheetName}
@@ -803,156 +900,182 @@ Return the response as a JSON array of validation rules.
 Only return the JSON array, no additional text.
 `;
 
-        try {
-          const result = await genAI.models.generateContent({
-            model: 'gemini-1.5-flash',
-            contents: analysisPrompt
-          });
-          
-          const text = result.text || '';
-          
-          if (!text) {
-            console.warn(`No response from AI model for chunk ${i + 1}`);
-            continue;
-          }
-          
-          // Extract JSON from the response
-          const jsonMatch = text.match(/\[[\s\S]*\]/);
-          if (!jsonMatch) {
-            console.warn(`Failed to parse AI response for chunk ${i + 1}`);
-            continue;
-          }
-          
-          const chunkRules = JSON.parse(jsonMatch[0]);
-          
-          // Add rules to map, deduplicating by field + ruleType
-          for (const rule of chunkRules) {
-            const key = `${rule.field}_${rule.ruleType}`;
-            
-            // For range rules, merge min/max values
-            if (rule.ruleType === 'range' && uniqueRulesMap.has(key)) {
-              const existingRule = uniqueRulesMap.get(key);
-              const existingCondition = existingRule.condition;
-              const newCondition = rule.condition;
-              
-              // Parse and merge range conditions
-              const existingMatch = existingCondition.match(/min:(-?\d+(?:\.\d+)?),max:(-?\d+(?:\.\d+)?)/);
-              const newMatch = newCondition.match(/min:(-?\d+(?:\.\d+)?),max:(-?\d+(?:\.\d+)?)/);
-              
-              if (existingMatch && newMatch) {
-                const minVal = Math.min(parseFloat(existingMatch[1]), parseFloat(newMatch[1]));
-                const maxVal = Math.max(parseFloat(existingMatch[2]), parseFloat(newMatch[2]));
-                existingRule.condition = `min:${minVal},max:${maxVal}`;
+              try {
+                const result = await genAI.models.generateContent({
+                  model: "gemini-1.5-flash",
+                  contents: analysisPrompt,
+                });
+
+                const text = result.text || "";
+
+                if (!text) {
+                  console.warn(`No response from AI model for chunk ${i + 1}`);
+                  continue;
+                }
+
+                // Extract JSON from the response
+                const jsonMatch = text.match(/\[[\s\S]*\]/);
+                if (!jsonMatch) {
+                  console.warn(
+                    `Failed to parse AI response for chunk ${i + 1}`
+                  );
+                  continue;
+                }
+
+                const chunkRules = JSON.parse(jsonMatch[0]);
+
+                // Add rules to map, deduplicating by field + ruleType
+                for (const rule of chunkRules) {
+                  const key = `${rule.field}_${rule.ruleType}`;
+
+                  // For range rules, merge min/max values
+                  if (rule.ruleType === "range" && uniqueRulesMap.has(key)) {
+                    const existingRule = uniqueRulesMap.get(key);
+                    const existingCondition = existingRule.condition;
+                    const newCondition = rule.condition;
+
+                    // Parse and merge range conditions
+                    const existingMatch = existingCondition.match(
+                      /min:(-?\d+(?:\.\d+)?),max:(-?\d+(?:\.\d+)?)/
+                    );
+                    const newMatch = newCondition.match(
+                      /min:(-?\d+(?:\.\d+)?),max:(-?\d+(?:\.\d+)?)/
+                    );
+
+                    if (existingMatch && newMatch) {
+                      const minVal = Math.min(
+                        parseFloat(existingMatch[1]),
+                        parseFloat(newMatch[1])
+                      );
+                      const maxVal = Math.max(
+                        parseFloat(existingMatch[2]),
+                        parseFloat(newMatch[2])
+                      );
+                      existingRule.condition = `min:${minVal},max:${maxVal}`;
+                    }
+                  } else {
+                    uniqueRulesMap.set(key, rule);
+                  }
+                }
+              } catch (chunkError) {
+                console.error(`Error processing chunk ${i + 1}:`, chunkError);
+                // Continue with next chunk
               }
-            } else {
-              uniqueRulesMap.set(key, rule);
             }
-          }
-          
-        } catch (chunkError) {
-          console.error(`Error processing chunk ${i + 1}:`, chunkError);
-          // Continue with next chunk
-        }
-      }
-          
-          // Convert map to array
-          const generatedRules = Array.from(uniqueRulesMap.values());
-          
-          if (generatedRules.length === 0) {
+
+            // Convert map to array
+            const generatedRules = Array.from(uniqueRulesMap.values());
+
+            if (generatedRules.length === 0) {
+              generationProgress.set(sessionId, {
+                templateId,
+                sheetId,
+                currentChunk: chunksToProcess,
+                totalChunks: chunksToProcess,
+                status: "error",
+                message: "No validation rules could be generated from the data",
+              });
+              return;
+            }
+
+            // Save the generated rules to database
+            const rulesToCreate = generatedRules.map((rule: any) => ({
+              templateId,
+              sheetId,
+              ruleType: rule.ruleType,
+              field: rule.field,
+              condition: rule.condition,
+              errorMessage: rule.errorMessage,
+              severity: rule.severity || "error",
+            }));
+
+            await storage.createValidationRules(rulesToCreate);
+
+            // Update progress to completed
             generationProgress.set(sessionId, {
               templateId,
               sheetId,
               currentChunk: chunksToProcess,
               totalChunks: chunksToProcess,
-              status: 'error',
-              message: "No validation rules could be generated from the data"
+              status: "completed",
+              message: `Successfully generated ${rulesToCreate.length} validation rules`,
             });
-            return;
+          } catch (error) {
+            console.error("Generate validation rules error:", error);
+            generationProgress.set(sessionId, {
+              templateId,
+              sheetId,
+              currentChunk: 0,
+              totalChunks: chunksToProcess,
+              status: "error",
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Failed to generate validation rules",
+            });
           }
-          
-          // Save the generated rules to database
-          const rulesToCreate = generatedRules.map((rule: any) => ({
-            templateId,
-            sheetId,
-            ruleType: rule.ruleType,
-            field: rule.field,
-            condition: rule.condition,
-            errorMessage: rule.errorMessage,
-            severity: rule.severity || 'error'
-          }));
-          
-          await storage.createValidationRules(rulesToCreate);
-          
-          // Update progress to completed
-          generationProgress.set(sessionId, {
-            templateId,
-            sheetId,
-            currentChunk: chunksToProcess,
-            totalChunks: chunksToProcess,
-            status: 'completed',
-            message: `Successfully generated ${rulesToCreate.length} validation rules`
-          });
-          
-        } catch (error) {
-          console.error("Generate validation rules error:", error);
-          generationProgress.set(sessionId, {
-            templateId,
-            sheetId,
-            currentChunk: 0,
-            totalChunks: chunksToProcess,
-            status: 'error',
-            message: error instanceof Error ? error.message : "Failed to generate validation rules"
-          });
-        }
-      })();
-      
-    } catch (error) {
-      console.error("Generate validation rules error:", error);
-      res.status(500).json({ error: "Failed to generate validation rules" });
+        })();
+      } catch (error) {
+        console.error("Generate validation rules error:", error);
+        res.status(500).json({ error: "Failed to generate validation rules" });
+      }
     }
-  });
+  );
 
   // Submit a filled template for validation
-  app.post("/api/submissions/upload", upload.single('file'), async (req: MulterRequest, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
+  app.post(
+    "/api/submissions/upload",
+    upload.single("file"),
+    async (req: MulterRequest, res) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        const { templateId, reportingPeriod } = req.body;
+        const userId = 1; // TODO: Get from authenticated user
+
+        if (!templateId) {
+          return res.status(400).json({ error: "Template ID is required" });
+        }
+
+        if (!reportingPeriod) {
+          return res
+            .status(400)
+            .json({ error: "Reporting period is required" });
+        }
+
+        // Create submission record
+        const submission = await storage.createSubmission({
+          templateId: parseInt(templateId),
+          userId,
+          fileName: req.file.originalname,
+          filePath: req.file.path,
+          fileSize: req.file.size,
+          reportingPeriod,
+        });
+
+        // Validate submission in background
+        validateSubmissionAsync(submission.id);
+
+        res.json({
+          message: "Submission uploaded successfully",
+          submissionId: submission.id,
+          submission,
+        });
+      } catch (error) {
+        // Enhanced error logging and return real error message for debugging
+        console.error("Submission error:", error);
+        let errorMsg = "Failed to upload submission";
+        if (error instanceof Error) {
+          errorMsg += ": " + error.message;
+        } else if (typeof error === "string") {
+          errorMsg += ": " + error;
+        }
+        res.status(500).json({ error: errorMsg });
       }
-
-      const { templateId, reportingPeriod } = req.body;
-      const userId = 1; // TODO: Get from authenticated user
-      
-      if (!templateId) {
-        return res.status(400).json({ error: "Template ID is required" });
-      }
-
-      if (!reportingPeriod) {
-        return res.status(400).json({ error: "Reporting period is required" });
-      }
-
-      // Create submission record
-      const submission = await storage.createSubmission({
-        templateId: parseInt(templateId),
-        userId,
-        fileName: req.file.originalname,
-        filePath: req.file.path,
-        fileSize: req.file.size,
-        reportingPeriod
-      });
-
-      // Validate submission in background
-      validateSubmissionAsync(submission.id);
-
-      res.json({ 
-        message: "Submission uploaded successfully", 
-        submissionId: submission.id,
-        submission 
-      });
-    } catch (error) {
-      console.error("Submission error:", error);
-      res.status(500).json({ error: "Failed to upload submission" });
     }
-  });
+  );
 
   // Get user submissions
   app.get("/api/submissions", async (req, res) => {
@@ -972,7 +1095,7 @@ Only return the JSON array, no additional text.
   app.get("/api/admin/submissions", async (req, res) => {
     try {
       const submissions = await storage.getSubmissions();
-      
+
       // Filter only successful submissions and add user information
       const successfulSubmissions = [];
       for (const submission of submissions) {
@@ -984,7 +1107,7 @@ Only return the JSON array, no additional text.
           });
         }
       }
-      
+
       res.json(successfulSubmissions);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch submissions" });
@@ -1006,11 +1129,11 @@ Only return the JSON array, no additional text.
     try {
       const id = parseInt(req.params.id);
       const submission = await storage.getSubmission(id);
-      
+
       if (!submission) {
         return res.status(404).json({ error: "Submission not found" });
       }
-      
+
       res.json(submission);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch submission" });
@@ -1033,7 +1156,7 @@ Only return the JSON array, no additional text.
     try {
       const id = parseInt(req.params.id);
       const submission = await storage.getSubmission(id);
-      
+
       if (!submission) {
         return res.status(404).json({ error: "Submission not found" });
       }
@@ -1044,9 +1167,12 @@ Only return the JSON array, no additional text.
       }
 
       // Set headers for file download
-      res.setHeader('Content-Type', 'application/octet-stream');
-      res.setHeader('Content-Disposition', `attachment; filename="${submission.fileName}"`);
-      
+      res.setHeader("Content-Type", "application/octet-stream");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${submission.fileName}"`
+      );
+
       // Stream the file
       const fileStream = fs.createReadStream(submission.filePath);
       fileStream.pipe(res);
@@ -1060,7 +1186,7 @@ Only return the JSON array, no additional text.
     try {
       const id = parseInt(req.params.id);
       const submission = await storage.getSubmission(id);
-      
+
       if (!submission) {
         return res.status(404).json({ error: "Submission not found" });
       }
@@ -1072,7 +1198,7 @@ Only return the JSON array, no additional text.
 
       // Delete validation results first (foreign key constraint)
       await storage.deleteValidationResults(id);
-      
+
       // Delete submission record
       await storage.deleteSubmission(id);
 
@@ -1086,7 +1212,7 @@ Only return the JSON array, no additional text.
   // Generate example validation rules file
   app.get("/api/validation-rules/example", (req, res) => {
     const example = ValidationRulesParser.generateExampleRules();
-    res.type('text/plain').send(example);
+    res.type("text/plain").send(example);
   });
 
   // Get Excel data for viewer
@@ -1094,14 +1220,14 @@ Only return the JSON array, no additional text.
     try {
       const id = parseInt(req.params.id);
       const template = await storage.getTemplate(id);
-      
+
       if (!template) {
         return res.status(404).json({ error: "Template not found" });
       }
 
       // Get the sheets for this template
       const sheets = await storage.getTemplateSheets(id);
-      
+
       if (sheets.length === 0) {
         return res.json([]);
       }
@@ -1109,16 +1235,16 @@ Only return the JSON array, no additional text.
       // Parse the Excel file to get data
       const workbook = new ExcelJS.Workbook();
       const ext = path.extname(template.filePath).toLowerCase();
-      
-      if (ext === '.xlsx' || ext === '.xls') {
+
+      if (ext === ".xlsx" || ext === ".xls") {
         await workbook.xlsx.readFile(template.filePath);
-        
+
         const sheetsData: any[] = [];
-        
+
         workbook.eachSheet((worksheet, sheetId) => {
           const sheetData: any[][] = [];
           const mergedCells: any[] = [];
-          
+
           // Get merged cell ranges using the model property
           if (worksheet.model && worksheet.model.merges) {
             worksheet.model.merges.forEach((merge: string) => {
@@ -1133,112 +1259,123 @@ Only return the JSON array, no additional text.
                   }
                   return index - 1;
                 };
-                
+
                 const startCol = colToIndex(match[1]);
                 const startRow = parseInt(match[2]) - 1;
                 const endCol = colToIndex(match[3]);
                 const endRow = parseInt(match[4]) - 1;
-                
+
                 mergedCells.push({
                   top: startRow,
                   left: startCol,
                   bottom: endRow,
-                  right: endCol
+                  right: endCol,
                 });
               }
             });
           }
-          
+
           // Convert worksheet to array format
           const maxRow = worksheet.rowCount || 0;
           const maxCol = worksheet.columnCount || 0;
-          
+
           for (let rowNumber = 1; rowNumber <= maxRow; rowNumber++) {
             const row = worksheet.getRow(rowNumber);
             const rowData: any[] = [];
-            
+
             for (let colNumber = 1; colNumber <= maxCol; colNumber++) {
               const cell = row.getCell(colNumber);
-              
+
               // Check if this cell is part of a merged range
               let isMerged = false;
               let mergeInfo = null;
-              
+
               for (const merge of mergedCells) {
-                if (rowNumber - 1 >= merge.top && rowNumber - 1 <= merge.bottom &&
-                    colNumber - 1 >= merge.left && colNumber - 1 <= merge.right) {
+                if (
+                  rowNumber - 1 >= merge.top &&
+                  rowNumber - 1 <= merge.bottom &&
+                  colNumber - 1 >= merge.left &&
+                  colNumber - 1 <= merge.right
+                ) {
                   isMerged = true;
                   mergeInfo = {
                     ...merge,
-                    isTopLeft: rowNumber - 1 === merge.top && colNumber - 1 === merge.left
+                    isTopLeft:
+                      rowNumber - 1 === merge.top &&
+                      colNumber - 1 === merge.left,
                   };
                   break;
                 }
               }
-              
+
               // Extract cell styling safely
               let backgroundColor = null;
               let textColor = null;
-              
-              if (cell.style?.fill && 'type' in cell.style.fill) {
+
+              if (cell.style?.fill && "type" in cell.style.fill) {
                 const fill = cell.style.fill as any;
-                if (fill.type === 'pattern' && fill.fgColor?.argb) {
+                if (fill.type === "pattern" && fill.fgColor?.argb) {
                   backgroundColor = `#${fill.fgColor.argb.substring(2)}`;
                 }
               }
-              
-              if (cell.style?.font?.color && 'argb' in cell.style.font.color) {
+
+              if (cell.style?.font?.color && "argb" in cell.style.font.color) {
                 const color = cell.style.font.color as any;
                 if (color.argb) {
                   textColor = `#${color.argb.substring(2)}`;
                 }
               }
-              
+
               rowData.push({
-                value: cell.value !== undefined && cell.value !== null ? String(cell.value) : "",
+                value:
+                  cell.value !== undefined && cell.value !== null
+                    ? String(cell.value)
+                    : "",
                 merged: isMerged,
                 mergeInfo: mergeInfo,
                 style: {
                   backgroundColor,
                   color: textColor,
-                  fontWeight: cell.style?.font?.bold ? 'bold' : 'normal',
-                  textAlign: cell.style?.alignment?.horizontal || 'left',
-                  verticalAlign: cell.style?.alignment?.vertical || 'middle'
-                }
+                  fontWeight: cell.style?.font?.bold ? "bold" : "normal",
+                  textAlign: cell.style?.alignment?.horizontal || "left",
+                  verticalAlign: cell.style?.alignment?.vertical || "middle",
+                },
               });
             }
             sheetData.push(rowData);
           }
-          
+
           sheetsData.push({
             sheetName: worksheet.name,
             data: sheetData,
-            mergedCells: mergedCells
+            mergedCells: mergedCells,
           });
         });
-        
+
         res.json(sheetsData);
-      } else if (ext === '.csv') {
+      } else if (ext === ".csv") {
         // For CSV files, create a single sheet
         const data: any[][] = [];
         const stream = fs.createReadStream(template.filePath);
-        
+
         stream
           .pipe(csv())
-          .on('data', (row: any) => {
+          .on("data", (row: any) => {
             const rowData = Object.values(row).map((value: any) => ({
-              value: value !== undefined && value !== null ? String(value) : ""
+              value: value !== undefined && value !== null ? String(value) : "",
             }));
             data.push(rowData);
           })
-          .on('end', () => {
-            res.json([{
-              sheetName: 'Sheet1',
-              data
-            }]);
+          .on("end", () => {
+            res.json([
+              {
+                sheetName: "Sheet1",
+                data,
+              },
+            ]);
           })
-          .on('error', (error) => {
-            console.error('CSV parsing error:', error);
+          .on("error", (error) => {
+            console.error("CSV parsing error:", error);
             res.status(500).json({ error: "Failed to parse CSV file" });
           });
       } else {
@@ -1267,7 +1404,7 @@ async function validateSubmissionAsync(submissionId: number) {
 
     // Get validation rules for the template
     const rules = await storage.getValidationRules(submission.templateId);
-    
+
     if (rules.length === 0) {
       // No validation rules - mark as passed
       await storage.updateSubmissionStatus(submissionId, "passed", 0, 0);
@@ -1281,12 +1418,16 @@ async function validateSubmissionAsync(submissionId: number) {
       rules,
       onProgress: async (progress: number, message?: string) => {
         // You could store progress in database or use WebSockets for real-time updates
-        console.log(`Validation progress for submission ${submissionId}: ${progress}% - ${message}`);
-      }
+        console.log(
+          `Validation progress for submission ${submissionId}: ${progress}% - ${message}`
+        );
+      },
     };
 
-    const { results, summary } = await ValidationEngine.validateSubmission(context);
-    
+    const { results, summary } = await ValidationEngine.validateSubmission(
+      context
+    );
+
     // Store validation results in batches for better performance
     const batchSize = 100;
     for (let i = 0; i < results.length; i += batchSize) {
@@ -1297,12 +1438,11 @@ async function validateSubmissionAsync(submissionId: number) {
     // Update submission status
     const status = summary.errors > 0 ? "failed" : "passed";
     await storage.updateSubmissionStatus(
-      submissionId, 
-      status, 
-      summary.errors, 
+      submissionId,
+      status,
+      summary.errors,
       summary.warnings
     );
-
   } catch (error) {
     console.error("Validation error:", error);
     await storage.updateSubmissionStatus(submissionId, "failed");
@@ -1312,27 +1452,41 @@ async function validateSubmissionAsync(submissionId: number) {
 // Background processing function
 async function processTemplateAsync(templateId: number) {
   let currentStep = "extraction";
-  
+
   try {
     console.log(`Starting processing for template ${templateId}`);
-    
+
     const template = await storage.getTemplate(templateId);
     if (!template) {
       throw new Error("Template not found");
     }
 
     // Update extraction status to in progress
-    await storage.updateProcessingStatus(templateId, "extraction", "in_progress", "Starting sheet extraction", 10);
+    await storage.updateProcessingStatus(
+      templateId,
+      "extraction",
+      "in_progress",
+      "Starting sheet extraction",
+      10
+    );
     await storage.updateTemplateStatus(templateId, "processing");
 
     console.log(`Processing file: ${template.filePath}`);
 
     // Process file and extract data
-    const result = await FileProcessor.processFile(template.filePath, templateId);
-    
+    const result = await FileProcessor.processFile(
+      template.filePath,
+      templateId
+    );
+
     if (!result.success) {
       console.error(`File processing failed: ${result.error}`);
-      await storage.updateProcessingStatus(templateId, "extraction", "failed", result.error || "Failed to process file");
+      await storage.updateProcessingStatus(
+        templateId,
+        "extraction",
+        "failed",
+        result.error || "Failed to process file"
+      );
       throw new Error(result.error);
     }
 
@@ -1350,56 +1504,89 @@ async function processTemplateAsync(templateId: number) {
           dataPointCount: sheet.dataPointCount,
           extractedData: {
             data: sheet.data,
-            tabularTemplates: sheet.tabularTemplates || []
-          }
+            tabularTemplates: sheet.tabularTemplates || [],
+          },
         });
-        
+
         // Update progress for each sheet stored
-        sheetProgress = 50 + Math.round((i + 1) / result.sheets.length * 40);
+        sheetProgress = 50 + Math.round(((i + 1) / result.sheets.length) * 40);
         await storage.updateProcessingStatus(
-          templateId, 
-          "extraction", 
-          "in_progress", 
-          `Storing sheet ${i + 1}/${result.sheets.length}: ${sheet.name}`, 
+          templateId,
+          "extraction",
+          "in_progress",
+          `Storing sheet ${i + 1}/${result.sheets.length}: ${sheet.name}`,
           sheetProgress
         );
       }
     }
 
     // Update extraction as complete
-    await storage.updateProcessingStatus(templateId, "extraction", "completed", `Successfully extracted ${result.sheets?.length || 0} sheets`, 100);
+    await storage.updateProcessingStatus(
+      templateId,
+      "extraction",
+      "completed",
+      `Successfully extracted ${result.sheets?.length || 0} sheets`,
+      100
+    );
 
     // Generate schemas with AI
     currentStep = "ai_processing";
-    await storage.updateProcessingStatus(templateId, "ai_processing", "in_progress", "Starting AI schema generation", 0);
-    
+    await storage.updateProcessingStatus(
+      templateId,
+      "ai_processing",
+      "in_progress",
+      "Starting AI schema generation",
+      0
+    );
+
     try {
       await FileProcessor.generateSchemas(templateId);
       await storage.updateTemplateStatus(templateId, "completed");
-      await storage.updateProcessingStatus(templateId, "schema_generation", "completed", "All processing completed successfully", 100);
+      await storage.updateProcessingStatus(
+        templateId,
+        "schema_generation",
+        "completed",
+        "All processing completed successfully",
+        100
+      );
     } catch (aiError) {
       console.error("AI processing error:", aiError);
       await storage.updateProcessingStatus(
-        templateId, 
-        "ai_processing", 
-        "failed", 
+        templateId,
+        "ai_processing",
+        "failed",
         aiError instanceof Error ? aiError.message : "AI processing failed"
       );
       throw aiError;
     }
-
   } catch (error) {
     console.error("Template processing failed:", error);
     await storage.updateTemplateStatus(templateId, "failed");
-    
+
     // Update the appropriate step as failed
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-    await storage.updateProcessingStatus(templateId, currentStep, "failed", errorMessage);
-    
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    await storage.updateProcessingStatus(
+      templateId,
+      currentStep,
+      "failed",
+      errorMessage
+    );
+
     // If we haven't started AI processing yet, mark it as pending
     if (currentStep === "extraction") {
-      await storage.updateProcessingStatus(templateId, "ai_processing", "pending", "Waiting for extraction to complete");
-      await storage.updateProcessingStatus(templateId, "schema_generation", "pending", "Waiting for AI processing");
+      await storage.updateProcessingStatus(
+        templateId,
+        "ai_processing",
+        "pending",
+        "Waiting for extraction to complete"
+      );
+      await storage.updateProcessingStatus(
+        templateId,
+        "schema_generation",
+        "pending",
+        "Waiting for AI processing"
+      );
     }
   }
 }
