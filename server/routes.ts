@@ -256,6 +256,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate schemas for a template (manual trigger)
+  app.post("/api/templates/:id/generate-schemas", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Check if template exists
+      const template = await storage.getTemplate(id);
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+
+      // Start schema generation in background
+      FileProcessor.generateSchemas(id).catch(error => {
+        console.error(`Schema generation failed for template ${id}:`, error);
+      });
+
+      res.json({ message: "Schema generation started" });
+    } catch (error) {
+      console.error("Generate schemas error:", error);
+      res.status(500).json({ error: "Failed to start schema generation" });
+    }
+  });
+
   // Get template types
   app.get("/api/template-types", (req, res) => {
     const types = [
