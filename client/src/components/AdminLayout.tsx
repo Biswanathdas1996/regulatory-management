@@ -8,15 +8,15 @@ import {
   FileText,
   FileCheck,
   FolderOpen,
-  Shield,
   Users,
+  Shield,
 } from "lucide-react";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
   title?: string;
   subtitle?: string;
-  showHeader?: boolean;
+  showSidebar?: boolean;
   headerActions?: React.ReactNode;
 }
 
@@ -24,7 +24,7 @@ export default function AdminLayout({
   children,
   title,
   subtitle,
-  showHeader = true,
+  showSidebar = true,
   headerActions,
 }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -50,7 +50,7 @@ export default function AdminLayout({
       current: location === "/admin-submissions",
     },
     {
-      name: "Template Library",
+      name: "Admin Templates",
       href: "/admin-templates",
       icon: FolderOpen,
       current: location === "/admin-templates",
@@ -63,6 +63,27 @@ export default function AdminLayout({
     },
   ];
 
+  if (!showSidebar) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          {(title || subtitle) && (
+            <div className="mb-8">
+              {title && (
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {title}
+                </h1>
+              )}
+              {subtitle && <p className="text-gray-600">{subtitle}</p>}
+              {headerActions && <div className="mt-4">{headerActions}</div>}
+            </div>
+          )}
+          {children}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
@@ -73,15 +94,13 @@ export default function AdminLayout({
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between h-20 px-6 border-b border-gray-200">
+          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
             <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 bg-gradient-to-br from-red-600 to-red-500 rounded-lg flex items-center justify-center shadow-sm">
-                <Shield className="text-white text-lg" />
+              <div className="h-8 w-8 bg-gradient-to-br from-red-600 to-red-500 rounded-lg flex items-center justify-center shadow-sm">
+                <Shield className="text-white text-sm" />
               </div>
               <div>
-                <h2 className="font-bold text-gray-900 text-lg">
-                  Admin Portal
-                </h2>
+                <h2 className="font-bold text-gray-900">Admin Portal</h2>
                 <p className="text-xs text-gray-500">System Management</p>
               </div>
             </div>
@@ -122,21 +141,6 @@ export default function AdminLayout({
               })}
             </div>
           </nav>
-
-          {/* Sidebar Footer */}
-          <div className="px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
-                <Shield className="h-4 w-4 text-red-600" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">
-                  Administrator
-                </p>
-                <p className="text-xs text-gray-500">System Access</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -150,42 +154,34 @@ export default function AdminLayout({
 
       {/* Main content */}
       <div className="flex-1 flex flex-col">
-        {showHeader && (
-          <header className="bg-white border-b border-gray-200">
-            <div className="px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-between h-20">
-                <div className="flex items-center space-x-4">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="lg:hidden"
-                    onClick={() => setSidebarOpen(true)}
-                  >
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                  <div>
-                    {title && (
-                      <h1 className="text-2xl font-bold text-gray-900">
-                        {title}
-                      </h1>
-                    )}
-                    {subtitle && (
-                      <p className="text-gray-500 text-sm mt-1">{subtitle}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  {headerActions}
+        <header className="bg-white border-b border-gray-200">
+          <div className="px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden"
+                  onClick={() => setSidebarOpen(true)}
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+                <div>
+                  {title && (
+                    <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+                  )}
+                  {subtitle && (
+                    <p className="text-gray-500 text-sm">{subtitle}</p>
+                  )}
                 </div>
               </div>
+              <div className="flex items-center space-x-4">{headerActions}</div>
             </div>
-          </header>
-        )}
-
-        <main className="flex-1 bg-gray-50">
-          <div className="px-4 sm:px-6 lg:px-8 py-8">
-            <div className="max-w-7xl mx-auto">{children}</div>
           </div>
+        </header>
+
+        <main className="flex-1 overflow-auto">
+          <div className="p-6">{children}</div>
         </main>
       </div>
     </div>

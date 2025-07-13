@@ -254,7 +254,7 @@ export default function SubmissionViewPage() {
                     <span className="text-sm text-gray-600">
                       Submitted on{" "}
                       {format(
-                        new Date(submission.submittedAt),
+                        new Date(submission.createdAt),
                         "MMM dd, yyyy HH:mm"
                       )}
                     </span>

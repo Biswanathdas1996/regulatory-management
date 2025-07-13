@@ -1,21 +1,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Link, useLocation } from "wouter";
 import {
-  Home,
+  Menu,
+  XCircle,
+  LayoutDashboard,
   Upload,
   History,
   FileText,
   User,
-  XCircle,
-  Menu,
 } from "lucide-react";
-import { Link, useLocation } from "wouter";
 
 interface UserLayoutProps {
   children: React.ReactNode;
   title?: string;
   subtitle?: string;
-  showHeader?: boolean;
+  showSidebar?: boolean;
   headerActions?: React.ReactNode;
 }
 
@@ -23,7 +23,7 @@ export default function UserLayout({
   children,
   title,
   subtitle,
-  showHeader = true,
+  showSidebar = true,
   headerActions,
 }: UserLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -32,7 +32,7 @@ export default function UserLayout({
   const menuItems = [
     {
       name: "Dashboard",
-      icon: Home,
+      icon: LayoutDashboard,
       href: "/user-dashboard",
       current: location === "/user-dashboard",
     },
@@ -48,13 +48,21 @@ export default function UserLayout({
       href: "/submission-history",
       current: location === "/submission-history",
     },
+    {
+      name: "Templates",
+      icon: FileText,
+      href: "/template-management",
+      current: location === "/template-management",
+    },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:inset-0`}
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0 lg:static lg:inset-0`}
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
@@ -96,7 +104,9 @@ export default function UserLayout({
                       onClick={() => setSidebarOpen(false)}
                     >
                       <IconComponent
-                        className={`h-5 w-5 mr-3 ${item.current ? "text-white" : "text-gray-400"}`}
+                        className={`h-5 w-5 mr-3 ${
+                          item.current ? "text-white" : "text-gray-400"
+                        }`}
                       />
                       {item.name}
                     </div>
@@ -133,42 +143,34 @@ export default function UserLayout({
 
       {/* Main content */}
       <div className="flex-1 flex flex-col">
-        {showHeader && (
-          <header className="bg-white border-b border-gray-200">
-            <div className="px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center justify-between h-20">
-                <div className="flex items-center space-x-4">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="lg:hidden"
-                    onClick={() => setSidebarOpen(true)}
-                  >
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                  <div>
-                    {title && (
-                      <h1 className="text-2xl font-bold text-gray-900">
-                        {title}
-                      </h1>
-                    )}
-                    {subtitle && (
-                      <p className="text-gray-500 text-sm mt-1">{subtitle}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  {headerActions}
+        <header className="bg-white border-b border-gray-200">
+          <div className="px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden"
+                  onClick={() => setSidebarOpen(true)}
+                >
+                  <Menu className="h-5 w-5" />
+                </Button>
+                <div>
+                  {title && (
+                    <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+                  )}
+                  {subtitle && (
+                    <p className="text-gray-500 text-sm">{subtitle}</p>
+                  )}
                 </div>
               </div>
+              <div className="flex items-center space-x-4">{headerActions}</div>
             </div>
-          </header>
-        )}
-
-        <main className="flex-1 bg-gray-50">
-          <div className="px-4 sm:px-6 lg:px-8 py-8">
-            <div className="max-w-7xl mx-auto">{children}</div>
           </div>
+        </header>
+
+        <main className="flex-1 overflow-auto">
+          <div className="p-6">{children}</div>
         </main>
       </div>
     </div>

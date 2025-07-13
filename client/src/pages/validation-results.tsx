@@ -47,6 +47,27 @@ export default function ValidationResultsPage() {
     },
   });
 
+  const handleAction = async (action: string) => {
+    try {
+      const response = await fetch(
+        `/api/submissions/${submissionId}/${action}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ feedback: "What the hell you submitted?" }),
+        }
+      );
+      if (!response.ok) throw new Error("Action failed");
+      alert(`Submission ${action} successfully.`);
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to perform action. Please try again.");
+    }
+  };
+
   if (submissionLoading || resultsLoading) {
     return (
       <AdminLayout
@@ -248,7 +269,7 @@ export default function ValidationResultsPage() {
                     <span className="text-sm text-gray-600">
                       Submitted on{" "}
                       {format(
-                        new Date(submission.submittedAt),
+                        new Date(submission.createdAt),
                         "MMM dd, yyyy HH:mm"
                       )}
                     </span>
@@ -267,6 +288,43 @@ export default function ValidationResultsPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Admin Actions and Status Display */}
+              <div className="flex items-center gap-4 mb-8">
+                <>
+                  <Button
+                    variant="default"
+                    onClick={() => handleAction("approve")}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleAction("reject")}
+                  >
+                    Reject
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleAction("return")}
+                  >
+                    Return to User
+                  </Button>
+                </>
+                {!submission.isAdmin && (
+                  <Badge
+                    className={
+                      submission.status === "approved"
+                        ? "bg-green-100 text-green-800"
+                        : submission.status === "rejected"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }
+                  >
+                    {submission.status.toUpperCase()}
+                  </Badge>
+                )}
+              </div>
 
               {/* Detailed Results by Rule */}
               <Card>

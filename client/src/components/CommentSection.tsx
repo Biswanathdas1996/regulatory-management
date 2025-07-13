@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageCircle, Reply, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Comment {
   id: number;
@@ -21,9 +22,12 @@ interface CommentSectionProps {
 }
 
 export function CommentSection({ submissionId }: CommentSectionProps) {
+  const { user } = useAuth(); // Get the authenticated user
+
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<number | null>(null);
   const queryClient = useQueryClient();
+  const replyInputRef = useRef<HTMLTextAreaElement | null>(null); // Add a ref for the reply input box
 
   const { data: comments = [], isLoading } = useQuery({
     queryKey: [`/api/submissions/${submissionId}/comments`],
@@ -36,6 +40,8 @@ export function CommentSection({ submissionId }: CommentSectionProps) {
 
   const addCommentMutation = useMutation({
     mutationFn: async (data: { content: string; parentCommentId?: number }) => {
+      if (!user) throw new Error("User is not authenticated"); // Ensure user is not null
+
       const response = await fetch(
         `/api/submissions/${submissionId}/comments`,
         {
@@ -43,7 +49,7 @@ export function CommentSection({ submissionId }: CommentSectionProps) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ...data,
-            user: { id: 2, username: "Admin", role: "admin" },
+            user: { id: user.id, username: user.username, role: user.role },
           }),
         }
       );
@@ -66,6 +72,19 @@ export function CommentSection({ submissionId }: CommentSectionProps) {
     addCommentMutation.mutate({
       content: newComment,
       ...(replyTo && { parentCommentId: replyTo }),
+    });
+  };
+
+  const handleReplySubmit = (
+    e: React.FormEvent,
+    parentCommentId: number | null
+  ) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    addCommentMutation.mutate({
+      content: newComment,
+      ...(parentCommentId && { parentCommentId }),
     });
   };
 
@@ -105,10 +124,15 @@ export function CommentSection({ submissionId }: CommentSectionProps) {
         </Button>
       )}
       {replyTo === comment.id && (
-        <form onSubmit={handleSubmit} className="mt-4">
+        <form
+          onSubmit={(e) => handleReplySubmit(e, comment.id)}
+          className="mt-4"
+        >
           <Textarea
+            ref={replyInputRef} // Attach the ref to the Textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
+            onKeyUp={() => replyInputRef.current?.focus()} // Ensure focus remains on the input
             placeholder="Write a reply..."
             className="mb-2"
           />

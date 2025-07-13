@@ -85,8 +85,15 @@ export interface IStorage {
   getSubmission(id: number): Promise<Submission | undefined>;
   getSubmissions(userId?: number, templateId?: number): Promise<Submission[]>;
   updateSubmissionStatus(
-    id: number,
-    status: string,
+    submissionId: number,
+    status:
+      | "pending"
+      | "approved"
+      | "rejected"
+      | "returned"
+      | "passed"
+      | "failed",
+    updatedById?: number | undefined,
     errors?: number,
     warnings?: number
   ): Promise<void>;
@@ -104,7 +111,13 @@ export interface IStorage {
 
   // Comment methods
   getComments(submissionId: number): Promise<Comment[]>;
-  createComment(data: InsertComment): Promise<Comment>;
+  createComment(data: {
+    submissionId: number;
+    userId: number;
+    text: string;
+    parentCommentId?: number | null;
+    systemGenerated?: boolean;
+  }): Promise<Comment>;
   getCommentsWithUsers(
     submissionId: number
   ): Promise<(Comment & { username: string })[]>;
@@ -366,23 +379,43 @@ export class DatabaseStorage implements IStorage {
         conditions.length === 1
           ? conditions[0]
           : conditions.reduce((acc, condition) => acc && condition);
-      return await query.where(whereClause).orderBy(submissions.submittedAt);
+      return await query.where(whereClause).orderBy(submissions.createdAt);
     }
 
-    return await query.orderBy(submissions.submittedAt);
+    return await query.orderBy(submissions.createdAt);
   }
 
+  // Update submission status
   async updateSubmissionStatus(
-    id: number,
-    status: string,
+    submissionId: number,
+    status:
+      | "pending"
+      | "approved"
+      | "rejected"
+      | "returned"
+      | "passed"
+      | "failed",
+    updatedById?: number | undefined,
     errors?: number,
     warnings?: number
-  ): Promise<void> {
-    const updates: any = { status, validatedAt: new Date() };
+  ) {
+    const updates: any = {
+      status,
+      statusUpdatedBy: updatedById,
+      statusUpdatedAt: new Date(),
+    };
+
+    // Legacy support for validation status updates
     if (errors !== undefined) updates.validationErrors = errors;
     if (warnings !== undefined) updates.validationWarnings = warnings;
+    if (status === "passed" || status === "failed") {
+      updates.validatedAt = new Date();
+    }
 
-    await db.update(submissions).set(updates).where(eq(submissions.id, id));
+    await db
+      .update(submissions)
+      .set(updates)
+      .where(eq(submissions.id, submissionId));
   }
 
   // Validation result methods
@@ -431,9 +464,25 @@ export class DatabaseStorage implements IStorage {
       .orderBy(comments.createdAt);
   }
 
-  async createComment(data: InsertComment) {
-    const [comment] = await db.insert(comments).values(data).returning();
-    return comment;
+  async createComment(data: {
+    submissionId: number;
+    userId: number;
+    text: string;
+    parentCommentId?: number | null;
+    systemGenerated?: boolean;
+  }) {
+    const comment = await db
+      .insert(comments)
+      .values({
+        submissionId: data.submissionId,
+        userId: data.userId,
+        parentCommentId: data.parentCommentId || null,
+        text: data.text,
+        systemGenerated: data.systemGenerated || false,
+      })
+      .returning();
+
+    return comment[0];
   }
 
   async getCommentsWithUsers(submissionId: number) {

@@ -219,7 +219,7 @@ export function SubmissionHistory({
                     </TableCell>
                     <TableCell className="text-sm text-gray-500">
                       {format(
-                        new Date(submission.submittedAt),
+                        new Date(submission.createdAt),
                         "MMM dd, yyyy HH:mm"
                       )}
                     </TableCell>

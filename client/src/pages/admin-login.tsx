@@ -5,8 +5,15 @@ import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useAuth } from "@/contexts/AuthContext";
 import { Link, useLocation } from "wouter";
 import { Shield, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
@@ -20,8 +27,7 @@ type AdminLoginForm = z.infer<typeof adminLoginSchema>;
 export default function AdminLoginPage() {
   const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const { login, isLoading } = useAuth();
 
   const form = useForm<AdminLoginForm>({
     resolver: zodResolver(adminLoginSchema),
@@ -32,29 +38,12 @@ export default function AdminLoginPage() {
   });
 
   const onSubmit = async (data: AdminLoginForm) => {
-    setIsLoading(true);
     try {
-      // Simulate authentication - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo purposes, accept any admin credentials
-      if (data.username.toLowerCase().includes("admin")) {
-        toast({
-          title: "Login Successful",
-          description: "Welcome to the admin dashboard",
-        });
-        setLocation("/admin-dashboard");
-      } else {
-        throw new Error("Invalid admin credentials");
-      }
+      await login({ username: data.username, password: data.password });
+      setLocation("/admin-dashboard");
     } catch (error) {
-      toast({
-        title: "Login Failed",
-        description: "Invalid username or password",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      // Error handling is done in the auth context
+      console.error("Login failed:", error);
     }
   };
 
@@ -74,13 +63,18 @@ export default function AdminLoginPage() {
             <div className="mx-auto mb-4 h-16 w-16 bg-gradient-to-br from-red-600 to-red-500 rounded-full flex items-center justify-center shadow-lg">
               <Shield className="h-8 w-8 text-white" />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">Admin Login</CardTitle>
+            <CardTitle className="text-2xl font-bold text-gray-900">
+              Admin Login
+            </CardTitle>
             <p className="text-gray-600">Access the administrative dashboard</p>
           </CardHeader>
-          
+
           <CardContent className="pt-0">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={form.control}
                   name="username"
@@ -133,8 +127,8 @@ export default function AdminLoginPage() {
                   )}
                 />
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full h-11 bg-red-600 hover:bg-red-700"
                   disabled={isLoading}
                 >

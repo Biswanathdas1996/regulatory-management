@@ -27,7 +27,7 @@ export default function SubmissionView() {
     status: string;
     validationErrors?: number;
     validationWarnings?: number;
-    submittedAt: string;
+    createdAt: string;
     validatedAt?: string;
     adminComments?: string;
   }
@@ -131,7 +131,7 @@ export default function SubmissionView() {
           </div>
           <div className="mt-2">
             <span className="font-semibold">Submitted At:</span>{" "}
-            {format(new Date(submission.submittedAt), "MMM dd, yyyy HH:mm")}
+            {format(new Date(submission.createdAt), "MMM dd, yyyy HH:mm")}
           </div>
         </div>
         <div className="mb-4">

@@ -1362,36 +1362,25 @@ Only return the JSON array, no additional text.
     }
   });
 
-  // Admin endpoint to get all successful submissions with user details
-  app.get("/api/admin/submissions", async (req, res) => {
-    try {
-      const submissions = await storage.getSubmissions();
-
-      // Filter only successful submissions and add user information
-      const successfulSubmissions = [];
-      for (const submission of submissions) {
-        if (submission.status === "passed") {
-          const user = await storage.getUser(submission.userId);
-          successfulSubmissions.push({
-            ...submission,
-            userName: user?.username || `User ${submission.userId}`,
-          });
-        }
-      }
-
-      res.json(successfulSubmissions);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch submissions" });
-    }
-  });
-
   // Get all submissions for admin view
   app.get("/api/admin/submissions", async (req, res) => {
     try {
       const submissions = await storage.getSubmissions();
-      res.json(submissions);
+
+      // Add user information to each submission
+      const submissionsWithUsers = [];
+      for (const submission of submissions) {
+        const user = await storage.getUser(submission.userId);
+        submissionsWithUsers.push({
+          ...submission,
+          userName: user?.username || `User ${submission.userId}`,
+        });
+      }
+
+      res.json(submissionsWithUsers);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch submissions" });
+      console.error("Error fetching admin submissions:", error);
+      res.status(500).json({ error: JSON.stringify(error) });
     }
   });
 
@@ -1410,6 +1399,124 @@ Only return the JSON array, no additional text.
       res.status(500).json({ error: "Failed to fetch submission" });
     }
   });
+
+  // Approve submission (Admin only)
+  app.post(
+    "/api/submissions/:id/approve",
+    requireAuth,
+    requireAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const submission = await storage.getSubmission(id);
+
+        if (!submission) {
+          return res.status(404).json({ error: "Submission not found" });
+        }
+
+        // Update submission status
+        await storage.updateSubmissionStatus(id, "approved", req.user?.id);
+
+        // Create an audit comment
+        await storage.createComment({
+          submissionId: id,
+          userId: req.user!.id,
+          text: "Submission approved",
+        });
+
+        res.json({ message: "Submission approved successfully" });
+      } catch (error) {
+        console.error("Approve submission error:", error);
+        res.status(500).json({ error: "Failed to approve submission" });
+      }
+    }
+  );
+
+  // Reject submission (Admin only)
+  app.post(
+    "/api/submissions/:id/reject",
+    requireAuth,
+    requireAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const { reason } = req.body;
+
+        if (
+          !reason ||
+          typeof reason !== "string" ||
+          reason.trim().length === 0
+        ) {
+          return res
+            .status(400)
+            .json({ error: "Rejection reason is required" });
+        }
+
+        const submission = await storage.getSubmission(id);
+        if (!submission) {
+          return res.status(404).json({ error: "Submission not found" });
+        }
+
+        // Update submission status
+        await storage.updateSubmissionStatus(id, "rejected", req.user?.id);
+
+        // Create an audit comment with rejection reason
+        await storage.createComment({
+          submissionId: id,
+          userId: req.user!.id,
+          text: `Submission rejected - Reason: ${reason.trim()}`,
+        });
+
+        res.json({ message: "Submission rejected successfully" });
+      } catch (error) {
+        console.error("Reject submission error:", error);
+        res.status(500).json({ error: "Failed to reject submission" });
+      }
+    }
+  );
+
+  // Return submission for revision (Admin only)
+  app.post(
+    "/api/submissions/:id/return",
+    requireAuth,
+    requireAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const { feedback } = req.body;
+
+        if (
+          !feedback ||
+          typeof feedback !== "string" ||
+          feedback.trim().length === 0
+        ) {
+          return res
+            .status(400)
+            .json({ error: "Feedback is required for returned submissions" });
+        }
+
+        const submission = await storage.getSubmission(id);
+        if (!submission) {
+          return res.status(404).json({ error: "Submission not found" });
+        }
+
+        // Update submission status
+        await storage.updateSubmissionStatus(id, "returned", req.user?.id);
+
+        // Create an audit comment with feedback
+        await storage.createComment({
+          submissionId: id,
+          userId: req.user!.id,
+          text: `Submission returned for revision - Feedback: ${feedback.trim()}`,
+        });
+
+        res.json({ message: "Submission returned successfully" });
+      } catch (error) {
+        console.error("Return submission error:", error);
+        res.status(500).json({ error: "Failed to return submission" });
+      }
+    }
+  );
 
   // Get validation results for a submission
   app.get("/api/submissions/:id/results", async (req, res) => {
@@ -1602,11 +1709,6 @@ Only return the JSON array, no additional text.
         const submission = await storage.getSubmission(submissionId);
         if (!submission) {
           return res.status(404).json({ error: "Submission not found" });
-        }
-
-        // Check if user has access to this submission
-        if (user.role !== "admin" && user.id !== submission.userId) {
-          return res.status(403).json({ error: "Access denied" });
         }
 
         // Create comment

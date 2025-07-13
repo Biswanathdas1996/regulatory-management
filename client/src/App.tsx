@@ -3,6 +3,14 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
+import {
+  ProtectedRoute,
+  AdminRoute,
+  UserRoute,
+  PublicRoute,
+} from "@/components/ProtectedRoute";
+import { Layout } from "@/components/Layout";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import TemplateDetail from "@/pages/template-detail";
@@ -22,21 +30,115 @@ import UserManagementPage from "@/pages/user-management";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/template/:id" component={TemplateDetail} />
-      <Route path="/template-management" component={TemplateManagement} />
-      <Route path="/user-submission" component={UserSubmissionPage} />
-      <Route path="/user-dashboard" component={UserDashboardPage} />
-      <Route path="/submission-history" component={SubmissionHistoryPage} />
-      <Route path="/validation-results/:id" component={ValidationResultsPage} />
-      <Route path="/admin-dashboard" component={AdminDashboardPage} />
-      <Route path="/admin-submissions" component={AdminSubmissionsPage} />
-      <Route path="/admin-templates" component={AdminTemplatesPage} />
-      <Route path="/admin-login" component={AdminLoginPage} />
-      <Route path="/user-login" component={UserLoginPage} />
-      <Route path="/user-management" component={UserManagementPage} />
-      <Route path="/submission-view/:id" component={SubmissionViewPage} />
-      <Route component={NotFound} />
+      {/* Public routes with different layouts */}
+      <Route path="/admin-login">
+        <Layout showHeader={false}>
+          <PublicRoute redirectIfAuthenticated>
+            <AdminLoginPage />
+          </PublicRoute>
+        </Layout>
+      </Route>
+      <Route path="/user-login">
+        <Layout showHeader={false}>
+          <PublicRoute redirectIfAuthenticated>
+            <UserLoginPage />
+          </PublicRoute>
+        </Layout>
+      </Route>
+
+      {/* All other routes with header */}
+      <Route path="/">
+        <Layout>
+          <Home />
+        </Layout>
+      </Route>
+      <Route path="/template/:id">
+        <Layout>
+          <TemplateDetail />
+        </Layout>
+      </Route>
+
+      {/* Admin protected routes */}
+      <Route path="/admin-dashboard">
+        <Layout>
+          <AdminRoute>
+            <AdminDashboardPage />
+          </AdminRoute>
+        </Layout>
+      </Route>
+      <Route path="/admin-submissions">
+        <Layout>
+          <AdminRoute>
+            <AdminSubmissionsPage />
+          </AdminRoute>
+        </Layout>
+      </Route>
+      <Route path="/admin-templates">
+        <Layout>
+          <AdminRoute>
+            <AdminTemplatesPage />
+          </AdminRoute>
+        </Layout>
+      </Route>
+      <Route path="/user-management">
+        <Layout>
+          <AdminRoute>
+            <UserManagementPage />
+          </AdminRoute>
+        </Layout>
+      </Route>
+
+      {/* User protected routes */}
+      <Route path="/user-dashboard">
+        <Layout>
+          <UserRoute>
+            <UserDashboardPage />
+          </UserRoute>
+        </Layout>
+      </Route>
+      <Route path="/user-submission">
+        <Layout>
+          <UserRoute>
+            <UserSubmissionPage />
+          </UserRoute>
+        </Layout>
+      </Route>
+      <Route path="/submission-history">
+        <Layout>
+          <UserRoute>
+            <SubmissionHistoryPage />
+          </UserRoute>
+        </Layout>
+      </Route>
+
+      {/* Mixed authentication routes */}
+      <Route path="/template-management">
+        <Layout>
+          <ProtectedRoute>
+            <TemplateManagement />
+          </ProtectedRoute>
+        </Layout>
+      </Route>
+      <Route path="/validation-results/:id">
+        <Layout>
+          <ProtectedRoute>
+            <ValidationResultsPage />
+          </ProtectedRoute>
+        </Layout>
+      </Route>
+      <Route path="/submission-view/:id">
+        <Layout>
+          <ProtectedRoute>
+            <SubmissionViewPage />
+          </ProtectedRoute>
+        </Layout>
+      </Route>
+
+      <Route>
+        <Layout>
+          <NotFound />
+        </Layout>
+      </Route>
     </Switch>
   );
 }
@@ -44,10 +146,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

@@ -5,13 +5,20 @@ import { z } from "zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useAuth } from "@/contexts/AuthContext";
 import { Link, useLocation } from "wouter";
 import { User, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 const userLoginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -20,8 +27,7 @@ type UserLoginForm = z.infer<typeof userLoginSchema>;
 export default function UserLoginPage() {
   const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const { login, isLoading } = useAuth();
 
   const form = useForm<UserLoginForm>({
     resolver: zodResolver(userLoginSchema),
@@ -32,25 +38,12 @@ export default function UserLoginPage() {
   });
 
   const onSubmit = async (data: UserLoginForm) => {
-    setIsLoading(true);
     try {
-      // Simulate authentication - replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo purposes, accept any valid email format
-      toast({
-        title: "Login Successful",
-        description: "Welcome to your dashboard",
-      });
+      await login({ email: data.email, password: data.password });
       setLocation("/user-dashboard");
     } catch (error) {
-      toast({
-        title: "Login Failed",
-        description: "Invalid email or password",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      // Error handling is done in the auth context
+      console.error("Login failed:", error);
     }
   };
 
@@ -70,23 +63,28 @@ export default function UserLoginPage() {
             <div className="mx-auto mb-4 h-16 w-16 bg-gradient-to-br from-blue-600 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
               <User className="h-8 w-8 text-white" />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">User Login</CardTitle>
+            <CardTitle className="text-2xl font-bold text-gray-900">
+              User Login
+            </CardTitle>
             <p className="text-gray-600">Access your submission dashboard</p>
           </CardHeader>
-          
+
           <CardContent className="pt-0">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
+              >
                 <FormField
                   control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email Address</FormLabel>
+                      <FormLabel>Username</FormLabel>
                       <FormControl>
                         <Input
-                          type="email"
-                          placeholder="Enter your email"
+                          type="text"
+                          placeholder="Enter your username"
                           {...field}
                           className="h-11"
                         />
@@ -131,13 +129,16 @@ export default function UserLoginPage() {
                 />
 
                 <div className="flex items-center justify-between">
-                  <Button variant="link" className="h-auto p-0 text-sm text-blue-600">
+                  <Button
+                    variant="link"
+                    className="h-auto p-0 text-sm text-blue-600"
+                  >
                     Forgot password?
                   </Button>
                 </div>
 
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full h-11"
                   disabled={isLoading}
                 >
