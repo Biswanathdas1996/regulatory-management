@@ -19,6 +19,8 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Files stored in dedicated `validation/` folder with structured naming
 - Backend API endpoint `/api/templates/:id/validation-file` processes uploaded files
 - Templates automatically marked as "with rules" when validation files are uploaded
+- Fixed `/api/templates/with-rules` endpoint to filter by `validation_file_uploaded` flag
+- Updated user submission template selector to show "with rules" badge for uploaded files
 - Streamlined user experience focused solely on file-based rule configuration
 
 ### IFSCA Landing Page Transformation (January 13, 2025)

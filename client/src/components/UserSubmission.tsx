@@ -262,7 +262,7 @@ export function UserSubmission() {
                               <div className="flex items-center justify-between w-full">
                                 <span>{template.name}</span>
                                 <Badge variant="secondary" className="ml-2">
-                                  {template.rulesCount} rules
+                                  with rules
                                 </Badge>
                               </div>
                             </SelectItem>
