@@ -80,7 +80,7 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 pb-16">
-        <div className="max-w-6xl mx-auto"></div>
+        <div className="max-w-6xl mx-auto">
 
           {/* Main Access Cards */}
           <div className="grid lg:grid-cols-2 gap-8 mb-16">
@@ -247,6 +247,7 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </div>
     </div>
   );
 }
