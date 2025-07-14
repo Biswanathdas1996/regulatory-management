@@ -270,11 +270,6 @@ export function ExcelViewer({
       );
     }
 
-    // Skip rendering cells that are part of a merged range but not the top-left
-    if (cell.merged && cell.mergeInfo && !cell.mergeInfo.isTopLeft) {
-      return null;
-    }
-
     const isEditing =
       editingCell?.row === rowIndex && editingCell?.col === colIndex;
     const cellValue = getCellValue(
@@ -477,6 +472,26 @@ export function ExcelViewer({
     // Calculate the maximum number of columns in any row
     const maxCols = Math.max(...sheet.data.map((row) => row.length));
 
+    // Create a matrix to track which cells are covered by merges
+    const coveredCells = new Set<string>();
+    
+    // First pass: identify all cells covered by merges
+    sheet.data.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        if (cell?.merged && cell.mergeInfo?.isTopLeft) {
+          const { left, right, top, bottom } = cell.mergeInfo;
+          // Mark all cells in the merge range except top-left as covered
+          for (let r = top; r <= bottom; r++) {
+            for (let c = left; c <= right; c++) {
+              if (r !== top || c !== left) {
+                coveredCells.add(`${r},${c}`);
+              }
+            }
+          }
+        }
+      });
+    });
+
     return (
       <div
         className="overflow-auto border rounded-lg"
@@ -531,6 +546,11 @@ export function ExcelViewer({
                 </td>
                 {/* Data cells */}
                 {Array.from({ length: maxCols }, (_, colIndex) => {
+                  // Skip cells that are covered by a merge range
+                  if (coveredCells.has(`${rowIndex},${colIndex}`)) {
+                    return null;
+                  }
+
                   const cell = row[colIndex];
 
                   // Handle null cells - maintain exact positioning
@@ -552,14 +572,6 @@ export function ExcelViewer({
                     );
                   }
 
-                  // Skip cells that are merged but not top-left
-                  if (
-                    cell.merged &&
-                    cell.mergeInfo &&
-                    !cell.mergeInfo.isTopLeft
-                  ) {
-                    return null;
-                  }
                   return renderCell(cell, rowIndex, colIndex, sheet.sheetName);
                 })}
               </tr>
