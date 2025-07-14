@@ -38,6 +38,12 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   updateUser(id: number, data: Partial<InsertUser>): Promise<User>;
   deleteUser(id: number): Promise<void>;
+  
+  // Admin methods
+  getIFSCAUsers(): Promise<User[]>;
+  getUsersByRole(role: string): Promise<User[]>;
+  getUsersByType(userType: string): Promise<User[]>;
+  updateUserStatus(id: number, isActive: boolean): Promise<void>;
 
   // Template methods
   createTemplate(template: InsertTemplate): Promise<Template>;
@@ -509,6 +515,38 @@ export class DatabaseStorage implements IStorage {
       ...comment,
       username: userMap.get(comment.userId) || `User ${comment.userId}`,
     }));
+  }
+
+  // Admin methods
+  async getIFSCAUsers(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.role, 'ifsca_user'))
+      .orderBy(users.username);
+  }
+
+  async getUsersByRole(role: string): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.role, role))
+      .orderBy(users.username);
+  }
+
+  async getUsersByType(userType: string): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.userType, userType))
+      .orderBy(users.username);
+  }
+
+  async updateUserStatus(id: number, isActive: boolean): Promise<void> {
+    await db
+      .update(users)
+      .set({ isActive, updatedAt: new Date() })
+      .where(eq(users.id, id));
   }
 }
 

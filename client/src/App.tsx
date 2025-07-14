@@ -23,6 +23,7 @@ import AdminDashboardPage from "@/pages/admin-dashboard";
 import AdminSubmissionsPage from "@/pages/admin-submissions";
 import AdminTemplatesPage from "@/pages/admin-templates";
 import AdminLoginPage from "@/pages/admin-login";
+import AdminPortalPage from "@/pages/admin-portal";
 import UserLoginPage from "@/pages/user-login";
 import SubmissionViewPage from "@/pages/submission-view";
 import UserManagementPage from "@/pages/user-management";
@@ -37,6 +38,11 @@ function Router() {
           <PublicRoute redirectIfAuthenticated>
             <AdminLoginPage />
           </PublicRoute>
+        </Layout>
+      </Route>
+      <Route path="/admin-portal">
+        <Layout showHeader={false}>
+          <AdminPortalPage />
         </Layout>
       </Route>
       <Route path="/user-login">

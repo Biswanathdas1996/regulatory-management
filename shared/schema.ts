@@ -25,7 +25,14 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  role: integer("role").default(0),
+  role: text("role").notNull().default("reporting_entity"), // reporting_entity, ifsca_user, ifsca_admin
+  userType: text("user_type"), // For IFSCA users: banking, stock_exchange, nbfc, insurance, etc.
+  fullName: text("full_name"),
+  email: text("email"),
+  organization: text("organization"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const templates = pgTable("templates", {
@@ -175,6 +182,27 @@ export const templateTypes = [
   "stock-mar",
   "stock-mdr",
   "treasury",
+];
+
+// User roles
+export const userRoles = [
+  "reporting_entity",
+  "ifsca_user", 
+  "ifsca_admin"
+];
+
+// IFSCA user types
+export const ifscaUserTypes = [
+  "banking",
+  "stock_exchange",
+  "nbfc",
+  "insurance",
+  "mutual_funds",
+  "pension_funds",
+  "aircraft_leasing",
+  "ship_leasing",
+  "fund_management",
+  "other"
 ];
 
 // Zod schemas for validation
