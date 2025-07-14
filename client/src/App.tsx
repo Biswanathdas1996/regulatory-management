@@ -27,6 +27,9 @@ import UserLoginPage from "@/pages/user-login";
 import SuperAdminLogin from "@/pages/super-admin-login";
 import IFSCALogin from "@/pages/ifsca-login";
 import ReportingEntityLogin from "@/pages/reporting-entity-login";
+import SuperAdminDashboard from "@/pages/super-admin-dashboard";
+import IFSCADashboard from "@/pages/ifsca-dashboard";
+import ReportingEntityDashboard from "@/pages/reporting-entity-dashboard";
 import SubmissionViewPage from "@/pages/submission-view";
 import UserManagementPage from "@/pages/user-management";
 import ExcelAnalyzerPage from "@/pages/excel-analyzer";
@@ -57,6 +60,29 @@ function Router() {
         </Layout>
       </Route>
       
+      {/* Dashboard routes */}
+      <Route path="/super-admin/dashboard">
+        <Layout>
+          <ProtectedRoute requireAuth>
+            <SuperAdminDashboard />
+          </ProtectedRoute>
+        </Layout>
+      </Route>
+      <Route path="/ifsca/dashboard">
+        <Layout>
+          <ProtectedRoute requireAuth>
+            <IFSCADashboard />
+          </ProtectedRoute>
+        </Layout>
+      </Route>
+      <Route path="/reporting-entity/dashboard">
+        <Layout>
+          <ProtectedRoute requireAuth>
+            <ReportingEntityDashboard />
+          </ProtectedRoute>
+        </Layout>
+      </Route>
+
       {/* Legacy login routes for backward compatibility */}
       <Route path="/admin-login">
         <Layout showHeader={false}>
