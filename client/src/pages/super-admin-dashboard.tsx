@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import SuperAdminLayout from "@/components/SuperAdminLayout";
 import { Shield, Users, Building, TrendingUp, Settings, FileText } from "lucide-react";
 
 export default function SuperAdminDashboard() {
@@ -46,26 +47,21 @@ export default function SuperAdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-red-600 rounded-lg">
-              <Shield className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Super Admin Dashboard</h1>
-              <p className="text-gray-600">Welcome back, {user?.username}</p>
-            </div>
-          </div>
+    <SuperAdminLayout 
+      title="Super Admin Dashboard" 
+      subtitle={`Welcome back, ${user?.username}`}
+    >
+      <div className="space-y-6">
+        {/* System Access Badge */}
+        <div className="flex items-center gap-3">
           <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+            <Shield className="h-3 w-3 mr-1" />
             Global System Access
           </Badge>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
             <Card key={index} className="border-0 shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -83,7 +79,7 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Categories Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="border-0 shadow-sm">
             <CardHeader>
               <CardTitle className="text-lg">Category Overview</CardTitle>
@@ -181,6 +177,6 @@ export default function SuperAdminDashboard() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </SuperAdminLayout>
   );
 }
