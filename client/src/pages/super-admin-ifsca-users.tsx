@@ -37,7 +37,9 @@ export default function SuperAdminIFSCAUsers() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["/api/super-admin/ifsca-users"],
     queryFn: async () => {
-      const response = await fetch("/api/super-admin/ifsca-users");
+      const response = await fetch("/api/super-admin/ifsca-users", {
+        credentials: "include",
+      });
       if (!response.ok) throw new Error("Failed to fetch IFSCA users");
       return response.json();
     },

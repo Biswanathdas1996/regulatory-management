@@ -2513,7 +2513,10 @@ async function processTemplateAsync(templateId: number) {
     requireSuperAdmin,
     async (req: AuthenticatedRequest, res) => {
       try {
+        console.log("Fetching all users for super admin...");
         const users = await storage.getAllUsers();
+        console.log(`Found ${users.length} total users:`, users.map(u => ({ id: u.id, username: u.username, role: u.role, category: u.category })));
+        
         // Filter to only IFSCA users and exclude super admin
         const ifscaUsers = users
           .filter(user => user.role === "ifsca_user")
@@ -2525,6 +2528,8 @@ async function processTemplateAsync(templateId: number) {
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
           }));
+        
+        console.log(`Filtered to ${ifscaUsers.length} IFSCA users:`, ifscaUsers);
         res.json(ifscaUsers);
       } catch (error) {
         console.error("Get IFSCA users error:", error);
