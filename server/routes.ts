@@ -2506,6 +2506,12 @@ async function processTemplateAsync(templateId: number) {
 
   // Super Admin IFSCA User Management Endpoints
   
+  // Test endpoint to verify API routing is working
+  app.get("/api/test", (req, res) => {
+    console.log("TEST endpoint hit!");
+    res.json({ message: "API routing is working", timestamp: new Date().toISOString() });
+  });
+  
   // Get all IFSCA users (Super Admin only)
   app.get(
     "/api/super-admin/ifsca-users",
@@ -2513,7 +2519,10 @@ async function processTemplateAsync(templateId: number) {
     requireSuperAdmin,
     async (req: AuthenticatedRequest, res) => {
       try {
+        console.log("========== SUPER ADMIN IFSCA USERS ENDPOINT HIT ==========");
+        console.log("Request user:", req.user);
         console.log("Fetching all users for super admin...");
+        
         const users = await storage.getAllUsers();
         console.log(`Found ${users.length} total users:`, users.map(u => ({ id: u.id, username: u.username, role: u.role, category: u.category })));
         
@@ -2530,7 +2539,10 @@ async function processTemplateAsync(templateId: number) {
           }));
         
         console.log(`Filtered to ${ifscaUsers.length} IFSCA users:`, ifscaUsers);
+        console.log("About to send response...");
+        
         res.json(ifscaUsers);
+        console.log("Response sent successfully");
       } catch (error) {
         console.error("Get IFSCA users error:", error);
         res.status(500).json({ error: "Failed to fetch IFSCA users" });
