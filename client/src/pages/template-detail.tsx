@@ -17,6 +17,11 @@ import { ProcessingStatus } from "@/components/ProcessingStatus";
 import { SchemaDisplay } from "@/components/SchemaDisplay";
 import { ExcelViewer } from "@/components/ExcelViewer";
 import { ValidationRulesManager } from "@/components/ValidationRulesManager";
+import type {
+  Template,
+  TemplateSheet,
+  TemplateSchema,
+} from "@/../../shared/schema";
 
 export default function TemplateDetail() {
   const params = useParams<{ id: string }>();
@@ -24,17 +29,17 @@ export default function TemplateDetail() {
   const templateId = parseInt(params.id);
   const [selectedSheetId, setSelectedSheetId] = useState<number | null>(null);
 
-  const { data: template, isLoading: templateLoading } = useQuery({
+  const { data: template, isLoading: templateLoading } = useQuery<Template>({
     queryKey: ["/api/templates", templateId],
     enabled: !!templateId,
   });
 
-  const { data: sheets } = useQuery({
+  const { data: sheets } = useQuery<TemplateSheet[]>({
     queryKey: ["/api/templates", templateId, "sheets"],
     enabled: !!templateId,
   });
 
-  const { data: schemas } = useQuery({
+  const { data: schemas } = useQuery<TemplateSchema[]>({
     queryKey: ["/api/templates", templateId, "schemas"],
     enabled: !!templateId,
   });
@@ -211,7 +216,11 @@ export default function TemplateDetail() {
 
       {/* Validation Rules Section */}
       <div className="mb-8">
-        <ValidationRulesManager templateId={templateId} template={template} sheets={sheets} />
+        <ValidationRulesManager
+          templateId={templateId}
+          template={template}
+          sheets={sheets}
+        />
       </div>
 
       {/* No Schemas Message */}
