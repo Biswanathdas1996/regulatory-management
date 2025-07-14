@@ -121,85 +121,63 @@ function Router() {
 
       {/* Admin protected routes */}
       <Route path="/admin-dashboard">
-        <Layout>
-          <AdminRoute>
-            <AdminDashboardPage />
-          </AdminRoute>
-        </Layout>
+        <AdminRoute>
+          <AdminDashboardPage />
+        </AdminRoute>
       </Route>
       <Route path="/admin-submissions">
-        <Layout>
-          <AdminRoute>
-            <AdminSubmissionsPage />
-          </AdminRoute>
-        </Layout>
+        <AdminRoute>
+          <AdminSubmissionsPage />
+        </AdminRoute>
       </Route>
       <Route path="/admin-templates">
-        <Layout>
-          <AdminRoute>
-            <AdminTemplatesPage />
-          </AdminRoute>
-        </Layout>
+        <AdminRoute>
+          <AdminTemplatesPage />
+        </AdminRoute>
       </Route>
       <Route path="/user-management">
-        <Layout>
-          <AdminRoute>
-            <UserManagementPage />
-          </AdminRoute>
-        </Layout>
+        <AdminRoute>
+          <UserManagementPage />
+        </AdminRoute>
       </Route>
       <Route path="/excel-analyzer">
-        <Layout>
-          <AdminRoute>
-            <ExcelAnalyzerPage />
-          </AdminRoute>
-        </Layout>
+        <AdminRoute>
+          <ExcelAnalyzerPage />
+        </AdminRoute>
       </Route>
 
       {/* User protected routes */}
       <Route path="/user-dashboard">
-        <Layout>
-          <UserRoute>
-            <UserDashboardPage />
-          </UserRoute>
-        </Layout>
+        <UserRoute>
+          <UserDashboardPage />
+        </UserRoute>
       </Route>
       <Route path="/user-submission">
-        <Layout>
-          <UserRoute>
-            <UserSubmissionPage />
-          </UserRoute>
-        </Layout>
+        <UserRoute>
+          <UserSubmissionPage />
+        </UserRoute>
       </Route>
       <Route path="/submission-history">
-        <Layout>
-          <UserRoute>
-            <SubmissionHistoryPage />
-          </UserRoute>
-        </Layout>
+        <UserRoute>
+          <SubmissionHistoryPage />
+        </UserRoute>
       </Route>
 
       {/* Mixed authentication routes */}
       <Route path="/template-management">
-        <Layout>
-          <ProtectedRoute>
-            <TemplateManagement />
-          </ProtectedRoute>
-        </Layout>
+        <ProtectedRoute>
+          <TemplateManagement />
+        </ProtectedRoute>
       </Route>
       <Route path="/validation-results/:id">
-        <Layout>
-          <ProtectedRoute>
-            <ValidationResultsPage />
-          </ProtectedRoute>
-        </Layout>
+        <ProtectedRoute>
+          <ValidationResultsPage />
+        </ProtectedRoute>
       </Route>
       <Route path="/submission-view/:id">
-        <Layout>
-          <ProtectedRoute>
-            <SubmissionViewPage />
-          </ProtectedRoute>
-        </Layout>
+        <ProtectedRoute>
+          <SubmissionViewPage />
+        </ProtectedRoute>
       </Route>
 
       <Route>

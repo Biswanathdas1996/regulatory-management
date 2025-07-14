@@ -28,6 +28,9 @@ export default function AdminLayout({
   showSidebar = true,
   headerActions,
 }: AdminLayoutProps) {
+  // Debug logging
+  console.log("AdminLayout rendering with:", { title, showSidebar });
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [location] = useLocation();
 
@@ -93,12 +96,8 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <div
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 lg:static lg:inset-0`}
-      >
+      {/* Sidebar - Always visible for debugging */}
+      <div className="w-72 bg-white border-r border-gray-200 flex-shrink-0">
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
@@ -111,14 +110,6 @@ export default function AdminLayout({
                 <p className="text-xs text-gray-500">System Management</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <XCircle className="h-5 w-5" />
-            </Button>
           </div>
 
           {/* Navigation */}
@@ -134,7 +125,6 @@ export default function AdminLayout({
                           ? "bg-red-600 text-white shadow-md shadow-red-600/20"
                           : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                       }`}
-                      onClick={() => setSidebarOpen(false)}
                     >
                       <IconComponent
                         className={`h-5 w-5 mr-3 ${
@@ -151,28 +141,12 @@ export default function AdminLayout({
         </div>
       </div>
 
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
       {/* Main content */}
       <div className="flex-1 flex flex-col">
         <header className="bg-white border-b border-gray-200">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-4">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="lg:hidden"
-                  onClick={() => setSidebarOpen(true)}
-                >
-                  <Menu className="h-5 w-5" />
-                </Button>
                 <div>
                   {title && (
                     <h1 className="text-xl font-bold text-gray-900">{title}</h1>

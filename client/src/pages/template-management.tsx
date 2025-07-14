@@ -8,14 +8,22 @@ import { Upload, FileText, BarChart3 } from "lucide-react";
 import AdminLayout from "@/components/AdminLayout";
 
 export default function TemplateManagement() {
-  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
+    null
+  );
 
-  const { data: templates, refetch: refetchTemplates } = useQuery({
+  const { data: templates, refetch: refetchTemplates } = useQuery<any[]>({
     queryKey: ["/api/templates"],
     refetchInterval: 5000, // Refetch every 5 seconds to update processing status
   });
 
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<{
+    totalTemplates: number;
+    processed: number;
+    processing: number;
+    failed: number;
+    averageConfidence: number;
+  }>({
     queryKey: ["/api/stats"],
     refetchInterval: 10000, // Refetch every 10 seconds
   });
@@ -28,10 +36,10 @@ export default function TemplateManagement() {
   const handleTemplateSelected = (templateId: number) => {
     setSelectedTemplateId(templateId);
   };
-  
+
   return (
-    <AdminLayout 
-      title="Template Management" 
+    <AdminLayout
+      title="Template Management"
       subtitle="Upload and manage Excel/CSV templates with validation rules"
     >
       <Tabs defaultValue="upload" className="w-full">
@@ -55,8 +63,8 @@ export default function TemplateManagement() {
         </TabsContent>
 
         <TabsContent value="library" className="space-y-8">
-          <TemplateLibrary 
-            templates={templates || []} 
+          <TemplateLibrary
+            templates={templates || []}
             onTemplateSelected={handleTemplateSelected}
             onTemplateDeleted={refetchTemplates}
             selectedTemplateId={selectedTemplateId}
