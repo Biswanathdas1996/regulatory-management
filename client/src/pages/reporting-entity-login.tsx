@@ -3,7 +3,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +28,8 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function ReportingEntityLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [, setLocation] = useLocation();
-  const { login, logout, isLoading, isReportingEntity, isAuthenticated, user } = useAuth();
+  const { login, logout, isLoading, isReportingEntity, isAuthenticated, user } =
+    useAuth();
   const { toast } = useToast();
 
   const form = useForm<LoginForm>({
@@ -73,20 +80,42 @@ export default function ReportingEntityLogin() {
               <FileText className="h-8 w-8 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Reporting Entity Portal</h1>
-          <p className="text-gray-600">Submit and manage your regulatory reports</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Reporting Entity Portal
+          </h1>
+          <p className="text-gray-600">
+            Submit and manage your regulatory reports
+          </p>
         </div>
 
         <Card className="border-green-200 shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle className="text-green-800">Reporting Entity Login</CardTitle>
+            <CardTitle className="text-green-800">
+              Reporting Entity Login
+            </CardTitle>
             <CardDescription>
-              Access your submission portal to upload and track regulatory reports
+              Access your submission portal to upload and track regulatory
+              reports
             </CardDescription>
             <div className="flex justify-center gap-2 mt-3">
-              <Badge variant="outline" className="text-blue-600 border-blue-200">Banking</Badge>
-              <Badge variant="outline" className="text-emerald-600 border-emerald-200">NBFC</Badge>
-              <Badge variant="outline" className="text-purple-600 border-purple-200">Stock Exchange</Badge>
+              <Badge
+                variant="outline"
+                className="text-blue-600 border-blue-200"
+              >
+                Banking
+              </Badge>
+              <Badge
+                variant="outline"
+                className="text-emerald-600 border-emerald-200"
+              >
+                NBFC
+              </Badge>
+              <Badge
+                variant="outline"
+                className="text-purple-600 border-purple-200"
+              >
+                Stock Exchange
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>
