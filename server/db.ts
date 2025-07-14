@@ -7,7 +7,9 @@ import ws from "ws";
 import * as schema from "@shared/schema";
 
 // Configure neon for serverless environment
-neonConfig.webSocketConstructor = ws;
+if (typeof WebSocket === 'undefined') {
+  neonConfig.webSocketConstructor = ws;
+}
 neonConfig.useSecureWebSocket = true;
 neonConfig.pipelineConnect = false;
 
@@ -19,9 +21,9 @@ if (!process.env.DATABASE_URL) {
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  connectionTimeoutMillis: 5000,
-  idleTimeoutMillis: 30000,
-  max: 10,
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 60000,
+  max: 20,
 });
 
 export const db = drizzle({ client: pool, schema });

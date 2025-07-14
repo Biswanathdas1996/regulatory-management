@@ -11,13 +11,15 @@ app.use(express.urlencoded({ extended: false, limit: "50mb" }));
 // Add session middleware
 app.use(
   session({
-    secret: "your-secret-key",
+    secret: process.env.SESSION_SECRET || "fallback-secret-key-for-development",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Allow non-HTTPS in development
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: true,
     },
+    name: "sessionId",
   })
 );
 
