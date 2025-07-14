@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -23,6 +22,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function IFSCALogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [, setLocation] = useLocation();
+  const { login, logout, isLoading, isIFSCAUser, isAuthenticated, user } = useAuth();
   const { toast } = useToast();
 
   const form = useForm<LoginForm>({
@@ -33,38 +33,35 @@ export default function IFSCALogin() {
     },
   });
 
-  const loginMutation = useMutation({
-    mutationFn: async (data: LoginForm) => {
-      const response = await apiRequest("POST", "/api/auth/login", data);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      if (data.role === "ifsca_user") {
+  // Check auth status after login attempt
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (isIFSCAUser) {
         toast({
           title: "Login successful",
-          description: `Welcome to IFSCA ${data.category} Console`,
+          description: `Welcome to IFSCA ${user.category} Console`,
         });
-        // Add a small delay to ensure auth context updates first
-        setTimeout(() => setLocation("/ifsca/dashboard"), 100);
+        setLocation("/ifsca/dashboard");
       } else {
+        // User logged in but not IFSCA user - logout and show error
         toast({
           title: "Access denied",
           description: "IFSCA User access required",
           variant: "destructive",
         });
+        logout();
       }
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Login failed",
-        description: error.message || "Invalid credentials",
-        variant: "destructive",
-      });
-    },
-  });
+    }
+  }, [isAuthenticated, isIFSCAUser, user, toast, setLocation, logout]);
 
-  const onSubmit = (data: LoginForm) => {
-    loginMutation.mutate(data);
+  const onSubmit = async (data: LoginForm) => {
+    try {
+      await login({ username: data.username, password: data.password });
+      // The useEffect above will handle the redirect or error after login
+    } catch (error) {
+      // Error handling is done in the auth context
+      console.error("Login failed:", error);
+    }
   };
 
   return (
@@ -141,9 +138,9 @@ export default function IFSCALogin() {
               <Button
                 type="submit"
                 className="w-full bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white"
-                disabled={loginMutation.isPending}
+                disabled={isLoading}
               >
-                {loginMutation.isPending ? "Signing in..." : "Sign In to IFSCA Console"}
+                {isLoading ? "Signing in..." : "Sign In to IFSCA Console"}
               </Button>
             </form>
 

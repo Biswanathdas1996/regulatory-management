@@ -1,16 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shield, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -22,6 +27,8 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function SuperAdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [, setLocation] = useLocation();
+  const { login, logout, isLoading, isSuperAdmin, isAuthenticated, user } =
+    useAuth();
   const { toast } = useToast();
 
   const form = useForm<LoginForm>({
@@ -32,38 +39,36 @@ export default function SuperAdminLogin() {
     },
   });
 
-  const loginMutation = useMutation({
-    mutationFn: async (data: LoginForm) => {
-      const response = await apiRequest("POST", "/api/auth/login", data);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      if (data.role === "super_admin") {
+  // Check auth status after login attempt
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (isSuperAdmin) {
         toast({
           title: "Login successful",
           description: "Welcome to Super Admin Dashboard",
         });
-        // Add a small delay to ensure auth context updates first
-        setTimeout(() => setLocation("/super-admin/dashboard"), 100);
+        // Redirect to auth test page to verify session state
+        setLocation("/auth-test");
       } else {
+        // User logged in but not super admin - logout and show error
         toast({
           title: "Access denied",
           description: "Super Admin access required",
           variant: "destructive",
         });
+        logout();
       }
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Login failed",
-        description: error.message || "Invalid credentials",
-        variant: "destructive",
-      });
-    },
-  });
+    }
+  }, [isAuthenticated, isSuperAdmin, user, toast, setLocation, logout]);
 
-  const onSubmit = (data: LoginForm) => {
-    loginMutation.mutate(data);
+  const onSubmit = async (data: LoginForm) => {
+    try {
+      await login({ username: data.username, password: data.password });
+      // The useEffect above will handle the redirect or error after login
+    } catch (error) {
+      // Error handling is done in the auth context
+      console.error("Login failed:", error);
+    }
   };
 
   return (
@@ -75,15 +80,20 @@ export default function SuperAdminLogin() {
               <Shield className="h-8 w-8 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Super Admin Portal</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Super Admin Portal
+          </h1>
           <p className="text-gray-600">Global system administration access</p>
         </div>
 
         <Card className="border-red-200 shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle className="text-red-800">System Administrator Login</CardTitle>
+            <CardTitle className="text-red-800">
+              System Administrator Login
+            </CardTitle>
             <CardDescription>
-              Enter your super admin credentials to access the global management console
+              Enter your super admin credentials to access the global management
+              console
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -135,9 +145,9 @@ export default function SuperAdminLogin() {
               <Button
                 type="submit"
                 className="w-full bg-red-600 hover:bg-red-700 text-white"
-                disabled={loginMutation.isPending}
+                disabled={isLoading}
               >
-                {loginMutation.isPending ? "Signing in..." : "Sign In as Super Admin"}
+                {isLoading ? "Signing in..." : "Sign In as Super Admin"}
               </Button>
             </form>
 

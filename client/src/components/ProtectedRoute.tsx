@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
-  requireAuth = true,
+  requireAuth = false,
   requireAdmin = false,
   requireReportingEntity = false,
   redirectTo,
@@ -42,7 +42,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       setLocation(redirectTo || "/reporting-entity/login");
       return;
     }
-  }, [isLoading, isAuthenticated, isAdmin, isReportingEntity, requireAuth, requireAdmin, requireReportingEntity, redirectTo, setLocation]);
+  }, [
+    isLoading,
+    isAuthenticated,
+    isAdmin,
+    isReportingEntity,
+    requireAuth,
+    requireAdmin,
+    requireReportingEntity,
+    redirectTo,
+    setLocation,
+  ]);
 
   // Show loading spinner while checking authentication
   if (isLoading) {
@@ -78,8 +88,14 @@ interface ReportingEntityRouteProps {
   children: ReactNode;
 }
 
-export const UserRoute: React.FC<ReportingEntityRouteProps> = ({ children }) => (
-  <ProtectedRoute requireAuth requireReportingEntity redirectTo="/reporting-entity/login">
+export const UserRoute: React.FC<ReportingEntityRouteProps> = ({
+  children,
+}) => (
+  <ProtectedRoute
+    requireAuth
+    requireReportingEntity
+    redirectTo="/reporting-entity/login"
+  >
     {children}
   </ProtectedRoute>
 );
@@ -97,7 +113,14 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({
   adminRedirectTo = "/admin-dashboard",
   userRedirectTo = "/reporting-entity/dashboard",
 }) => {
-  const { isAuthenticated, isAdmin, isReportingEntity, isSuperAdmin, isIFSCAUser, isLoading } = useAuth();
+  const {
+    isAuthenticated,
+    isAdmin,
+    isReportingEntity,
+    isSuperAdmin,
+    isIFSCAUser,
+    isLoading,
+  } = useAuth();
   const [, setLocation] = useLocation();
 
   // Use effect for navigation to avoid setState during render
@@ -114,7 +137,15 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({
         setLocation("/reporting-entity/dashboard");
       }
     }
-  }, [isLoading, isAuthenticated, isSuperAdmin, isIFSCAUser, isReportingEntity, redirectIfAuthenticated, setLocation]);
+  }, [
+    isLoading,
+    isAuthenticated,
+    isSuperAdmin,
+    isIFSCAUser,
+    isReportingEntity,
+    redirectIfAuthenticated,
+    setLocation,
+  ]);
 
   // Show loading spinner while checking authentication
   if (isLoading) {

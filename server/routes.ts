@@ -65,7 +65,9 @@ const validationStorage = multer.diskStorage({
     const timestamp = Date.now();
     cb(
       null,
-      `template-${templateId}-validation-${timestamp}${path.extname(file.originalname)}`
+      `template-${templateId}-validation-${timestamp}${path.extname(
+        file.originalname
+      )}`
     );
   },
 });
@@ -264,7 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const newUser = await storage.createUser({
           username,
           password: hashedPassword,
-          role: userRole,
+          role: userRole.toString(),
         });
 
         // Return user without password
@@ -568,8 +570,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const templates = await storage.getTemplates();
       // Get templates that have validation files uploaded
       const templatesWithRules = templates
-        .filter(template => template.validationFileUploaded)
-        .map(template => ({
+        .filter((template) => template.validationFileUploaded)
+        .map((template) => ({
           ...template,
           rulesCount: template.validationFileUploaded ? 1 : 0, // Show that rules exist via file upload
         }));
@@ -627,9 +629,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const template = await storage.createTemplate({
           name: templateName.trim(),
           templateType,
+          category: templateType, // Use templateType as category
           fileName: templateFile.originalname,
           filePath: templateFile.path,
           fileSize: templateFile.size,
+          createdBy: req.user?.id || 1, // Use authenticated user ID or default to 1
           validationRulesPath: validationFile?.path,
         });
 
@@ -677,7 +681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     async (req: MulterRequest, res) => {
       try {
         const templateId = parseInt(req.params.id);
-        
+
         if (!req.file) {
           return res.status(400).json({ error: "No validation file uploaded" });
         }
@@ -697,13 +701,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.updateValidationFileUploaded(templateId, true);
 
           // Parse and store validation rules
-          const fileExtension = path.extname(validationFile.originalname).toLowerCase();
+          const fileExtension = path
+            .extname(validationFile.originalname)
+            .toLowerCase();
           let rules: any[] = [];
 
-          if (fileExtension === '.txt') {
+          if (fileExtension === ".txt") {
             // Parse text file rules
-            rules = await ValidationRulesParser.parseRulesFile(filePath, templateId);
-          } else if (fileExtension === '.xlsx' || fileExtension === '.xls') {
+            rules = await ValidationRulesParser.parseRulesFile(
+              filePath,
+              templateId
+            );
+          } else if (fileExtension === ".xlsx" || fileExtension === ".xls") {
             // Parse Excel file rules (implement similar to existing Excel import)
             const workbook = new ExcelJS.Workbook();
             await workbook.xlsx.readFile(filePath);
@@ -711,8 +720,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             if (worksheet) {
               const sheets = await storage.getTemplateSheets(templateId);
-              const sheetMap = new Map(sheets.map((s) => [s.sheetName.toLowerCase(), s.id]));
-              
+              const sheetMap = new Map(
+                sheets.map((s) => [s.sheetName.toLowerCase(), s.id])
+              );
+
               rules = [];
               let headerRow: string[] = [];
 
@@ -725,8 +736,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   const rowData = values.slice(1);
 
                   if (rowData.length >= 6) {
-                    const [sheet, field, ruleType, condition, errorMessage, severity] = rowData;
-                    
+                    const [
+                      sheet,
+                      field,
+                      ruleType,
+                      condition,
+                      errorMessage,
+                      severity,
+                    ] = rowData;
+
                     if (field && ruleType && condition && errorMessage) {
                       let sheetId = null;
                       if (sheet && sheet.toLowerCase() !== "all sheets") {
@@ -740,7 +758,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                         field: field.toString(),
                         condition: condition.toString(),
                         errorMessage: errorMessage.toString(),
-                        severity: (severity?.toString()?.toLowerCase() || "error") === "warning" ? "warning" : "error",
+                        severity:
+                          (severity?.toString()?.toLowerCase() || "error") ===
+                          "warning"
+                            ? "warning"
+                            : "error",
                       });
                     }
                   }
@@ -761,24 +783,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             rulesCreated: rules.length,
             validationFileUploaded: true,
           });
-
         } catch (parseError) {
           console.error("Failed to parse validation file:", parseError);
-          
+
           // Still mark file as uploaded but with warning
           await storage.updateTemplateValidationRulesPath(templateId, filePath);
           await storage.updateValidationFileUploaded(templateId, true);
-          
+
           res.json({
             message: "Validation file uploaded but parsing failed",
             templateId,
             filePath,
             rulesCreated: 0,
             validationFileUploaded: true,
-            warning: "File uploaded but could not parse validation rules. Please check file format.",
+            warning:
+              "File uploaded but could not parse validation rules. Please check file format.",
           });
         }
-
       } catch (error) {
         console.error("Validation file upload error:", error);
         res.status(500).json({ error: "Failed to upload validation file" });
@@ -790,7 +811,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/templates/:id/validation-file/download", async (req, res) => {
     try {
       const templateId = parseInt(req.params.id);
-      
+
       // Check if template exists
       const template = await storage.getTemplate(templateId);
       if (!template) {
@@ -799,25 +820,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if validation file exists
       if (!template.validationRulesPath || !template.validationFileUploaded) {
-        return res.status(404).json({ error: "No validation file found for this template" });
+        return res
+          .status(404)
+          .json({ error: "No validation file found for this template" });
       }
 
       // Check if file exists on disk
       if (!fs.existsSync(template.validationRulesPath)) {
-        return res.status(404).json({ error: "Validation file not found on disk" });
+        return res
+          .status(404)
+          .json({ error: "Validation file not found on disk" });
       }
 
       // Extract filename from path
       const filename = path.basename(template.validationRulesPath);
-      
+
       // Set appropriate headers
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.setHeader('Content-Type', 'application/octet-stream');
-      
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${filename}"`
+      );
+      res.setHeader("Content-Type", "application/octet-stream");
+
       // Stream the file to response
       const fileStream = fs.createReadStream(template.validationRulesPath);
       fileStream.pipe(res);
-      
     } catch (error) {
       console.error("Validation file download error:", error);
       res.status(500).json({ error: "Failed to download validation file" });
@@ -1895,8 +1922,9 @@ Only return the JSON array, no additional text.
         }
 
         if (submission.status !== "returned") {
-          return res.status(400).json({ 
-            error: "Can only re-upload files for submissions that have been returned" 
+          return res.status(400).json({
+            error:
+              "Can only re-upload files for submissions that have been returned",
           });
         }
 
@@ -1944,7 +1972,7 @@ Only return the JSON array, no additional text.
         if (template.validationFileUploaded) {
           // Update submission status to validating
           await storage.updateSubmissionStatus(newSubmission.id, "pending");
-          
+
           // Start async validation
           validateSubmissionAsync(newSubmission.id);
         }
@@ -2158,7 +2186,10 @@ Only return the JSON array, no additional text.
 
                 cellObj = {
                   // Only set value for top-left cell of merged range, or non-merged cells
-                  value: isMerged && mergeInfo && !mergeInfo.isTopLeft ? null : cell.value,
+                  value:
+                    isMerged && mergeInfo && !mergeInfo.isTopLeft
+                      ? null
+                      : cell.value,
                   merged: isMerged,
                   mergeInfo: mergeInfo,
                   style: {

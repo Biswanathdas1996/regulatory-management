@@ -33,6 +33,7 @@ import ReportingEntityDashboard from "@/pages/reporting-entity-dashboard";
 import SubmissionViewPage from "@/pages/submission-view";
 import UserManagementPage from "@/pages/user-management";
 import ExcelAnalyzerPage from "@/pages/excel-analyzer";
+import AuthTestPage from "@/pages/auth-test";
 
 function Router() {
   return (
@@ -59,7 +60,7 @@ function Router() {
           </PublicRoute>
         </Layout>
       </Route>
-      
+
       {/* Dashboard routes */}
       <Route path="/super-admin/dashboard">
         <Layout>
@@ -103,6 +104,13 @@ function Router() {
       <Route path="/">
         <Layout>
           <Home />
+        </Layout>
+      </Route>
+      <Route path="/auth-test">
+        <Layout>
+          <ProtectedRoute>
+            <AuthTestPage />
+          </ProtectedRoute>
         </Layout>
       </Route>
       <Route path="/template/:id">
