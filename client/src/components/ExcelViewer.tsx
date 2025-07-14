@@ -80,8 +80,10 @@ export function ExcelViewer({
     isLoading,
     error,
   } = useQuery<SheetData[]>({
-    queryKey: [`/api/templates/${templateId}/excel-data`],
+    queryKey: [`/api/templates/${templateId}/excel-data`, Date.now()],
     enabled: !!templateId,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache
   });
 
   // Poll for generation progress

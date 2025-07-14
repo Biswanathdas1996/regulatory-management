@@ -2150,7 +2150,8 @@ Only return the JSON array, no additional text.
                 }
 
                 cellObj = {
-                  value: cell.value,
+                  // Only set value for top-left cell of merged range, or non-merged cells
+                  value: isMerged && mergeInfo && !mergeInfo.isTopLeft ? null : cell.value,
                   merged: isMerged,
                   mergeInfo: mergeInfo,
                   style: {
