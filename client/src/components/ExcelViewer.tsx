@@ -332,8 +332,8 @@ export function ExcelViewer({
     return (
       <td
         key={`${rowIndex}-${colIndex}`}
-        colSpan={colSpan}
-        rowSpan={rowSpan}
+        colSpan={colSpan > 1 ? colSpan : undefined}
+        rowSpan={rowSpan > 1 ? rowSpan : undefined}
         style={cellStyle}
         onClick={() => handleCellClick(rowIndex, colIndex, sheetName)}
         className="relative hover:bg-blue-50 transition-colors"
@@ -472,19 +472,19 @@ export function ExcelViewer({
     // Calculate the maximum number of columns in any row
     const maxCols = Math.max(...sheet.data.map((row) => row.length));
 
-    // Create a matrix to track which cells are covered by merges
-    const coveredCells = new Set<string>();
+    // Create a set to track which cells should be skipped because they're covered by a merge
+    const skipCells = new Set<string>();
     
-    // First pass: identify all cells covered by merges
+    // Process merge information
     sheet.data.forEach((row, rowIndex) => {
       row.forEach((cell, colIndex) => {
         if (cell?.merged && cell.mergeInfo?.isTopLeft) {
           const { left, right, top, bottom } = cell.mergeInfo;
-          // Mark all cells in the merge range except top-left as covered
+          // Mark all cells in the merge range (except the top-left) to be skipped
           for (let r = top; r <= bottom; r++) {
             for (let c = left; c <= right; c++) {
-              if (r !== top || c !== left) {
-                coveredCells.add(`${r},${c}`);
+              if (!(r === top && c === left)) {
+                skipCells.add(`${r},${c}`);
               }
             }
           }
@@ -529,53 +529,64 @@ export function ExcelViewer({
             </tr>
           </thead>
           <tbody>
-            {sheet.data.map((row, rowIndex) => (
-              <tr key={rowIndex} className="group">
-                {/* Row number */}
-                <td
-                  className="border border-gray-300 bg-gray-100 text-xs text-center font-medium sticky left-0 z-10"
-                  style={{
-                    minWidth: "40px",
-                    width: "40px",
-                    height: "24px",
-                    padding: "2px",
-                    fontSize: "11px",
-                  }}
-                >
-                  {rowIndex + 1}
-                </td>
-                {/* Data cells */}
-                {Array.from({ length: maxCols }, (_, colIndex) => {
-                  // Skip cells that are covered by a merge range
-                  if (coveredCells.has(`${rowIndex},${colIndex}`)) {
-                    return null;
-                  }
-
-                  const cell = row[colIndex];
-
-                  // Handle null cells - maintain exact positioning
-                  if (!cell) {
-                    return (
-                      <td
-                        key={`${rowIndex}-${colIndex}`}
-                        style={{
-                          border: "1px solid #d1d5db",
-                          padding: "2px 6px",
-                          minWidth: "80px",
-                          height: "24px",
-                          backgroundColor: "#ffffff",
-                        }}
-                        title={`Cell: ${String.fromCharCode(65 + colIndex)}${
-                          rowIndex + 1
-                        }`}
-                      />
-                    );
-                  }
-
-                  return renderCell(cell, rowIndex, colIndex, sheet.sheetName);
-                })}
-              </tr>
-            ))}
+            {sheet.data.map((row, rowIndex) => {
+              const cellsInRow: React.ReactNode[] = [];
+              let colIndex = 0;
+              
+              while (colIndex < maxCols) {
+                // Skip this cell if it's covered by a merge
+                if (skipCells.has(`${rowIndex},${colIndex}`)) {
+                  colIndex++;
+                  continue;
+                }
+                
+                const cell = row[colIndex];
+                
+                // Handle empty cells
+                if (!cell) {
+                  cellsInRow.push(
+                    <td
+                      key={`${rowIndex}-${colIndex}`}
+                      style={{
+                        border: "1px solid #d1d5db",
+                        padding: "2px 6px",
+                        minWidth: "80px",
+                        height: "24px",
+                        backgroundColor: "#ffffff",
+                      }}
+                      title={`Cell: ${String.fromCharCode(65 + colIndex)}${
+                        rowIndex + 1
+                      }`}
+                    />
+                  );
+                  colIndex++;
+                  continue;
+                }
+                
+                // Render the cell (with colspan/rowspan if it's a merge)
+                cellsInRow.push(renderCell(cell, rowIndex, colIndex, sheet.sheetName));
+                colIndex++;
+              }
+              
+              return (
+                <tr key={rowIndex} className="group">
+                  {/* Row number */}
+                  <td
+                    className="border border-gray-300 bg-gray-100 text-xs text-center font-medium sticky left-0 z-10"
+                    style={{
+                      minWidth: "40px",
+                      width: "40px",
+                      height: "24px",
+                      padding: "2px",
+                      fontSize: "11px",
+                    }}
+                  >
+                    {rowIndex + 1}
+                  </td>
+                  {cellsInRow}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
