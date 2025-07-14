@@ -56,13 +56,24 @@ export default function SuperAdminIFSCAUsers() {
     mutationFn: async (userData: CreateUserData) => {
       console.log("Creating user with data:", userData);
       try {
-        const result = await apiRequest("/api/super-admin/ifsca-users", {
+        const response = await fetch("/api/super-admin/ifsca-users", {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
           body: JSON.stringify({
             ...userData,
             role: "ifsca_user",
           }),
         });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+          throw new Error(errorData.error || "Failed to create user");
+        }
+        
+        const result = await response.json();
         console.log("User created successfully:", result);
         return result;
       } catch (error) {
@@ -90,10 +101,21 @@ export default function SuperAdminIFSCAUsers() {
 
   const updateUserMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<CreateUserData> }) => {
-      return apiRequest(`/api/super-admin/ifsca-users/${id}`, {
+      const response = await fetch(`/api/super-admin/ifsca-users/${id}`, {
         method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
         body: JSON.stringify(data),
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(errorData.error || "Failed to update user");
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/super-admin/ifsca-users"] });
@@ -115,9 +137,17 @@ export default function SuperAdminIFSCAUsers() {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: number) => {
-      return apiRequest(`/api/super-admin/ifsca-users/${userId}`, {
+      const response = await fetch(`/api/super-admin/ifsca-users/${userId}`, {
         method: "DELETE",
+        credentials: "include",
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(errorData.error || "Failed to delete user");
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/super-admin/ifsca-users"] });
