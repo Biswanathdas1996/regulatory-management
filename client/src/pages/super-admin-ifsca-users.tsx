@@ -30,6 +30,8 @@ interface CreateUserData {
 
 export default function SuperAdminIFSCAUsers() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<IFSCAUser | null>(null);
   const [newUser, setNewUser] = useState<CreateUserData>({ username: "", password: "", category: "" });
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -45,6 +47,7 @@ export default function SuperAdminIFSCAUsers() {
       if (!response.ok) throw new Error("Failed to fetch IFSCA users");
       const data = await response.json();
       console.log("Received data:", data);
+      console.log("Data length:", data.length);
       return data;
     },
   });
@@ -72,6 +75,31 @@ export default function SuperAdminIFSCAUsers() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to create user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<CreateUserData> }) => {
+      return apiRequest(`/api/super-admin/ifsca-users/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/super-admin/ifsca-users"] });
+      setIsEditDialogOpen(false);
+      setEditingUser(null);
+      toast({
+        title: "IFSCA User Updated",
+        description: "IFSCA user has been updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update user",
         variant: "destructive",
       });
     },
@@ -109,6 +137,21 @@ export default function SuperAdminIFSCAUsers() {
       return;
     }
     createUserMutation.mutate(newUser);
+  };
+
+  const handleEditUser = (user: IFSCAUser) => {
+    setEditingUser(user);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateUser = () => {
+    if (editingUser) {
+      const updateData: Partial<CreateUserData> = {
+        username: editingUser.username,
+        category: editingUser.category,
+      };
+      updateUserMutation.mutate({ id: editingUser.id, data: updateData });
+    }
   };
 
   const handleDeleteUser = (userId: number) => {
@@ -279,7 +322,7 @@ export default function SuperAdminIFSCAUsers() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button 
@@ -300,6 +343,52 @@ export default function SuperAdminIFSCAUsers() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit IFSCA User</DialogTitle>
+            <DialogDescription>
+              Update the IFSCA user's information
+            </DialogDescription>
+          </DialogHeader>
+          {editingUser && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-username">Username</Label>
+                <Input
+                  id="edit-username"
+                  value={editingUser.username}
+                  onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })}
+                  placeholder="Enter username"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-category">Category</Label>
+                <Select value={editingUser.category} onValueChange={(value) => setEditingUser({ ...editingUser, category: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="banking">Banking</SelectItem>
+                    <SelectItem value="nbfc">NBFC</SelectItem>
+                    <SelectItem value="stock_exchange">Stock Exchange</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateUser} disabled={updateUserMutation.isPending}>
+              {updateUserMutation.isPending ? "Updating..." : "Update User"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SuperAdminLayout>
   );
 }

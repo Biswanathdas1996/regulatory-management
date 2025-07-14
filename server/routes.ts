@@ -2534,13 +2534,15 @@ async function processTemplateAsync(templateId: number) {
             username: user.username,
             role: user.role,
             category: user.category,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
+            createdAt: user.created_at || user.createdAt,
+            updatedAt: user.updated_at || user.updatedAt,
           }));
         
         console.log(`Filtered to ${ifscaUsers.length} IFSCA users:`, ifscaUsers);
         console.log("About to send response...");
         
+        // Add explicit headers to ensure JSON response
+        res.setHeader('Content-Type', 'application/json');
         res.json(ifscaUsers);
         console.log("Response sent successfully");
       } catch (error) {
@@ -2557,6 +2559,9 @@ async function processTemplateAsync(templateId: number) {
     requireSuperAdmin,
     async (req: AuthenticatedRequest, res) => {
       try {
+        console.log("========== CREATE IFSCA USER ENDPOINT HIT ==========");
+        console.log("Request body:", req.body);
+        
         const { username, password, category } = req.body;
 
         // Validate required fields
