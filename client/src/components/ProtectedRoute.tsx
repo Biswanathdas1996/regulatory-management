@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
   children: ReactNode;
   requireAuth?: boolean;
   requireAdmin?: boolean;
-  requireUser?: boolean;
+  requireReportingEntity?: boolean;
   redirectTo?: string;
 }
 
@@ -15,10 +15,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requireAuth = true,
   requireAdmin = false,
-  requireUser = false,
+  requireReportingEntity = false,
   redirectTo,
 }) => {
-  const { isAuthenticated, isAdmin, isUser, isLoading } = useAuth();
+  const { isAuthenticated, isAdmin, isReportingEntity, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
   // Show loading spinner while checking authentication
@@ -45,9 +45,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return null;
   }
 
-  // Check user requirements
-  if (requireUser && !isUser) {
-    setLocation(redirectTo || "/user-login");
+  // Check reporting entity requirements
+  if (requireReportingEntity && !isReportingEntity) {
+    setLocation(redirectTo || "/reporting-entity/login");
     return null;
   }
 
@@ -64,12 +64,12 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => (
   </ProtectedRoute>
 );
 
-interface UserRouteProps {
+interface ReportingEntityRouteProps {
   children: ReactNode;
 }
 
-export const UserRoute: React.FC<UserRouteProps> = ({ children }) => (
-  <ProtectedRoute requireAuth requireUser redirectTo="/user-login">
+export const UserRoute: React.FC<ReportingEntityRouteProps> = ({ children }) => (
+  <ProtectedRoute requireAuth requireReportingEntity redirectTo="/reporting-entity/login">
     {children}
   </ProtectedRoute>
 );
@@ -85,9 +85,9 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({
   children,
   redirectIfAuthenticated = false,
   adminRedirectTo = "/admin-dashboard",
-  userRedirectTo = "/user-dashboard",
+  userRedirectTo = "/reporting-entity/dashboard",
 }) => {
-  const { isAuthenticated, isAdmin, isUser, isLoading } = useAuth();
+  const { isAuthenticated, isAdmin, isReportingEntity, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
   // Show loading spinner while checking authentication
@@ -106,7 +106,7 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({
   if (redirectIfAuthenticated && isAuthenticated) {
     if (isAdmin) {
       setLocation(adminRedirectTo);
-    } else if (isUser) {
+    } else if (isReportingEntity) {
       setLocation(userRedirectTo);
     }
     return null;

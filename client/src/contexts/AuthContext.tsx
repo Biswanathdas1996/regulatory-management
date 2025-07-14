@@ -10,7 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 export interface User {
   id: number;
   username: string;
-  role: "admin" | "user";
+  role: "super_admin" | "ifsca_user" | "reporting_entity";
+  category?: string;
 }
 
 interface AuthContextType {
@@ -23,8 +24,10 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isLoading: boolean;
   isAuthenticated: boolean;
-  isAdmin: boolean;
-  isUser: boolean;
+  isSuperAdmin: boolean;
+  isIFSCAUser: boolean;
+  isReportingEntity: boolean;
+  isAdmin: boolean; // Backward compatibility - covers super_admin and ifsca_user
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -65,25 +68,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
+      setIsLoading(true);
       // First check if we have a stored user session
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
         // Verify the session with the server
         const response = await fetch("/api/auth/me", {
           credentials: "include",
-        });
+        }).catch(() => null);
 
-        if (response.ok) {
+        if (response && response.ok) {
           const userData = await response.json();
           setUser(userData);
         } else {
           // Session is invalid, clear local storage
           localStorage.removeItem("user");
+          setUser(null);
         }
       }
     } catch (error) {
       console.error("Error checking auth status:", error);
       localStorage.removeItem("user");
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -166,8 +172,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const isAuthenticated = !!user;
-  const isAdmin = user?.role === "admin";
-  const isUser = user?.role === "user";
+  const isSuperAdmin = user?.role === "super_admin";
+  const isIFSCAUser = user?.role === "ifsca_user";
+  const isReportingEntity = user?.role === "reporting_entity";
+  const isAdmin = isSuperAdmin || isIFSCAUser; // Backward compatibility
 
   const value: AuthContextType = {
     user,
@@ -175,8 +183,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     isLoading,
     isAuthenticated,
+    isSuperAdmin,
+    isIFSCAUser,
+    isReportingEntity,
     isAdmin,
-    isUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
