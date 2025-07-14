@@ -34,12 +34,10 @@ export default function ReportingEntityLogin() {
   });
 
   const loginMutation = useMutation({
-    mutationFn: (data: LoginForm) =>
-      apiRequest("/api/auth/login", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      }),
+    mutationFn: async (data: LoginForm) => {
+      const response = await apiRequest("POST", "/api/auth/login", data);
+      return response.json();
+    },
     onSuccess: (data) => {
       if (data.role === "reporting_entity") {
         toast({

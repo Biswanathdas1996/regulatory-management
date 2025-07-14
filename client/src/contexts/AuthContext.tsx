@@ -115,10 +115,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         },
         credentials: "include",
         body: JSON.stringify(loginData),
+      }).catch(err => {
+        throw new Error(`Network error: ${err.message}`);
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({ error: "Login failed" }));
         throw new Error(error.error || "Login failed");
       }
 
@@ -152,6 +154,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
+      }).catch(() => {
+        // Ignore logout errors, clear local state anyway
       });
 
       setUser(null);
