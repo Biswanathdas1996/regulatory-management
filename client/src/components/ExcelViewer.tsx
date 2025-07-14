@@ -74,16 +74,23 @@ export function ExcelViewer({
   });
   const { toast } = useToast();
 
+  // Force cache invalidation to get updated merged cell data
+  useEffect(() => {
+    if (templateId) {
+      queryClient.invalidateQueries({
+        queryKey: [`/api/templates/${templateId}/excel-data`],
+      });
+    }
+  }, [templateId]);
+
   // Fetch Excel data from the API
   const {
     data: sheetsData,
     isLoading,
     error,
   } = useQuery<SheetData[]>({
-    queryKey: [`/api/templates/${templateId}/excel-data`, Date.now()],
+    queryKey: [`/api/templates/${templateId}/excel-data`],
     enabled: !!templateId,
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Don't cache
   });
 
   // Poll for generation progress
