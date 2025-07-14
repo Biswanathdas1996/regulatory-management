@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
@@ -21,6 +21,29 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, isAdmin, isReportingEntity, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
+  // Use effect for navigation to avoid setState during render
+  useEffect(() => {
+    if (isLoading) return;
+
+    // Check authentication requirements
+    if (requireAuth && !isAuthenticated) {
+      setLocation(redirectTo || "/");
+      return;
+    }
+
+    // Check admin requirements
+    if (requireAdmin && !isAdmin) {
+      setLocation(redirectTo || "/admin-login");
+      return;
+    }
+
+    // Check reporting entity requirements
+    if (requireReportingEntity && !isReportingEntity) {
+      setLocation(redirectTo || "/reporting-entity/login");
+      return;
+    }
+  }, [isLoading, isAuthenticated, isAdmin, isReportingEntity, requireAuth, requireAdmin, requireReportingEntity, redirectTo, setLocation]);
+
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
@@ -33,23 +56,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Check authentication requirements
-  if (requireAuth && !isAuthenticated) {
-    setLocation(redirectTo || "/");
-    return null;
-  }
-
-  // Check admin requirements
-  if (requireAdmin && !isAdmin) {
-    setLocation(redirectTo || "/admin-login");
-    return null;
-  }
-
-  // Check reporting entity requirements
-  if (requireReportingEntity && !isReportingEntity) {
-    setLocation(redirectTo || "/reporting-entity/login");
-    return null;
-  }
+  // Don't render children if authentication checks fail
+  if (requireAuth && !isAuthenticated) return null;
+  if (requireAdmin && !isAdmin) return null;
+  if (requireReportingEntity && !isReportingEntity) return null;
 
   return <>{children}</>;
 };
@@ -87,8 +97,24 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({
   adminRedirectTo = "/admin-dashboard",
   userRedirectTo = "/reporting-entity/dashboard",
 }) => {
-  const { isAuthenticated, isAdmin, isReportingEntity, isLoading } = useAuth();
+  const { isAuthenticated, isAdmin, isReportingEntity, isSuperAdmin, isIFSCAUser, isLoading } = useAuth();
   const [, setLocation] = useLocation();
+
+  // Use effect for navigation to avoid setState during render
+  useEffect(() => {
+    if (isLoading) return;
+
+    // Redirect authenticated users if specified
+    if (redirectIfAuthenticated && isAuthenticated) {
+      if (isSuperAdmin) {
+        setLocation("/super-admin/dashboard");
+      } else if (isIFSCAUser) {
+        setLocation("/ifsca/dashboard");
+      } else if (isReportingEntity) {
+        setLocation("/reporting-entity/dashboard");
+      }
+    }
+  }, [isLoading, isAuthenticated, isSuperAdmin, isIFSCAUser, isReportingEntity, redirectIfAuthenticated, setLocation]);
 
   // Show loading spinner while checking authentication
   if (isLoading) {
@@ -102,15 +128,8 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({
     );
   }
 
-  // Redirect authenticated users if specified
-  if (redirectIfAuthenticated && isAuthenticated) {
-    if (isAdmin) {
-      setLocation(adminRedirectTo);
-    } else if (isReportingEntity) {
-      setLocation(userRedirectTo);
-    }
-    return null;
-  }
+  // Don't render children if redirect is happening
+  if (redirectIfAuthenticated && isAuthenticated) return null;
 
   return <>{children}</>;
 };

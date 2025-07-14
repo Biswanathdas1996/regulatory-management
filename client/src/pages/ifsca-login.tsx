@@ -44,7 +44,8 @@ export default function IFSCALogin() {
           title: "Login successful",
           description: `Welcome to IFSCA ${data.category} Console`,
         });
-        setLocation("/ifsca/dashboard");
+        // Add a small delay to ensure auth context updates first
+        setTimeout(() => setLocation("/ifsca/dashboard"), 100);
       } else {
         toast({
           title: "Access denied",

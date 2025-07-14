@@ -44,7 +44,8 @@ export default function ReportingEntityLogin() {
           title: "Login successful",
           description: `Welcome to your ${data.category} reporting dashboard`,
         });
-        setLocation("/reporting-entity/dashboard");
+        // Add a small delay to ensure auth context updates first
+        setTimeout(() => setLocation("/reporting-entity/dashboard"), 100);
       } else {
         toast({
           title: "Access denied",

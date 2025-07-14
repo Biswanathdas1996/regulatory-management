@@ -43,7 +43,8 @@ export default function SuperAdminLogin() {
           title: "Login successful",
           description: "Welcome to Super Admin Dashboard",
         });
-        setLocation("/super-admin/dashboard");
+        // Add a small delay to ensure auth context updates first
+        setTimeout(() => setLocation("/super-admin/dashboard"), 100);
       } else {
         toast({
           title: "Access denied",
