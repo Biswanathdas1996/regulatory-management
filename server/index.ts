@@ -70,7 +70,16 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  console.log("Setting up Express app...");
+  
+  // Add a middleware to check if requests are reaching the API routes
+  app.use("/api/*", (req, res, next) => {
+    console.log(`API Route hit: ${req.method} ${req.originalUrl} (path: ${req.path})`);
+    next();
+  });
+  
   const server = await registerRoutes(app);
+  console.log("Routes registered successfully");
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -84,7 +93,9 @@ app.use((req, res, next) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
+    console.log("Setting up Vite middleware...");
     await setupVite(app, server);
+    console.log("Vite middleware setup complete");
   } else {
     serveStatic(app);
   }

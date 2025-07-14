@@ -54,13 +54,21 @@ export default function SuperAdminIFSCAUsers() {
 
   const createUserMutation = useMutation({
     mutationFn: async (userData: CreateUserData) => {
-      return apiRequest("/api/super-admin/ifsca-users", {
-        method: "POST",
-        body: JSON.stringify({
-          ...userData,
-          role: "ifsca_user",
-        }),
-      });
+      console.log("Creating user with data:", userData);
+      try {
+        const result = await apiRequest("/api/super-admin/ifsca-users", {
+          method: "POST",
+          body: JSON.stringify({
+            ...userData,
+            role: "ifsca_user",
+          }),
+        });
+        console.log("User created successfully:", result);
+        return result;
+      } catch (error) {
+        console.error("Create user error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/super-admin/ifsca-users"] });
@@ -128,7 +136,9 @@ export default function SuperAdminIFSCAUsers() {
   });
 
   const handleCreateUser = () => {
+    console.log("handleCreateUser called with:", newUser);
     if (!newUser.username || !newUser.password || !newUser.category) {
+      console.log("Validation failed - missing fields");
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields",
@@ -136,6 +146,7 @@ export default function SuperAdminIFSCAUsers() {
       });
       return;
     }
+    console.log("Calling createUserMutation.mutate");
     createUserMutation.mutate(newUser);
   };
 

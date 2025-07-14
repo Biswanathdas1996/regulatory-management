@@ -144,12 +144,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   function requireSuperAdmin(req: AuthenticatedRequest, res: any, next: any) {
+    console.log("requireSuperAdmin middleware - user:", req.user);
     if (!req.user) {
+      console.log("requireSuperAdmin: No user found");
       return res.status(401).json({ error: "Authentication required" });
     }
     if (req.user.role !== "super_admin") {
+      console.log("requireSuperAdmin: User role is not super_admin:", req.user.role);
       return res.status(403).json({ error: "Super Admin access required" });
     }
+    console.log("requireSuperAdmin: Access granted");
     next();
   }
 
@@ -2543,7 +2547,7 @@ async function processTemplateAsync(templateId: number) {
         
         // Add explicit headers to ensure JSON response
         res.setHeader('Content-Type', 'application/json');
-        res.json(ifscaUsers);
+        res.status(200).json(ifscaUsers);
         console.log("Response sent successfully");
       } catch (error) {
         console.error("Get IFSCA users error:", error);
@@ -2560,6 +2564,7 @@ async function processTemplateAsync(templateId: number) {
     async (req: AuthenticatedRequest, res) => {
       try {
         console.log("========== CREATE IFSCA USER ENDPOINT HIT ==========");
+        console.log("Request user:", req.user);
         console.log("Request body:", req.body);
         
         const { username, password, category } = req.body;
@@ -2594,7 +2599,12 @@ async function processTemplateAsync(templateId: number) {
 
         // Return user without password
         const { password: _, ...userWithoutPassword } = newUser;
-        res.json(userWithoutPassword);
+        console.log("About to send create user response:", userWithoutPassword);
+        
+        // Ensure JSON response with explicit headers
+        res.setHeader('Content-Type', 'application/json');
+        res.status(201).json(userWithoutPassword);
+        console.log("Create user response sent successfully");
       } catch (error) {
         console.error("Create IFSCA user error:", error);
         res.status(500).json({ error: "Failed to create IFSCA user" });
