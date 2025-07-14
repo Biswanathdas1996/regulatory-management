@@ -41,10 +41,10 @@ export default function ReportingEntityLogin() {
         headers: { "Content-Type": "application/json" },
       }),
     onSuccess: (data) => {
-      if (data.user?.role === "reporting_entity") {
+      if (data.role === "reporting_entity") {
         toast({
           title: "Login successful",
-          description: `Welcome to your ${data.user.category} reporting dashboard`,
+          description: `Welcome to your ${data.category} reporting dashboard`,
         });
         setLocation("/reporting-entity/dashboard");
       } else {

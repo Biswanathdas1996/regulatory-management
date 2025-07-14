@@ -135,8 +135,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.user) {
       return res.status(401).json({ error: "Authentication required" });
     }
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "super_admin" && req.user.role !== "ifsca_user") {
       return res.status(403).json({ error: "Admin access required" });
+    }
+    next();
+  }
+
+  function requireSuperAdmin(req: AuthenticatedRequest, res: any, next: any) {
+    if (!req.user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    if (req.user.role !== "super_admin") {
+      return res.status(403).json({ error: "Super Admin access required" });
     }
     next();
   }
@@ -151,18 +161,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      const role = user.role === 1 ? "admin" : "user";
-      (req.session as any).user = {
+      const userData = {
         id: user.id,
         username: user.username,
-        role,
+        role: user.role,
+        category: user.category,
       };
 
-      res.json({
-        id: user.id,
-        username: user.username,
-        role,
-      });
+      (req.session as any).user = userData;
+      res.json(userData);
     } catch (error) {
       console.error("Login error:", error);
       res.status(500).json({ error: "Failed to login" });

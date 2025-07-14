@@ -41,10 +41,10 @@ export default function IFSCALogin() {
         headers: { "Content-Type": "application/json" },
       }),
     onSuccess: (data) => {
-      if (data.user?.role === "ifsca_user") {
+      if (data.role === "ifsca_user") {
         toast({
           title: "Login successful",
-          description: `Welcome to IFSCA ${data.user.category} Console`,
+          description: `Welcome to IFSCA ${data.category} Console`,
         });
         setLocation("/ifsca/dashboard");
       } else {

@@ -136,42 +136,33 @@ export const submissions = pgTable("submissions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Add type exports
-import { InferModel } from "drizzle-orm";
+// Type exports using modern Drizzle syntax
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
 
-// Type exports
-export type User = InferModel<typeof users>;
-export type InsertUser = InferModel<typeof users, "insert">;
+export type Template = typeof templates.$inferSelect;
+export type InsertTemplate = typeof templates.$inferInsert;
 
-export type Template = InferModel<typeof templates>;
-export type InsertTemplate = InferModel<typeof templates, "insert">;
+export type TemplateSheet = typeof templateSheets.$inferSelect;
+export type InsertTemplateSheet = typeof templateSheets.$inferInsert;
 
-export type TemplateSheet = InferModel<typeof templateSheets>;
-export type InsertTemplateSheet = InferModel<typeof templateSheets, "insert">;
+export type TemplateSchema = typeof templateSchemas.$inferSelect;
+export type InsertTemplateSchema = typeof templateSchemas.$inferInsert;
 
-export type TemplateSchema = InferModel<typeof templateSchemas>;
-export type InsertTemplateSchema = InferModel<typeof templateSchemas, "insert">;
+export type ProcessingStatus = typeof processingStatus.$inferSelect;
+export type InsertProcessingStatus = typeof processingStatus.$inferInsert;
 
-export type ProcessingStatus = InferModel<typeof processingStatus>;
-export type InsertProcessingStatus = InferModel<
-  typeof processingStatus,
-  "insert"
->;
+export type ValidationRule = typeof validationRules.$inferSelect;
+export type InsertValidationRule = typeof validationRules.$inferInsert;
 
-export type ValidationRule = InferModel<typeof validationRules>;
-export type InsertValidationRule = InferModel<typeof validationRules, "insert">;
+export type Submission = typeof submissions.$inferSelect;
+export type InsertSubmission = typeof submissions.$inferInsert;
 
-export type Submission = InferModel<typeof submissions>;
-export type InsertSubmission = InferModel<typeof submissions, "insert">;
+export type ValidationResult = typeof validationResults.$inferSelect;
+export type InsertValidationResult = typeof validationResults.$inferInsert;
 
-export type ValidationResult = InferModel<typeof validationResults>;
-export type InsertValidationResult = InferModel<
-  typeof validationResults,
-  "insert"
->;
-
-export type Comment = InferModel<typeof comments>;
-export type InsertComment = InferModel<typeof comments, "insert">;
+export type Comment = typeof comments.$inferSelect;
+export type InsertComment = typeof comments.$inferInsert;
 
 // User role constants
 export const userRoles = [

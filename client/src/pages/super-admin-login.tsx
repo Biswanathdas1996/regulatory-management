@@ -40,7 +40,7 @@ export default function SuperAdminLogin() {
         headers: { "Content-Type": "application/json" },
       }),
     onSuccess: (data) => {
-      if (data.user?.role === "super_admin") {
+      if (data.role === "super_admin") {
         toast({
           title: "Login successful",
           description: "Welcome to Super Admin Dashboard",
