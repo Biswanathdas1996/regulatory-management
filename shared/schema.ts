@@ -25,13 +25,18 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  role: integer("role").default(0),
+  role: text("role").notNull().default("reporting_entity"), // super_admin, ifsca_user, reporting_entity
+  category: text("category"), // banking, nbfc, stock_exchange (null for super_admin)
+  createdBy: integer("created_by"), // ID of user who created this user
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const templates = pgTable("templates", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   templateType: text("template_type").notNull(),
+  category: text("category").notNull(), // banking, nbfc, stock_exchange
   jsonSchema: text("json_schema"),
   fileName: text("file_name").notNull(),
   filePath: text("file_path").notNull(),
@@ -39,6 +44,7 @@ export const templates = pgTable("templates", {
   validationRulesPath: text("validation_rules_path"), // Path to validation rules .txt file
   validationFileUploaded: boolean("validation_file_uploaded").default(false), // Track if validation file is uploaded
   status: text("status").notNull().default("active"), // active, inactive
+  createdBy: integer("created_by").references(() => users.id).notNull(), // ID of IFSCA user who created this template
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -166,6 +172,20 @@ export type InsertValidationResult = InferModel<
 
 export type Comment = InferModel<typeof comments>;
 export type InsertComment = InferModel<typeof comments, "insert">;
+
+// User role constants
+export const userRoles = [
+  "super_admin",
+  "ifsca_user", 
+  "reporting_entity"
+] as const;
+
+// Category constants  
+export const categories = [
+  "banking",
+  "nbfc", 
+  "stock_exchange"
+] as const;
 
 // Template types array
 export const templateTypes = [

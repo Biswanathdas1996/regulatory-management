@@ -80,6 +80,33 @@ export default function Home() {
       {/* Main Content */}
       <div className="container mx-auto px-4 pb-12 mt-[30px] mb-[30px]">
         <div className="max-w-5xl mx-auto">
+          {/* Super Admin Access */}
+          <div className="mb-8">
+            <Card className="group hover:shadow-xl hover:shadow-red-500/10 transition-all duration-300 border-red-200 bg-gradient-to-r from-red-50/50 to-red-100/50 backdrop-blur-sm overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="h-12 w-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/25">
+                      <Shield className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">
+                        Super Admin Portal
+                      </h3>
+                      <p className="text-sm text-gray-600">Global system administration and user management</p>
+                    </div>
+                  </div>
+                  <Link href="/super-admin/login">
+                    <Button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-md shadow-red-500/25">
+                      Super Admin Access
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Main Access Cards */}
           <div className="grid lg:grid-cols-2 gap-6 mb-12">
             {/* Financial Institution Portal */}
@@ -112,7 +139,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Link href="/user-login">
+                  <Link href="/reporting-entity/login">
                     <Button className="w-full h-10 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-medium rounded-lg shadow-md shadow-emerald-500/25 transition-all duration-200 text-sm">
                       Access Portal
                       <ArrowRight className="h-4 w-4 ml-2" />
@@ -152,7 +179,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Link href="/admin-login">
+                  <Link href="/ifsca/login">
                     <Button className="w-full h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg shadow-md shadow-blue-500/25 transition-all duration-200 text-sm">
                       IFSCA Access
                       <ArrowRight className="h-4 w-4 ml-2" />

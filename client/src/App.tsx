@@ -24,6 +24,9 @@ import AdminSubmissionsPage from "@/pages/admin-submissions";
 import AdminTemplatesPage from "@/pages/admin-templates";
 import AdminLoginPage from "@/pages/admin-login";
 import UserLoginPage from "@/pages/user-login";
+import SuperAdminLogin from "@/pages/super-admin-login";
+import IFSCALogin from "@/pages/ifsca-login";
+import ReportingEntityLogin from "@/pages/reporting-entity-login";
 import SubmissionViewPage from "@/pages/submission-view";
 import UserManagementPage from "@/pages/user-management";
 import ExcelAnalyzerPage from "@/pages/excel-analyzer";
@@ -32,6 +35,29 @@ function Router() {
   return (
     <Switch>
       {/* Public routes with different layouts */}
+      <Route path="/super-admin/login">
+        <Layout showHeader={false}>
+          <PublicRoute redirectIfAuthenticated>
+            <SuperAdminLogin />
+          </PublicRoute>
+        </Layout>
+      </Route>
+      <Route path="/ifsca/login">
+        <Layout showHeader={false}>
+          <PublicRoute redirectIfAuthenticated>
+            <IFSCALogin />
+          </PublicRoute>
+        </Layout>
+      </Route>
+      <Route path="/reporting-entity/login">
+        <Layout showHeader={false}>
+          <PublicRoute redirectIfAuthenticated>
+            <ReportingEntityLogin />
+          </PublicRoute>
+        </Layout>
+      </Route>
+      
+      {/* Legacy login routes for backward compatibility */}
       <Route path="/admin-login">
         <Layout showHeader={false}>
           <PublicRoute redirectIfAuthenticated>

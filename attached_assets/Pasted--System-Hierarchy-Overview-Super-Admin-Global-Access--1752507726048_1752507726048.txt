@@ -1,0 +1,86 @@
+
+## 🧱 System Hierarchy Overview
+
+```
+                         Super Admin (Global Access)
+                                 |
+                ---------------------------------------
+                |                  |                 |
+         IFSCA User (Banking)  IFSCA User (NBFC)  IFSCA User (Stock Exchange)
+                |                  |                 |
+        Reporting Entities    Reporting Entities  Reporting Entities
+        (Banking)             (NBFC)              (Stock Exchange)
+```
+
+---
+
+## 🔐 Roles and Responsibilities
+
+### 1. **Super Admin (Global Level)**
+
+* **Login Page**: `/super-admin/login`
+* **Dashboard**: `/super-admin/dashboard`
+* **Responsibilities**:
+
+  * Create/manage **IFSCA users**
+  * Assign **Category** to each IFSCA user (e.g., Banking, NBFC, Stock Exchange)
+  * View system-wide activity/logs
+  * Cannot upload submissions/templates directly
+
+---
+
+### 2. **IFSCA Users (Category Level Admins)**
+
+* **Login Page**: `/ifsca/login`
+* **Dashboard**: `/ifsca/dashboard`
+* **Responsibilities**:
+
+  * Belong to a **specific category** (Banking / NBFC / Stock Exchange)
+  * Create/manage **Reporting Entities** under their category
+  * Upload/View category-specific **Templates**
+  * View/Approve/Monitor **Submissions** made by reporting entities in their category
+
+---
+
+### 3. **Reporting Entities (Submitters)**
+
+* **Login Page**: `/reporting-entity/login`
+* **Dashboard**: `/reporting-entity/dashboard`
+* **Responsibilities**:
+
+  * Belong to a specific category
+  * Upload/Submit reports using templates for that category
+  * View submission history/status
+  * Edit draft submissions if allowed by status
+
+---
+
+## 🧩 Key Concept: **Category-based Segregation**
+
+* **Category is the core segmentation key**
+* All templates and submissions are tagged by **category**
+* Users and entities can only access templates/submissions from **their category**
+* Prevents data leakage/cross-access between unrelated sectors (Banking vs NBFC, etc.)
+
+---
+
+## 🚪 Login and Dashboard Access
+
+| Role             | Login URL                 | Dashboard URL                 | Access Scope           |
+| ---------------- | ------------------------- | ----------------------------- | ---------------------- |
+| Super Admin      | `/super-admin/login`      | `/super-admin/dashboard`      | All categories & users |
+| IFSCA User       | `/ifsca/login`            | `/ifsca/dashboard`            | Assigned category only |
+| Reporting Entity | `/reporting-entity/login` | `/reporting-entity/dashboard` | Self, within category  |
+
+---
+
+## ✅ Security & Access Controls
+
+* **JWT or session-based auth**
+* Role-based access control (RBAC)
+* Category filter enforced at:
+
+  * Query layer (DB queries)
+  * Frontend routes
+  * API endpoints
+
