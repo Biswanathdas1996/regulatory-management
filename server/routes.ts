@@ -135,19 +135,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.user) {
       return res.status(401).json({ error: "Authentication required" });
     }
-    if (req.user.role !== "admin" && req.user.role !== "ifsca_admin") {
+    if (req.user.role !== "admin") {
       return res.status(403).json({ error: "Admin access required" });
-    }
-    next();
-  }
-
-  // IFSCA Admin middleware to check if user is IFSCA admin
-  function requireIFSCAAdmin(req: AuthenticatedRequest, res: any, next: any) {
-    if (!req.user) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
-    if (req.user.role !== "ifsca_admin") {
-      return res.status(403).json({ error: "IFSCA Admin access required" });
     }
     next();
   }
@@ -162,31 +151,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      // Check if user is active
-      if (!user.isActive) {
-        return res.status(401).json({ error: "Account is deactivated" });
-      }
-
-      // Convert old role system to new system
-      let role = user.role;
-      if (typeof user.role === 'number') {
-        role = user.role === 1 ? "admin" : "user";
-      }
-
+      const role = user.role === 1 ? "admin" : "user";
       (req.session as any).user = {
         id: user.id,
         username: user.username,
         role,
-        userType: user.userType,
-        fullName: user.fullName,
       };
 
       res.json({
         id: user.id,
         username: user.username,
         role,
-        userType: user.userType,
-        fullName: user.fullName,
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -211,160 +186,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(401).json({ error: "Not authenticated" });
     }
     res.json(req.user);
-  });
-
-  // Admin login route
-  app.post("/api/admin/login", async (req, res) => {
-    try {
-      const { username, password } = req.body;
-      const user = await storage.getUserByUsername(username);
-
-      if (!user || !(await bcrypt.compare(password, user.password))) {
-        return res.status(401).json({ error: "Invalid credentials" });
-      }
-
-      // Check if user is IFSCA admin
-      if (user.role !== "ifsca_admin") {
-        return res.status(403).json({ error: "Admin access required" });
-      }
-
-      // Check if user is active
-      if (!user.isActive) {
-        return res.status(401).json({ error: "Account is deactivated" });
-      }
-
-      (req.session as any).user = {
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        userType: user.userType,
-        fullName: user.fullName,
-      };
-
-      res.json({
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        userType: user.userType,
-        fullName: user.fullName,
-      });
-    } catch (error) {
-      console.error("Admin login error:", error);
-      res.status(500).json({ error: "Failed to login" });
-    }
-  });
-
-  // Admin routes
-  app.get("/api/admin/users", requireIFSCAAdmin, async (req: AuthenticatedRequest, res) => {
-    try {
-      const users = await storage.getAllUsers();
-      // Don't return passwords
-      const safeUsers = users.map((user) => ({
-        id: user.id,
-        username: user.username,
-        role: user.role,
-        userType: user.userType,
-        fullName: user.fullName,
-        email: user.email,
-        organization: user.organization,
-        isActive: user.isActive,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      }));
-      res.json(safeUsers);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      res.status(500).json({ error: "Failed to fetch users" });
-    }
-  });
-
-  app.post("/api/admin/users", requireIFSCAAdmin, async (req: AuthenticatedRequest, res) => {
-    try {
-      const { username, password, fullName, email, role, userType, organization } = req.body;
-
-      // Validate required fields
-      if (!username || !password || !fullName || !email || !role) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-
-      // Check if username already exists
-      const existingUser = await storage.getUserByUsername(username);
-      if (existingUser) {
-        return res.status(409).json({ error: "Username already exists" });
-      }
-
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      // Create user
-      const newUser = await storage.createUser({
-        username,
-        password: hashedPassword,
-        fullName,
-        email,
-        role,
-        userType,
-        organization,
-        isActive: true,
-      });
-
-      // Return user without password
-      const safeUser = {
-        id: newUser.id,
-        username: newUser.username,
-        role: newUser.role,
-        userType: newUser.userType,
-        fullName: newUser.fullName,
-        email: newUser.email,
-        organization: newUser.organization,
-        isActive: newUser.isActive,
-        createdAt: newUser.createdAt,
-        updatedAt: newUser.updatedAt,
-      };
-
-      res.status(201).json(safeUser);
-    } catch (error) {
-      console.error("Error creating user:", error);
-      res.status(500).json({ error: "Failed to create user" });
-    }
-  });
-
-  app.patch("/api/admin/users/:id/status", requireIFSCAAdmin, async (req: AuthenticatedRequest, res) => {
-    try {
-      const userId = parseInt(req.params.id);
-      const { isActive } = req.body;
-
-      if (typeof isActive !== 'boolean') {
-        return res.status(400).json({ error: "isActive must be a boolean" });
-      }
-
-      await storage.updateUserStatus(userId, isActive);
-      res.json({ message: "User status updated successfully" });
-    } catch (error) {
-      console.error("Error updating user status:", error);
-      res.status(500).json({ error: "Failed to update user status" });
-    }
-  });
-
-  app.get("/api/admin/stats", requireIFSCAAdmin, async (req: AuthenticatedRequest, res) => {
-    try {
-      const allUsers = await storage.getAllUsers();
-      const ifscaUsers = allUsers.filter(user => user.role === 'ifsca_user');
-      const adminUsers = allUsers.filter(user => user.role === 'ifsca_admin');
-      const activeUsers = allUsers.filter(user => user.isActive);
-
-      const stats = {
-        totalUsers: allUsers.length,
-        ifscaUsers: ifscaUsers.length,
-        adminUsers: adminUsers.length,
-        activeUsers: activeUsers.length,
-      };
-
-      res.json(stats);
-    } catch (error) {
-      console.error("Error fetching admin stats:", error);
-      res.status(500).json({ error: "Failed to fetch statistics" });
-    }
   });
 
   // User management endpoints (Admin only)

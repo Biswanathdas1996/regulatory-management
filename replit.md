@@ -8,28 +8,6 @@ This is a comprehensive digital solution for GIFT City financial institutions to
 
 The application validates submissions against predefined IFSCA-compliant rules with 100% accuracy, ensuring regulatory compliance and flagging violations in real-time.
 
-## Recent Changes (January 14, 2025)
-
-### IFSCA Admin Portal System Implementation (January 14, 2025)
-- Created comprehensive IFSCA admin portal with dedicated login system
-- Implemented admin-only access with red-themed design and Shield icon branding
-- Added full user management capabilities for creating various IFSCA user types:
-  - Banking, Stock Exchange, NBFC, Insurance, Mutual Funds, Pension Funds, etc.
-- Enhanced database schema with expanded user roles and types:
-  - Added role field: "reporting_entity", "ifsca_user", "ifsca_admin"
-  - Added userType field for IFSCA user categories
-  - Added fullName, email, organization, and isActive fields
-- Created admin API endpoints for user management:
-  - POST /api/admin/login - Admin-only login with role validation
-  - GET /api/admin/users - Fetch all users with safe user data
-  - POST /api/admin/users - Create new IFSCA users with validation
-  - PATCH /api/admin/users/:id/status - Toggle user active/inactive status
-  - GET /api/admin/stats - Administrative statistics dashboard
-- Added seed admin script with default admin user (admin/admin123)
-- Created sample IFSCA users for testing different user types
-- Updated authentication middleware to support new role system
-- Implemented proper admin access control with IFSCA admin-only routes
-
 ## Recent Changes (January 13, 2025)
 
 ### Home Page Modernization and Template Access Removal (January 13, 2025)

@@ -2,17 +2,20 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Eye, EyeOff, Shield, ArrowLeft } from "lucide-react";
-import { Link } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useAuth } from "@/contexts/AuthContext";
+import { Link, useLocation } from "wouter";
+import { Shield, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 const adminLoginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -21,10 +24,10 @@ const adminLoginSchema = z.object({
 
 type AdminLoginForm = z.infer<typeof adminLoginSchema>;
 
-export default function AdminLogin() {
+export default function AdminLoginPage() {
+  const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
-  const [, navigate] = useLocation();
-  const { toast } = useToast();
+  const { login, isLoading } = useAuth();
 
   const form = useForm<AdminLoginForm>({
     resolver: zodResolver(adminLoginSchema),
@@ -34,130 +37,123 @@ export default function AdminLogin() {
     },
   });
 
-  const loginMutation = useMutation({
-    mutationFn: async (data: AdminLoginForm) => {
-      const response = await apiRequest("/api/admin/login", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
-      return response;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Login successful",
-        description: "Welcome to IFSCA Admin Portal",
-      });
-      navigate("/admin-portal");
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Login failed",
-        description: error.message || "Invalid credentials",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSubmit = (data: AdminLoginForm) => {
-    loginMutation.mutate(data);
+  const onSubmit = async (data: AdminLoginForm) => {
+    try {
+      await login({ username: data.username, password: data.password });
+      setLocation("/admin-dashboard");
+    } catch (error) {
+      // Error handling is done in the auth context
+      console.error("Login failed:", error);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 to-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <Link href="/" className="inline-flex items-center gap-2 text-red-600 hover:text-red-700 mb-4">
-            <ArrowLeft className="w-4 h-4" />
+        {/* Back Link */}
+        <Link to="/">
+          <Button variant="ghost" className="mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Home
-          </Link>
-          <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Shield className="w-8 h-8 text-red-600" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">IFSCA Admin Portal</h1>
-          <p className="text-gray-600">Administrator Access Only</p>
-        </div>
+          </Button>
+        </Link>
 
-        <Card className="shadow-lg">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Admin Login</CardTitle>
-            <CardDescription className="text-center">
-              Enter your administrator credentials to access the IFSCA admin portal
-            </CardDescription>
+        <Card className="border-0 shadow-xl">
+          <CardHeader className="text-center pb-6">
+            <div className="mx-auto mb-4 h-16 w-16 bg-gradient-to-br from-red-600 to-red-500 rounded-full flex items-center justify-center shadow-lg">
+              <Shield className="h-8 w-8 text-white" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-gray-900">
+              IFSCA User Login
+            </CardTitle>
+            <p className="text-gray-600">Access the administrative dashboard</p>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="Enter IFSCA admin username"
-                  {...form.register("username")}
-                  className="w-full"
-                />
-                {form.formState.errors.username && (
-                  <p className="text-sm text-red-600">{form.formState.errors.username.message}</p>
-                )}
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter admin password"
-                    {...form.register("password")}
-                    className="w-full pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-500" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-gray-500" />
-                    )}
-                  </Button>
-                </div>
-                {form.formState.errors.password && (
-                  <p className="text-sm text-red-600">{form.formState.errors.password.message}</p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full bg-red-600 hover:bg-red-700 text-white"
-                disabled={loginMutation.isPending}
+          <CardContent className="pt-0">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
               >
-                {loginMutation.isPending ? "Signing in..." : "Sign In"}
-              </Button>
-            </form>
+                <FormField
+                  control={form.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter IFSCA username"
+                          {...field}
+                          className="h-11"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Enter admin password"
+                            {...field}
+                            className="h-11 pr-10"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-11 px-3 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4 text-gray-400" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-gray-400" />
+                            )}
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button
+                  type="submit"
+                  className="w-full h-11 bg-red-600 hover:bg-red-700"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Signing in..." : "Sign In"}
+                </Button>
+              </form>
+            </Form>
+
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <p className="text-center text-sm text-gray-600">
                 Need user access?{" "}
-                <Link href="/login" className="text-red-600 hover:text-red-700 font-medium">
-                  User Login
+                <Link to="/user-login">
+                  <Button variant="link" className="h-auto p-0 text-blue-600">
+                    User Login
+                  </Button>
                 </Link>
               </p>
             </div>
+
+            {/* Demo Credentials */}
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <p className="text-xs text-gray-500 text-center">Demo: username: "admin", Password: "admin123"</p>
+            </div>
           </CardContent>
         </Card>
-
-        <div className="mt-6 text-center">
-          <Alert className="bg-red-50 border-red-200 text-left">
-            <Shield className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800">
-              <strong>Administrator Access:</strong> This portal is restricted to authorized IFSCA administrators only.
-              Unauthorized access is prohibited and monitored.
-            </AlertDescription>
-          </Alert>
-        </div>
       </div>
     </div>
   );
