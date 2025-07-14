@@ -28,6 +28,7 @@ import SuperAdminLogin from "@/pages/super-admin-login";
 import IFSCALogin from "@/pages/ifsca-login";
 import ReportingEntityLogin from "@/pages/reporting-entity-login";
 import SuperAdminDashboard from "@/pages/super-admin-dashboard";
+import SuperAdminIFSCAUsers from "@/pages/super-admin-ifsca-users";
 import IFSCADashboard from "@/pages/ifsca-dashboard";
 import ReportingEntityDashboard from "@/pages/reporting-entity-dashboard";
 import SubmissionViewPage from "@/pages/submission-view";
@@ -66,6 +67,13 @@ function Router() {
         <Layout>
           <ProtectedRoute requireAuth>
             <SuperAdminDashboard />
+          </ProtectedRoute>
+        </Layout>
+      </Route>
+      <Route path="/super-admin/ifsca-users">
+        <Layout>
+          <ProtectedRoute requireAuth>
+            <SuperAdminIFSCAUsers />
           </ProtectedRoute>
         </Layout>
       </Route>
