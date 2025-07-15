@@ -2604,136 +2604,177 @@ Only return the JSON array, no additional text.
   });
 
   // Analytics endpoint for admin users
-  app.get("/api/admin/analytics", requireAdmin, async (req: AuthenticatedRequest, res) => {
-    try {
-      const category = req.query.category;
-      const userRole = req.user?.role;
-      const userCategory = req.user?.category;
+  app.get(
+    "/api/admin/analytics",
+    requireAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const category = req.query.category;
+        const userRole = req.user?.role;
+        const userCategory = req.user?.category;
 
-      // For IFSCA users, filter by their category
-      // For super admins, show all or filter by requested category
-      let categoryFilter = null;
-      if (userRole === 'ifsca_user') {
-        categoryFilter = userCategory;
-      } else if (category && userRole === 'super_admin') {
-        categoryFilter = parseInt(category as string);
-      }
+        // For IFSCA users, filter by their category
+        // For super admins, show all or filter by requested category
+        let categoryFilter: number | undefined = undefined;
+        if (userRole === "ifsca_user") {
+          categoryFilter = userCategory
+            ? typeof userCategory === "string"
+              ? parseInt(userCategory)
+              : userCategory
+            : undefined;
+        } else if (category && userRole === "super_admin") {
+          categoryFilter = parseInt(category as string);
+        }
 
-      // Get all submissions with category filtering
-      const submissions = await storage.getSubmissions(undefined, undefined, categoryFilter);
-      
-      // Get all users for the category
-      const allUsers = await storage.getAllUsers();
-      const users = categoryFilter 
-        ? allUsers.filter(u => u.category === categoryFilter)
-        : allUsers;
+        // Get all submissions with category filtering
+        const submissions = await storage.getSubmissions(
+          undefined,
+          undefined,
+          categoryFilter
+        );
 
-      // Get templates for the category
-      const allTemplates = await storage.getTemplates();
-      const templates = categoryFilter 
-        ? allTemplates.filter(t => t.category === categoryFilter)
-        : allTemplates;
+        // Get all users for the category
+        const allUsers = await storage.getAllUsers();
+        const users = categoryFilter
+          ? allUsers.filter((u) => u.category === categoryFilter)
+          : allUsers;
 
-      // Calculate analytics
-      const totalSubmissions = submissions.length;
-      
-      // Status breakdown
-      const submissionsByStatus = submissions.reduce((acc: any, sub: any) => {
-        acc[sub.status] = (acc[sub.status] || 0) + 1;
-        return acc;
-      }, { passed: 0, failed: 0, pending: 0, rejected: 0, returned: 0 });
+        // Get templates for the category
+        const allTemplates = await storage.getTemplates();
+        const templates = categoryFilter
+          ? allTemplates.filter((t) => t.category === categoryFilter)
+          : allTemplates;
 
-      // User engagement
-      const activeUserIds = new Set(submissions.map(s => s.userId));
-      const userEngagement = {
-        totalUsers: users.length,
-        activeUsers: activeUserIds.size,
-        submissionsPerUser: users.length > 0 ? submissions.length / users.length : 0,
-      };
+        // Calculate analytics
+        const totalSubmissions = submissions.length;
 
-      // Template analytics
-      const templateAnalytics = templates.map(template => {
-        const templateSubmissions = submissions.filter(s => s.templateId === template.id);
-        const successfulSubmissions = templateSubmissions.filter(s => s.status === 'passed');
-        
-        return {
-          templateName: template.name,
-          submissionCount: templateSubmissions.length,
-          successRate: templateSubmissions.length > 0 ? (successfulSubmissions.length / templateSubmissions.length) * 100 : 0,
-          avgProcessingTime: 2.5, // Mock data - would need processing time tracking
+        // Status breakdown
+        const submissionsByStatus = submissions.reduce(
+          (acc: any, sub: any) => {
+            acc[sub.status] = (acc[sub.status] || 0) + 1;
+            return acc;
+          },
+          { passed: 0, failed: 0, pending: 0, rejected: 0, returned: 0 }
+        );
+
+        // User engagement
+        const activeUserIds = new Set(submissions.map((s) => s.userId));
+        const userEngagement = {
+          totalUsers: users.length,
+          activeUsers: activeUserIds.size,
+          submissionsPerUser:
+            users.length > 0 ? submissions.length / users.length : 0,
         };
-      });
 
-      // Compliance metrics
-      const onTimeSubmissions = submissions.filter(s => s.status === 'passed' || s.status === 'pending').length;
-      const complianceRate = totalSubmissions > 0 ? (onTimeSubmissions / totalSubmissions) * 100 : 0;
+        // Template analytics
+        const templateAnalytics = templates.map((template) => {
+          const templateSubmissions = submissions.filter(
+            (s) => s.templateId === template.id
+          );
+          const successfulSubmissions = templateSubmissions.filter(
+            (s) => s.status === "passed"
+          );
 
-      // Recent activity (last 10 submissions)
-      const recentSubmissions = submissions
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 10);
-
-      const recentActivity = await Promise.all(
-        recentSubmissions.map(async (submission) => {
-          const user = users.find(u => u.id === submission.userId);
-          const template = templates.find(t => t.id === submission.templateId);
-          
           return {
-            date: submission.createdAt,
-            username: user?.username || 'Unknown User',
-            action: 'Submitted',
-            template: template?.name || 'Unknown Template',
-            status: submission.status,
+            templateName: template.name,
+            submissionCount: templateSubmissions.length,
+            successRate:
+              templateSubmissions.length > 0
+                ? (successfulSubmissions.length / templateSubmissions.length) *
+                  100
+                : 0,
+            avgProcessingTime: 2.5, // Mock data - would need processing time tracking
           };
-        })
-      );
+        });
 
-      const analyticsData = {
-        totalSubmissions,
-        submissionsByStatus,
-        submissionTrends: [], // Could be calculated from historical data
-        userEngagement,
-        templateAnalytics,
-        complianceMetrics: {
-          onTimeSubmissions,
-          overdueSubmissions: totalSubmissions - onTimeSubmissions,
-          complianceRate,
-        },
-        recentActivity,
-      };
+        // Compliance metrics
+        const onTimeSubmissions = submissions.filter(
+          (s) => s.status === "passed" || s.status === "pending"
+        ).length;
+        const complianceRate =
+          totalSubmissions > 0
+            ? (onTimeSubmissions / totalSubmissions) * 100
+            : 0;
 
-      res.json(analyticsData);
-    } catch (error) {
-      console.error("Error fetching analytics:", error);
-      res.status(500).json({ error: "Failed to fetch analytics data" });
+        // Recent activity (last 10 submissions)
+        const recentSubmissions = submissions
+          .sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+          .slice(0, 10);
+
+        const recentActivity = await Promise.all(
+          recentSubmissions.map(async (submission) => {
+            const user = users.find((u) => u.id === submission.userId);
+            const template = templates.find(
+              (t) => t.id === submission.templateId
+            );
+
+            return {
+              date: submission.createdAt,
+              username: user?.username || "Unknown User",
+              action: "Submitted",
+              template: template?.name || "Unknown Template",
+              status: submission.status,
+            };
+          })
+        );
+
+        const analyticsData = {
+          totalSubmissions,
+          submissionsByStatus,
+          submissionTrends: [], // Could be calculated from historical data
+          userEngagement,
+          templateAnalytics,
+          complianceMetrics: {
+            onTimeSubmissions,
+            overdueSubmissions: totalSubmissions - onTimeSubmissions,
+            complianceRate,
+          },
+          recentActivity,
+        };
+
+        res.json(analyticsData);
+      } catch (error) {
+        console.error("Error fetching analytics:", error);
+        res.status(500).json({ error: "Failed to fetch analytics data" });
+      }
     }
-  });
+  );
 
   // Endpoint to get users for a specific category (for analytics)
-  app.get("/api/admin/users", requireAdmin, async (req: AuthenticatedRequest, res) => {
-    try {
-      const category = req.query.category;
-      const userRole = req.user?.role;
-      const userCategory = req.user?.category;
+  app.get(
+    "/api/admin/users",
+    requireAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const category = req.query.category;
+        const userRole = req.user?.role;
+        const userCategory = req.user?.category;
 
-      let categoryFilter = null;
-      if (userRole === 'ifsca_user') {
-        categoryFilter = userCategory;
-      } else if (category && userRole === 'super_admin') {
-        categoryFilter = parseInt(category as string);
+        let categoryFilter = null;
+        if (userRole === "ifsca_user") {
+          categoryFilter = userCategory;
+        } else if (category && userRole === "super_admin") {
+          categoryFilter = parseInt(category as string);
+        }
+
+        const allUsers = await storage.getAllUsers();
+        const users = categoryFilter
+          ? allUsers.filter(
+              (u) =>
+                u.category === categoryFilter && u.role === "reporting_entity"
+            )
+          : allUsers.filter((u) => u.role === "reporting_entity");
+
+        res.json(users);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).json({ error: "Failed to fetch users" });
       }
-
-      const allUsers = await storage.getAllUsers();
-      const users = categoryFilter 
-        ? allUsers.filter(u => u.category === categoryFilter && u.role === 'reporting_entity')
-        : allUsers.filter(u => u.role === 'reporting_entity');
-
-      res.json(users);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      res.status(500).json({ error: "Failed to fetch users" });
     }
-  });
+  );
 
   // Get all IFSCA users (Super Admin only)
   app.get(
