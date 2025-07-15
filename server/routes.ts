@@ -2743,6 +2743,112 @@ Only return the JSON array, no additional text.
     }
   );
 
+  // Category Management Endpoints (Super Admin only)
+  
+  // Get all categories
+  app.get(
+    "/api/super-admin/categories",
+    requireAuth,
+    requireSuperAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        console.log("========== GET CATEGORIES ENDPOINT HIT ==========");
+        const categories = await storage.getCategories();
+        res.json(categories);
+      } catch (error) {
+        console.error("Get categories error:", error);
+        res.status(500).json({ error: "Failed to fetch categories" });
+      }
+    }
+  );
+
+  // Create new category
+  app.post(
+    "/api/super-admin/categories",
+    requireAuth,
+    requireSuperAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        console.log("========== CREATE CATEGORY ENDPOINT HIT ==========");
+        const { name, displayName, description, color, icon } = req.body;
+
+        // Validate required fields
+        if (!name || !displayName) {
+          return res.status(400).json({ 
+            error: "Name and display name are required" 
+          });
+        }
+
+        // Check if category already exists
+        const existingCategory = await storage.getCategoryByName(name);
+        if (existingCategory) {
+          return res.status(409).json({ 
+            error: "Category with this name already exists" 
+          });
+        }
+
+        const category = await storage.createCategory({
+          name: name.toLowerCase().replace(/\s+/g, '_'),
+          displayName,
+          description,
+          color: color || "#3B82F6",
+          icon: icon || "Building",
+          createdBy: req.user!.id,
+        });
+
+        res.status(201).json(category);
+      } catch (error) {
+        console.error("Create category error:", error);
+        res.status(500).json({ error: "Failed to create category" });
+      }
+    }
+  );
+
+  // Update category
+  app.put(
+    "/api/super-admin/categories/:id",
+    requireAuth,
+    requireSuperAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        console.log("========== UPDATE CATEGORY ENDPOINT HIT ==========");
+        const categoryId = parseInt(req.params.id);
+        const { displayName, description, color, icon } = req.body;
+
+        const updatedCategory = await storage.updateCategory(categoryId, {
+          displayName,
+          description,
+          color,
+          icon,
+        });
+
+        res.json(updatedCategory);
+      } catch (error) {
+        console.error("Update category error:", error);
+        res.status(500).json({ error: "Failed to update category" });
+      }
+    }
+  );
+
+  // Delete category (soft delete)
+  app.delete(
+    "/api/super-admin/categories/:id",
+    requireAuth,
+    requireSuperAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        console.log("========== DELETE CATEGORY ENDPOINT HIT ==========");
+        const categoryId = parseInt(req.params.id);
+        
+        await storage.deleteCategory(categoryId);
+        res.json({ message: "Category deleted successfully" });
+      } catch (error) {
+        console.error("Delete category error:", error);
+        res.status(500).json({ error: "Failed to delete category" });
+      }
+    }
+  );
+
   // Delete IFSCA user (Super Admin only)
   app.delete(
     "/api/super-admin/ifsca-users/:id",

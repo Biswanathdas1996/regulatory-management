@@ -8,6 +8,7 @@ import {
   submissions,
   validationResults,
   comments,
+  categoryTable,
   type User,
   type InsertUser,
   type Template,
@@ -26,6 +27,8 @@ import {
   type InsertValidationResult,
   type Comment,
   type InsertComment,
+  type Category,
+  type InsertCategory,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, inArray, and, desc } from "drizzle-orm";
@@ -122,6 +125,13 @@ export interface IStorage {
   getCommentsWithUsers(
     submissionId: number
   ): Promise<(Comment & { username: string })[]>;
+
+  // Category methods
+  getCategories(): Promise<Category[]>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: number, data: Partial<InsertCategory>): Promise<Category>;
+  deleteCategory(id: number): Promise<void>;
+  getCategoryByName(name: string): Promise<Category | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -509,6 +519,49 @@ export class DatabaseStorage implements IStorage {
       ...comment,
       username: userMap.get(comment.userId) || `User ${comment.userId}`,
     }));
+  }
+
+  // Category management methods
+  async getCategories(): Promise<Category[]> {
+    const result = await db
+      .select()
+      .from(categoryTable)
+      .where(eq(categoryTable.isActive, true))
+      .orderBy(categoryTable.displayName);
+    return result;
+  }
+
+  async createCategory(insertCategory: InsertCategory): Promise<Category> {
+    const [category] = await db
+      .insert(categoryTable)
+      .values(insertCategory)
+      .returning();
+    return category;
+  }
+
+  async updateCategory(id: number, data: Partial<InsertCategory>): Promise<Category> {
+    const [updatedCategory] = await db
+      .update(categoryTable)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(categoryTable.id, id))
+      .returning();
+    return updatedCategory;
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    await db
+      .update(categoryTable)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(categoryTable.id, id));
+  }
+
+  async getCategoryByName(name: string): Promise<Category | undefined> {
+    const [category] = await db
+      .select()
+      .from(categoryTable)
+      .where(and(eq(categoryTable.name, name), eq(categoryTable.isActive, true)))
+      .limit(1);
+    return category;
   }
 }
 

@@ -10,6 +10,20 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Categories table for dynamic category management
+export const categoryTable = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(), // banking, nbfc, stock_exchange, etc.
+  displayName: text("display_name").notNull(), // Banking, NBFC, Stock Exchange, etc.
+  description: text("description"),
+  color: text("color").default("#3B82F6"), // Hex color for UI
+  icon: text("icon").default("Building"), // Lucide icon name
+  isActive: boolean("is_active").default(true),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Comments table for submission discussions
 export const comments = pgTable("comments", {
   id: serial("id").primaryKey(),
@@ -168,6 +182,9 @@ export type InsertValidationResult = typeof validationResults.$inferInsert;
 
 export type Comment = typeof comments.$inferSelect;
 export type InsertComment = typeof comments.$inferInsert;
+
+export type Category = typeof categoryTable.$inferSelect;
+export type InsertCategory = typeof categoryTable.$inferInsert;
 
 // User role constants
 export const userRoles = [

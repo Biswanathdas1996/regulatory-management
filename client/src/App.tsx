@@ -33,6 +33,7 @@ import ReportingEntityLogin from "@/pages/reporting-entity-login";
 import SuperAdminDashboard from "@/pages/super-admin-dashboard";
 import SuperAdminIFSCAUsers from "@/pages/super-admin-ifsca-users";
 import SuperAdminReportingEntitiesPage from "@/pages/super-admin-reporting-entities";
+import SuperAdminCategoryManagementPage from "@/pages/super-admin-category-management";
 import IFSCADashboard from "@/pages/ifsca-dashboard";
 import ReportingEntityDashboard from "@/pages/reporting-entity-dashboard";
 import SubmissionViewPage from "@/pages/submission-view";
@@ -92,6 +93,13 @@ function Router() {
         <Layout>
           <SuperAdminRoute>
             <SuperAdminReportingEntitiesPage />
+          </SuperAdminRoute>
+        </Layout>
+      </Route>
+      <Route path="/super-admin/categories">
+        <Layout>
+          <SuperAdminRoute>
+            <SuperAdminCategoryManagementPage />
           </SuperAdminRoute>
         </Layout>
       </Route>

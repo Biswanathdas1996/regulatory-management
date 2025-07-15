@@ -66,6 +66,12 @@ export default function SuperAdminLayout({
       icon: Building,
       current: location === "/super-admin/reporting-entities",
     },
+    {
+      name: "Category Management",
+      href: "/super-admin/categories",
+      icon: Settings,
+      current: location === "/super-admin/categories",
+    },
     // {
     //   name: "System Activity",
     //   href: "/super-admin/activity",
