@@ -313,6 +313,8 @@ export class ModernValidationEngine {
           return this.validateRangeRule(rule, sheet, submissionId);
         case 'custom':
           return this.validateCustomRule(rule, sheet, submissionId);
+        case 'cell':
+          return this.validateCellRule(rule, sheet, submissionId);
         default:
           results.push({
             submissionId,
@@ -576,6 +578,87 @@ export class ModernValidationEngine {
         rowNumber: cell.row,
         columnName: cell.column
       });
+    });
+    
+    return results;
+  }
+
+  /**
+   * Validate cell rule (specific cell validations)
+   */
+  private static validateCellRule(
+    rule: ValidationRule,
+    sheet: any,
+    submissionId: number
+  ): ValidationResult[] {
+    const results: ValidationResult[] = [];
+    
+    // Parse field reference (e.g., "A1", "B5", or cell range specified in rule)
+    const fieldInfo = this.parseFieldReference(rule.field, sheet, rule);
+    
+    fieldInfo.cells.forEach((cell) => {
+      const value = String(cell.value || '').trim();
+      
+      // For cell rules, check if the cell contains expected content
+      // This can be extended to support more specific cell validation logic
+      const isEmpty = cell.value === null || 
+                      cell.value === undefined || 
+                      cell.value === '' ||
+                      (typeof cell.value === 'string' && cell.value.trim() === '');
+      
+      if (rule.condition === 'required' || rule.condition === 'true') {
+        // Cell must not be empty
+        if (isEmpty) {
+          results.push({
+            submissionId,
+            ruleId: rule.id,
+            field: rule.field,
+            ruleType: rule.ruleType,
+            condition: rule.condition,
+            cellReference: cell.reference,
+            cellValue: String(cell.value || ''),
+            errorMessage: rule.errorMessage,
+            severity: rule.severity,
+            isValid: false,
+            sheetName: sheet.name,
+            rowNumber: cell.row,
+            columnName: cell.column
+          });
+        } else {
+          results.push({
+            submissionId,
+            ruleId: rule.id,
+            field: rule.field,
+            ruleType: rule.ruleType,
+            condition: rule.condition,
+            cellReference: cell.reference,
+            cellValue: String(cell.value),
+            errorMessage: rule.errorMessage,
+            severity: rule.severity,
+            isValid: true,
+            sheetName: sheet.name,
+            rowNumber: cell.row,
+            columnName: cell.column
+          });
+        }
+      } else {
+        // For other cell conditions, mark as valid by default
+        results.push({
+          submissionId,
+          ruleId: rule.id,
+          field: rule.field,
+          ruleType: rule.ruleType,
+          condition: rule.condition,
+          cellReference: cell.reference,
+          cellValue: String(cell.value || ''),
+          errorMessage: rule.errorMessage,
+          severity: rule.severity,
+          isValid: true,
+          sheetName: sheet.name,
+          rowNumber: cell.row,
+          columnName: cell.column
+        });
+      }
     });
     
     return results;

@@ -425,8 +425,8 @@ export class ModernValidationRulesParser {
                 rules.push({
                   templateId,
                   field,
-                  ruleType: row.Required === 'true' ? 'required' : 'custom',
-                  condition: row.Expression || 'NOT_EMPTY',
+                  ruleType: 'cell', // Always keep as 'cell' type for cell-specific validations
+                  condition: row.Required === 'true' || row.Required === 'required' ? 'required' : (row.Expression || 'NOT_EMPTY'),
                   errorMessage: row.Description || `Cell ${cellReference} validation failed`,
                   severity: row.Severity || 'error',
                   isActive: true,
