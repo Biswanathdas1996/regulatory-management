@@ -65,6 +65,12 @@ export const templates = pgTable("templates", {
   validationRulesPath: text("validation_rules_path"), // Path to validation rules .txt file
   validationFileUploaded: boolean("validation_file_uploaded").default(false), // Track if validation file is uploaded
   status: text("status").notNull().default("active"), // active, inactive
+  // XBRL-specific fields
+  isXBRL: boolean("is_xbrl").default(false), // Flag to indicate if this is an XBRL template
+  xbrlTaxonomyPath: text("xbrl_taxonomy_path"), // Path to XBRL taxonomy schema
+  xbrlSchemaRef: text("xbrl_schema_ref"), // Reference to XBRL schema
+  xbrlNamespace: text("xbrl_namespace"), // XBRL namespace for this template
+  xbrlVersion: text("xbrl_version").default("2.1"), // XBRL version
   createdBy: integer("created_by")
     .references(() => users.id)
     .notNull(), // ID of IFSCA user who created this template
@@ -221,6 +227,7 @@ export const templateTypes = [
   "stock-mar",
   "stock-mdr",
   "treasury",
+  "xbrl", // XBRL template type
 ];
 
 // Zod schemas for validation

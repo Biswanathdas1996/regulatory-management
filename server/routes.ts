@@ -10,6 +10,7 @@ import { FileProcessor } from "./services/fileProcessor";
 import { ModernValidationRulesParser } from "../validation/ModernValidationRulesParser";
 import { ValidationEngine } from "./services/validationEngine";
 import { ModernValidationEngine } from "../validation/ModernValidationEngine";
+import { xbrlProcessor } from "./xbrl-processor";
 import {
   insertTemplateSchema,
   insertTemplateSheetSchema,
@@ -3506,6 +3507,217 @@ sheetValidations:
       } catch (error) {
         console.error("Delete IFSCA user error:", error);
         res.status(500).json({ error: "Failed to delete IFSCA user" });
+      }
+    }
+  );
+
+  // XBRL-specific endpoints
+  
+  // Parse XBRL template for schema extraction
+  app.post(
+    "/api/templates/:id/parse-xbrl",
+    requireAuth,
+    requireAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const templateId = parseInt(req.params.id);
+        const template = await storage.getTemplate(templateId);
+        
+        if (!template) {
+          return res.status(404).json({ error: "Template not found" });
+        }
+
+        if (!template.isXBRL) {
+          return res.status(400).json({ error: "Template is not marked as XBRL" });
+        }
+
+        // Parse XBRL template and extract taxonomy
+        const xbrlTemplate = await xbrlProcessor.createXBRLTemplate(template.filePath);
+        
+        // Store XBRL-specific information in template
+        await storage.updateTemplate(templateId, {
+          xbrlTaxonomyPath: template.filePath,
+          xbrlSchemaRef: xbrlTemplate.taxonomy.concepts.length > 0 ? 
+            xbrlTemplate.taxonomy.concepts[0].name : ''
+        });
+
+        res.json({
+          message: "XBRL template parsed successfully",
+          concepts: xbrlTemplate.taxonomy.concepts,
+          validationRules: xbrlTemplate.validationRules
+        });
+      } catch (error) {
+        console.error("XBRL parsing error:", error);
+        res.status(500).json({ error: "Failed to parse XBRL template" });
+      }
+    }
+  );
+
+  // Validate XBRL submission
+  app.post(
+    "/api/submissions/:id/validate-xbrl",
+    requireAuth,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const submissionId = parseInt(req.params.id);
+        const submission = await storage.getSubmission(submissionId);
+        
+        if (!submission) {
+          return res.status(404).json({ error: "Submission not found" });
+        }
+
+        const template = await storage.getTemplate(submission.templateId);
+        if (!template || !template.isXBRL) {
+          return res.status(400).json({ error: "Submission is not for XBRL template" });
+        }
+
+        // Create XBRL template from taxonomy
+        const xbrlTemplate = await xbrlProcessor.createXBRLTemplate(template.xbrlTaxonomyPath!);
+        
+        // Validate XBRL instance
+        const validationResult = await xbrlProcessor.validateXBRLInstance(
+          submission.filePath,
+          xbrlTemplate
+        );
+
+        // Update submission status based on validation
+        const status = validationResult.isValid ? "passed" : "failed";
+        await storage.updateSubmissionStatus(
+          submissionId,
+          status,
+          req.user?.id,
+          validationResult.errors.length,
+          validationResult.warnings.length
+        );
+
+        res.json({
+          isValid: validationResult.isValid,
+          errors: validationResult.errors,
+          warnings: validationResult.warnings,
+          status
+        });
+      } catch (error) {
+        console.error("XBRL validation error:", error);
+        res.status(500).json({ error: "Failed to validate XBRL submission" });
+      }
+    }
+  );
+
+  // Generate XBRL report
+  app.post(
+    "/api/submissions/:id/generate-xbrl-report",
+    requireAuth,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const submissionId = parseInt(req.params.id);
+        const submission = await storage.getSubmission(submissionId);
+        
+        if (!submission) {
+          return res.status(404).json({ error: "Submission not found" });
+        }
+
+        const template = await storage.getTemplate(submission.templateId);
+        if (!template || !template.isXBRL) {
+          return res.status(400).json({ error: "Submission is not for XBRL template" });
+        }
+
+        // Parse XBRL instance
+        const xbrlInstance = await xbrlProcessor.parseXBRLInstance(submission.filePath);
+        
+        // Generate report output path
+        const reportPath = path.join(
+          'server/uploads/reports',
+          `xbrl-report-${submissionId}-${Date.now()}.xml`
+        );
+
+        // Ensure reports directory exists
+        const reportsDir = path.dirname(reportPath);
+        if (!fs.existsSync(reportsDir)) {
+          fs.mkdirSync(reportsDir, { recursive: true });
+        }
+
+        // Generate XBRL report
+        await xbrlProcessor.generateXBRLReport(xbrlInstance, reportPath);
+
+        res.json({
+          message: "XBRL report generated successfully",
+          reportPath: reportPath,
+          downloadUrl: `/api/submissions/${submissionId}/download-xbrl-report`
+        });
+      } catch (error) {
+        console.error("XBRL report generation error:", error);
+        res.status(500).json({ error: "Failed to generate XBRL report" });
+      }
+    }
+  );
+
+  // Download XBRL report
+  app.get(
+    "/api/submissions/:id/download-xbrl-report",
+    requireAuth,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const submissionId = parseInt(req.params.id);
+        const submission = await storage.getSubmission(submissionId);
+        
+        if (!submission) {
+          return res.status(404).json({ error: "Submission not found" });
+        }
+
+        // Find the report file
+        const reportPattern = `xbrl-report-${submissionId}-*.xml`;
+        const reportsDir = 'server/uploads/reports';
+        const files = fs.readdirSync(reportsDir).filter(file => 
+          file.startsWith(`xbrl-report-${submissionId}-`) && file.endsWith('.xml')
+        );
+
+        if (files.length === 0) {
+          return res.status(404).json({ error: "XBRL report not found" });
+        }
+
+        const reportPath = path.join(reportsDir, files[0]);
+        
+        res.setHeader('Content-Type', 'application/xml');
+        res.setHeader('Content-Disposition', `attachment; filename="xbrl-report-${submissionId}.xml"`);
+        
+        const reportStream = fs.createReadStream(reportPath);
+        reportStream.pipe(res);
+      } catch (error) {
+        console.error("XBRL report download error:", error);
+        res.status(500).json({ error: "Failed to download XBRL report" });
+      }
+    }
+  );
+
+  // Get XBRL template structure for user guidance
+  app.get(
+    "/api/templates/:id/xbrl-structure",
+    requireAuth,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const templateId = parseInt(req.params.id);
+        const template = await storage.getTemplate(templateId);
+        
+        if (!template) {
+          return res.status(404).json({ error: "Template not found" });
+        }
+
+        if (!template.isXBRL || !template.xbrlTaxonomyPath) {
+          return res.status(400).json({ error: "Template is not XBRL or taxonomy not found" });
+        }
+
+        // Parse XBRL taxonomy
+        const taxonomy = await xbrlProcessor.parseXBRLTaxonomy(template.xbrlTaxonomyPath);
+        
+        res.json({
+          concepts: taxonomy.concepts,
+          presentations: taxonomy.presentations,
+          namespace: template.xbrlNamespace,
+          version: template.xbrlVersion
+        });
+      } catch (error) {
+        console.error("XBRL structure error:", error);
+        res.status(500).json({ error: "Failed to get XBRL structure" });
       }
     }
   );

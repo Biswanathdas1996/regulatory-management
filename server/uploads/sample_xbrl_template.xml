@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:xbrli="http://www.xbrl.org/2003/instance"
+           xmlns:link="http://www.xbrl.org/2003/linkbase"
+           xmlns:xlink="http://www.w3.org/1999/xlink"
+           xmlns:ifsca="http://www.ifsca.gov.in/taxonomy/2024"
+           targetNamespace="http://www.ifsca.gov.in/taxonomy/2024"
+           elementFormDefault="qualified">
+
+  <xs:import namespace="http://www.xbrl.org/2003/instance" 
+             schemaLocation="http://www.xbrl.org/2003/xbrl-instance-2003-12-31.xsd"/>
+
+  <!-- Capital Adequacy Report Elements -->
+  <xs:element name="TotalCapital" type="xbrli:monetaryItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant" 
+              xbrli:balance="credit">
+    <xs:annotation>
+      <xs:documentation>Total regulatory capital of the institution</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="Tier1Capital" type="xbrli:monetaryItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant" 
+              xbrli:balance="credit">
+    <xs:annotation>
+      <xs:documentation>Tier 1 capital including common equity and additional tier 1</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="Tier2Capital" type="xbrli:monetaryItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant" 
+              xbrli:balance="credit">
+    <xs:annotation>
+      <xs:documentation>Tier 2 capital including subordinated debt and hybrid instruments</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="RiskWeightedAssets" type="xbrli:monetaryItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant" 
+              xbrli:balance="debit">
+    <xs:annotation>
+      <xs:documentation>Total risk weighted assets for capital adequacy calculation</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="CapitalAdequacyRatio" type="xbrli:percentItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant">
+    <xs:annotation>
+      <xs:documentation>Capital adequacy ratio (Total Capital / RWA)</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="Tier1CapitalRatio" type="xbrli:percentItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant">
+    <xs:annotation>
+      <xs:documentation>Tier 1 capital ratio (Tier 1 Capital / RWA)</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <!-- Liquidity Report Elements -->
+  <xs:element name="LiquidityRatio" type="xbrli:percentItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant">
+    <xs:annotation>
+      <xs:documentation>Liquidity Coverage Ratio (LCR)</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="HighQualityLiquidAssets" type="xbrli:monetaryItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant" 
+              xbrli:balance="debit">
+    <xs:annotation>
+      <xs:documentation>High Quality Liquid Assets for liquidity calculation</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="NetCashOutflows" type="xbrli:monetaryItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant" 
+              xbrli:balance="debit">
+    <xs:annotation>
+      <xs:documentation>Net cash outflows over 30-day stress period</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <!-- Credit Risk Elements -->
+  <xs:element name="TotalLoansAdvances" type="xbrli:monetaryItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant" 
+              xbrli:balance="debit">
+    <xs:annotation>
+      <xs:documentation>Total loans and advances to customers</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="NonPerformingAssets" type="xbrli:monetaryItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant" 
+              xbrli:balance="debit">
+    <xs:annotation>
+      <xs:documentation>Non-performing assets (NPAs)</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="ProvisionForBadDebt" type="xbrli:monetaryItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant" 
+              xbrli:balance="credit">
+    <xs:annotation>
+      <xs:documentation>Provisions made for bad and doubtful debts</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <!-- Operational Risk Elements -->
+  <xs:element name="OperationalRiskCapital" type="xbrli:monetaryItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant" 
+              xbrli:balance="credit">
+    <xs:annotation>
+      <xs:documentation>Capital allocated for operational risk</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="GrossIncome" type="xbrli:monetaryItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="duration" 
+              xbrli:balance="credit">
+    <xs:annotation>
+      <xs:documentation>Gross income for operational risk calculation</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <!-- Market Risk Elements -->
+  <xs:element name="MarketRiskCapital" type="xbrli:monetaryItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant" 
+              xbrli:balance="credit">
+    <xs:annotation>
+      <xs:documentation>Capital allocated for market risk</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="TradingBookAssets" type="xbrli:monetaryItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant" 
+              xbrli:balance="debit">
+    <xs:annotation>
+      <xs:documentation>Assets held in trading book</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <!-- Entity Information -->
+  <xs:element name="EntityName" type="xbrli:stringItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="duration">
+    <xs:annotation>
+      <xs:documentation>Name of the reporting entity</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="EntityIdentifier" type="xbrli:stringItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="duration">
+    <xs:annotation>
+      <xs:documentation>Unique identifier of the reporting entity</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="ReportingDate" type="xbrli:dateItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="instant">
+    <xs:annotation>
+      <xs:documentation>Date for which the report is prepared</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:element name="ReportingCurrency" type="xbrli:stringItemType" 
+              substitutionGroup="xbrli:item" 
+              xbrli:periodType="duration">
+    <xs:annotation>
+      <xs:documentation>Currency used for reporting (e.g., USD, INR)</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+</xs:schema>

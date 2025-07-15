@@ -11,6 +11,22 @@ The application validates submissions against predefined IFSCA-compliant rules w
 
 ## Recent Changes (January 15, 2025)
 
+### XBRL Template Support Implementation (January 15, 2025) ✓
+
+- Added comprehensive XBRL support for regulatory document management
+- Created XBRLProcessor class for parsing XBRL taxonomies and instance documents
+- Added XBRL-specific database fields (isXBRL, xbrlTaxonomyPath, xbrlSchemaRef, xbrlNamespace, xbrlVersion)
+- Implemented XBRL validation engine with taxonomy compliance checking
+- Created XBRL template upload component with user-friendly interface
+- Added XBRL submission workflow with validation and report generation
+- Enhanced API endpoints for XBRL processing: parse-xbrl, validate-xbrl, generate-xbrl-report
+- Supports XBRL 2.1 specification with proper namespace handling
+- Automated XBRL report generation for regulatory compliance
+- User-friendly workflow: upload taxonomy → users download → fill & submit → validate → generate reports
+- Non-technical users can easily work with XBRL through intuitive interface
+
+## Recent Changes (January 15, 2025)
+
 ### Cell-Based Validation System Fix and Enhancement (January 15, 2025) ✓
 
 - Fixed critical issue where 'cell' rule type wasn't being processed by ModernValidationEngine

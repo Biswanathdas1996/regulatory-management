@@ -46,6 +46,7 @@ export interface IStorage {
   createTemplate(template: InsertTemplate): Promise<Template>;
   getTemplate(id: number): Promise<Template | undefined>;
   getTemplates(): Promise<Template[]>;
+  updateTemplate(id: number, data: Partial<InsertTemplate>): Promise<Template>;
   updateTemplateStatus(id: number, status: string): Promise<void>;
   updateTemplateValidationRulesPath(id: number, path: string): Promise<void>;
   updateValidationFileUploaded(id: number, uploaded: boolean): Promise<void>;
@@ -188,6 +189,15 @@ export class DatabaseStorage implements IStorage {
 
   async getTemplates(): Promise<Template[]> {
     return await db.select().from(templates).orderBy(templates.createdAt);
+  }
+
+  async updateTemplate(id: number, data: Partial<InsertTemplate>): Promise<Template> {
+    const [template] = await db
+      .update(templates)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(templates.id, id))
+      .returning();
+    return template;
   }
 
   async updateTemplateStatus(id: number, status: string): Promise<void> {
