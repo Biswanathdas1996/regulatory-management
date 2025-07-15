@@ -101,11 +101,18 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
 
   // Update category when user data loads
   useEffect(() => {
-    if (currentUser?.role === "ifsca_user" && currentUser.category) {
+    if (currentUser?.role === "ifsca_user" && currentUser.category && categoriesData.length > 0) {
       // Set category as string ID
-      form.setValue("category", currentUser.category.toString());
+      const categoryValue = currentUser.category.toString();
+      console.log("Setting category for IFSCA user:", categoryValue);
+      console.log("Available categories:", categories.map(c => ({ value: c.value, label: c.label })));
+      console.log("Current form category value:", form.getValues("category"));
+      form.setValue("category", categoryValue);
+      // Force trigger validation
+      form.trigger("category");
+      console.log("After setting category value:", form.getValues("category"));
     }
-  }, [currentUser, form]);
+  }, [currentUser, form, categoriesData, categories]);
 
   const uploadMutation = useMutation({
     mutationFn: async (data: UploadFormData) => {
@@ -263,7 +270,10 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <Select 
-                      onValueChange={field.onChange} 
+                      onValueChange={(value) => {
+                        console.log("Category select changed to:", value);
+                        field.onChange(value);
+                      }} 
                       value={field.value}
                       disabled={currentUser?.role === "ifsca_user"}
                     >
