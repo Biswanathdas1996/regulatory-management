@@ -100,13 +100,13 @@ export function SubmissionCalendar({ userId, category }: SubmissionCalendarProps
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'overdue':
-        return 'bg-gradient-to-r from-red-50 to-rose-50 text-red-700 border-red-300 border-l-red-500';
+        return 'bg-gradient-to-r from-red-50/90 via-rose-50/80 to-pink-50/70 text-red-700 border-red-200/60 border-l-red-400 shadow-red-100/40';
       case 'due':
-        return 'bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border-amber-300 border-l-amber-500';
+        return 'bg-gradient-to-r from-amber-50/90 via-yellow-50/80 to-orange-50/70 text-amber-700 border-amber-200/60 border-l-amber-400 shadow-amber-100/40';
       case 'upcoming':
-        return 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-300 border-l-blue-500';
+        return 'bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-cyan-50/70 text-blue-700 border-blue-200/60 border-l-blue-400 shadow-blue-100/40';
       default:
-        return 'bg-gradient-to-r from-gray-50 to-slate-50 text-gray-700 border-gray-300 border-l-gray-500';
+        return 'bg-gradient-to-r from-slate-50/90 via-gray-50/80 to-zinc-50/70 text-slate-700 border-slate-200/60 border-l-slate-400 shadow-slate-100/40';
     }
   };
 
@@ -153,10 +153,10 @@ export function SubmissionCalendar({ userId, category }: SubmissionCalendarProps
             </Button>
           </div>
 
-          {/* Days of Week Header with better styling */}
+          {/* Days of Week Header with beautiful gradient styling */}
           <div className="grid grid-cols-7 gap-2 mb-4">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="p-3 text-center text-sm font-semibold text-gray-600 bg-gray-50 rounded-lg">
+              <div key={day} className="p-3 text-center text-sm font-semibold text-slate-700 bg-gradient-to-br from-slate-100/80 via-blue-50/40 to-indigo-50/30 rounded-lg border border-slate-200/50 shadow-sm">
                 {day}
               </div>
             ))}
@@ -174,16 +174,16 @@ export function SubmissionCalendar({ userId, category }: SubmissionCalendarProps
                   key={day.toISOString()}
                   className={`min-h-[100px] lg:min-h-[120px] p-2 lg:p-3 rounded-xl border-2 transition-all duration-300 hover:shadow-lg hover:scale-[1.02] group cursor-pointer ${
                     isCurrentMonth 
-                      ? 'bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50/30' 
-                      : 'bg-gray-50/50 border-gray-100 hover:border-gray-200 hover:bg-gray-100/50'
-                  } ${isDayToday ? 'ring-2 ring-blue-500 ring-offset-2 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-300' : ''}`}
+                      ? 'bg-gradient-to-br from-white via-blue-50/20 to-indigo-50/30 border-blue-200/50 hover:border-blue-400/60 hover:bg-gradient-to-br hover:from-blue-50/40 hover:via-indigo-50/30 hover:to-purple-50/20 hover:shadow-blue-100/50' 
+                      : 'bg-gradient-to-br from-slate-50/70 via-gray-50/50 to-stone-50/60 border-slate-200/50 hover:border-slate-300/60 hover:bg-gradient-to-br hover:from-slate-100/50 hover:via-gray-100/40 hover:to-stone-100/30'
+                  } ${isDayToday ? 'ring-2 ring-blue-400 ring-offset-2 bg-gradient-to-br from-blue-100/80 via-indigo-100/60 to-purple-100/40 border-blue-400/70 shadow-lg shadow-blue-200/30' : ''}`}
                 >
                   <div className={`text-sm mb-2 flex items-center justify-center w-7 h-7 rounded-full transition-all duration-200 ${
                     isDayToday 
-                      ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold shadow-md' 
+                      ? 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white font-bold shadow-lg shadow-blue-300/50' 
                       : isCurrentMonth 
-                        ? 'text-gray-900 group-hover:text-blue-600 group-hover:bg-blue-100 group-hover:font-semibold' 
-                        : 'text-gray-400 group-hover:text-gray-600'
+                        ? 'text-slate-800 group-hover:text-blue-600 group-hover:bg-gradient-to-r group-hover:from-blue-100/80 group-hover:to-indigo-100/60 group-hover:font-semibold group-hover:shadow-sm' 
+                        : 'text-slate-400 group-hover:text-slate-600 group-hover:bg-slate-100/50'
                   }`}>
                     {format(day, 'd')}
                   </div>
@@ -201,7 +201,7 @@ export function SubmissionCalendar({ userId, category }: SubmissionCalendarProps
                         </div>
                       ))}
                       {dayReminders.length > 2 && (
-                        <div className="text-xs text-gray-600 font-medium bg-gradient-to-r from-gray-100 to-gray-150 rounded-lg p-1.5 text-center shadow-sm border border-gray-200">
+                        <div className="text-xs text-slate-600 font-medium bg-gradient-to-r from-slate-100/80 via-gray-100/60 to-zinc-100/50 rounded-lg p-1.5 text-center shadow-sm border border-slate-200/50">
                           +{dayReminders.length - 2} more
                         </div>
                       )}
