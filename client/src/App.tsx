@@ -40,6 +40,7 @@ import SubmissionViewPage from "@/pages/submission-view";
 import UserManagementPage from "@/pages/user-management";
 import ExcelAnalyzerPage from "@/pages/excel-analyzer";
 import AuthTestPage from "@/pages/auth-test";
+import AdminAnalyticsPage from "@/pages/admin-analytics";
 
 function Router() {
   return (
@@ -161,6 +162,11 @@ function Router() {
       <Route path="/regulator/re-management">
         <AdminRoute>
           <UserManagementPage />
+        </AdminRoute>
+      </Route>
+      <Route path="/regulator/analytics">
+        <AdminRoute>
+          <AdminAnalyticsPage />
         </AdminRoute>
       </Route>
       <Route path="/excel-analyzer">
