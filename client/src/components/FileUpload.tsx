@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -54,7 +54,10 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
     queryKey: ["/api/template-types"],
   });
   
-  console.log("Template types data:", templateTypes);
+  // Debug logging (temporary)
+  // console.log("Template types data:", templateTypes);
+  // console.log("Categories data:", categoriesData);
+  // console.log("Current user:", currentUser);
 
   const { data: currentUser } = useQuery({
     queryKey: ["/api/auth/me"],
@@ -75,10 +78,12 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
   });
 
   // Transform API categories to select options
-  const categories = categoriesData.map((cat: any) => ({
-    value: cat.id.toString(), // Use category ID as value
-    label: cat.displayName,
-  }));
+  const categories = useMemo(() => {
+    return categoriesData.map((cat: any) => ({
+      value: cat.id.toString(), // Use category ID as value
+      label: cat.displayName,
+    }));
+  }, [categoriesData]);
 
   const frequencies = [
     { value: "daily", label: "Daily" },
@@ -106,15 +111,18 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
     if (currentUser?.role === "ifsca_user" && currentUser.category && categoriesData.length > 0) {
       // Set category as string ID
       const categoryValue = currentUser.category.toString();
-      console.log("Setting category for IFSCA user:", categoryValue);
-      console.log("Available categories:", categories.map(c => ({ value: c.value, label: c.label })));
-      console.log("Current form category value:", form.getValues("category"));
-      form.setValue("category", categoryValue);
-      // Force trigger validation
-      form.trigger("category");
-      console.log("After setting category value:", form.getValues("category"));
+      const currentCategoryValue = form.getValues("category");
+      
+      // Only update if different to prevent infinite loops
+      if (currentCategoryValue !== categoryValue) {
+        console.log("Setting category for IFSCA user:", categoryValue);
+        console.log("Available categories:", categories.map(c => ({ value: c.value, label: c.label })));
+        console.log("Current form category value:", currentCategoryValue);
+        form.setValue("category", categoryValue);
+        console.log("After setting category value:", form.getValues("category"));
+      }
     }
-  }, [currentUser, form, categoriesData, categories]);
+  }, [currentUser?.id, currentUser?.role, currentUser?.category, categoriesData.length]);
 
   const uploadMutation = useMutation({
     mutationFn: async (data: UploadFormData) => {
@@ -246,16 +254,8 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
                   <FormItem>
                     <FormLabel>Template Type</FormLabel>
                     <Select 
-                      onValueChange={(value) => {
-                        console.log("Template type selected:", value);
-                        try {
-                          field.onChange(value);
-                        } catch (error) {
-                          console.error("Error updating template type:", error);
-                        }
-                      }} 
+                      onValueChange={field.onChange}
                       value={field.value}
-                      disabled={!Array.isArray(templateTypes) || templateTypes.length === 0}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -263,17 +263,11 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Array.isArray(templateTypes) && templateTypes.length > 0 ? (
-                          templateTypes.map((type: any) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className="p-2 text-sm text-gray-500">
-                            Loading template types...
-                          </div>
-                        )}
+                        {Array.isArray(templateTypes) && templateTypes.map((type: any) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
