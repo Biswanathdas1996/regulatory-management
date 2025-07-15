@@ -64,6 +64,18 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Error handling with detailed validation and parsing feedback
 - Example files created for all supported formats
 
+### Validation Template Download Feature (January 15, 2025) ✓
+
+- Added template-specific validation rule download functionality for non-technical users
+- Created `/api/templates/:id/validation-template` endpoint generating pre-filled templates
+- Templates automatically populated with actual sheet names and column headers from uploaded template
+- Support for all 5 validation formats: JSON Schema, YAML, CSV, Excel, and TXT
+- Enhanced ValidationRulesManager with download template dropdown menu
+- Added helpful user guidance with blue info box for users without validation files
+- Templates include proper metadata and structure for easy completion by business users
+- Enables non-technical users to download pre-structured templates, add validation rules, and upload back
+- Templates maintain consistency with uploaded template structure for seamless integration
+
 ### Category-Based Template Filtering Implementation (January 15, 2025) ✓
 
 - Implemented category-based template filtering where IFSCA users can only view templates relevant to their specific category

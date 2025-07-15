@@ -8,6 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { 
   FileText, 
   Upload, 
   CheckCircle, 
@@ -93,6 +99,49 @@ export function ValidationRulesManager({ templateId, template }: ValidationRules
     }
   };
 
+  // Download template function
+  const handleDownloadTemplate = async (format: string) => {
+    try {
+      const response = await fetch(`/api/templates/${templateId}/validation-template?format=${format}`);
+      if (!response.ok) {
+        throw new Error('Failed to download validation template');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      
+      // Generate filename based on format
+      const extensions = {
+        json: 'json',
+        yaml: 'yaml',
+        csv: 'csv',
+        excel: 'xlsx',
+        txt: 'txt'
+      };
+      const extension = extensions[format] || 'txt';
+      a.download = `${template?.name || 'template'}-validation-rules.${extension}`;
+      
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({ 
+        title: "Success", 
+        description: `${format.toUpperCase()} validation template downloaded successfully` 
+      });
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: "Failed to download validation template", 
+        variant: "destructive" 
+      });
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -101,14 +150,46 @@ export function ValidationRulesManager({ templateId, template }: ValidationRules
             <FileText className="h-5 w-5" />
             Validation Rules
           </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowValidationUploadDialog(true)}
-          >
-            <Upload className="h-4 w-4 mr-1" />
-            Upload Validation File
-          </Button>
+          <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-1" />
+                  Download Template
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleDownloadTemplate('json')}>
+                  <FileJson className="h-4 w-4 mr-2" />
+                  JSON Schema Template
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDownloadTemplate('yaml')}>
+                  <FileCode className="h-4 w-4 mr-2" />
+                  YAML Template
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDownloadTemplate('csv')}>
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  CSV Template
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDownloadTemplate('excel')}>
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Excel Template
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDownloadTemplate('txt')}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  TXT Template (Legacy)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowValidationUploadDialog(true)}
+            >
+              <Upload className="h-4 w-4 mr-1" />
+              Upload Validation File
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -159,9 +240,51 @@ export function ValidationRulesManager({ templateId, template }: ValidationRules
           <div className="text-center py-8">
             <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
             <p className="text-lg font-medium text-gray-900">Validation Rules Management</p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-gray-500 mt-1 mb-4">
               Upload validation files to configure rules for this template
             </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Info className="h-4 w-4 text-blue-600" />
+                <p className="text-sm font-medium text-blue-900">
+                  Need help creating validation rules?
+                </p>
+              </div>
+              <p className="text-sm text-blue-700 mb-3">
+                Download a pre-filled validation template with your template's sheet structure. 
+                Simply add your validation rules and upload it back!
+              </p>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-1" />
+                    Download Template
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleDownloadTemplate('json')}>
+                    <FileJson className="h-4 w-4 mr-2" />
+                    JSON Schema Template
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownloadTemplate('yaml')}>
+                    <FileCode className="h-4 w-4 mr-2" />
+                    YAML Template
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownloadTemplate('csv')}>
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    CSV Template
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownloadTemplate('excel')}>
+                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    Excel Template
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownloadTemplate('txt')}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    TXT Template (Legacy)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         )}
       </CardContent>

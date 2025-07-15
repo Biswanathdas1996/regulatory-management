@@ -2313,6 +2313,196 @@ Only return the JSON array, no additional text.
     res.type("text/plain").send(example);
   });
 
+  // Generate validation rules template for specific template
+  app.get("/api/templates/:id/validation-template", async (req: AuthenticatedRequest, res) => {
+    try {
+      const templateId = parseInt(req.params.id);
+      const format = req.query.format || 'json';
+      
+      const template = await storage.getTemplate(templateId);
+      if (!template) {
+        return res.status(404).json({ error: "Template not found" });
+      }
+
+      const sheets = await storage.getTemplateSheets(templateId);
+      const schemas = await storage.getTemplateSchemas(templateId);
+      
+      if (format === 'json') {
+        const jsonTemplate = {
+          metadata: {
+            templateName: template.name,
+            version: "1.0",
+            createdBy: "IFSCA Team",
+            createdDate: new Date().toISOString().split('T')[0],
+            description: `Validation rules for ${template.name}`
+          },
+          sheetValidations: {}
+        };
+
+        // Add each sheet with its columns
+        for (const sheet of sheets) {
+          const sheetSchemas = schemas.filter(s => s.sheetId === sheet.id);
+          jsonTemplate.sheetValidations[sheet.sheetName] = {
+            columnValidations: {}
+          };
+
+          // Add column validations for each field
+          for (const schema of sheetSchemas) {
+            const columnLetter = schema.columnName || schema.fieldName.split('')[0] || 'A';
+            jsonTemplate.sheetValidations[sheet.sheetName].columnValidations[columnLetter] = {
+              dataType: "string", // Default, user can change
+              required: true,
+              description: schema.fieldName
+            };
+          }
+        }
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename="${template.name}-validation-rules.json"`);
+        res.send(JSON.stringify(jsonTemplate, null, 2));
+      } 
+      else if (format === 'yaml') {
+        let yamlContent = `metadata:
+  templateName: "${template.name}"
+  version: "1.0"
+  createdBy: "IFSCA Team"
+  createdDate: "${new Date().toISOString().split('T')[0]}"
+  description: "Validation rules for ${template.name}"
+
+sheetValidations:
+`;
+
+        for (const sheet of sheets) {
+          const sheetSchemas = schemas.filter(s => s.sheetId === sheet.id);
+          yamlContent += `  "${sheet.sheetName}":
+    columnValidations:
+`;
+          
+          for (const schema of sheetSchemas) {
+            const columnLetter = schema.columnName || schema.fieldName.split('')[0] || 'A';
+            yamlContent += `      ${columnLetter}:
+        dataType: string
+        required: true
+        description: "${schema.fieldName}"
+      
+`;
+          }
+        }
+
+        res.setHeader('Content-Type', 'text/yaml');
+        res.setHeader('Content-Disposition', `attachment; filename="${template.name}-validation-rules.yaml"`);
+        res.send(yamlContent);
+      }
+      else if (format === 'csv') {
+        let csvContent = 'RuleType,SheetName,Column,DataType,Required,MinLength,MaxLength,Minimum,Maximum,EnumValues,Pattern,Description,Expression,Severity\n';
+        
+        for (const sheet of sheets) {
+          const sheetSchemas = schemas.filter(s => s.sheetId === sheet.id);
+          for (const schema of sheetSchemas) {
+            const columnLetter = schema.columnName || schema.fieldName.split('')[0] || 'A';
+            csvContent += `column,${sheet.sheetName},${columnLetter},string,true,,,,,,"",${schema.fieldName},,\n`;
+          }
+        }
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${template.name}-validation-rules.csv"`);
+        res.send(csvContent);
+      }
+      else if (format === 'excel') {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Validation Rules');
+
+        // Add headers
+        worksheet.columns = [
+          { header: 'RuleType', key: 'ruleType', width: 15 },
+          { header: 'SheetName', key: 'sheetName', width: 20 },
+          { header: 'Column', key: 'column', width: 10 },
+          { header: 'DataType', key: 'dataType', width: 15 },
+          { header: 'Required', key: 'required', width: 10 },
+          { header: 'MinLength', key: 'minLength', width: 12 },
+          { header: 'MaxLength', key: 'maxLength', width: 12 },
+          { header: 'Minimum', key: 'minimum', width: 10 },
+          { header: 'Maximum', key: 'maximum', width: 10 },
+          { header: 'EnumValues', key: 'enumValues', width: 20 },
+          { header: 'Pattern', key: 'pattern', width: 20 },
+          { header: 'Description', key: 'description', width: 30 },
+          { header: 'Expression', key: 'expression', width: 30 },
+          { header: 'Severity', key: 'severity', width: 10 }
+        ];
+
+        // Add data rows
+        for (const sheet of sheets) {
+          const sheetSchemas = schemas.filter(s => s.sheetId === sheet.id);
+          for (const schema of sheetSchemas) {
+            const columnLetter = schema.columnName || schema.fieldName.split('')[0] || 'A';
+            worksheet.addRow({
+              ruleType: 'column',
+              sheetName: sheet.sheetName,
+              column: columnLetter,
+              dataType: 'string',
+              required: 'true',
+              minLength: '',
+              maxLength: '',
+              minimum: '',
+              maximum: '',
+              enumValues: '',
+              pattern: '',
+              description: schema.fieldName,
+              expression: '',
+              severity: ''
+            });
+          }
+        }
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${template.name}-validation-rules.xlsx"`);
+        
+        await workbook.xlsx.write(res);
+        res.end();
+      }
+      else if (format === 'txt') {
+        let txtContent = `# Validation Rules for ${template.name}
+# Generated on ${new Date().toISOString().split('T')[0]}
+# 
+# Format: RULE_TYPE:SHEET_NAME:FIELD:CONDITION:ERROR_MESSAGE:SEVERITY
+# 
+# Available rule types:
+# - required: Field must have a value
+# - format: Field must match a specific format
+# - range: Field must be within a numeric range
+# - custom: Custom validation expression
+#
+# Examples:
+# required:Sheet1:A:*:Field A is required:error
+# format:Sheet1:B:email:Invalid email format:error
+# range:Sheet1:C:1-100:Value must be between 1 and 100:warning
+#
+
+`;
+
+        for (const sheet of sheets) {
+          const sheetSchemas = schemas.filter(s => s.sheetId === sheet.id);
+          txtContent += `\n# ${sheet.sheetName} validation rules\n`;
+          
+          for (const schema of sheetSchemas) {
+            const columnLetter = schema.columnName || schema.fieldName.split('')[0] || 'A';
+            txtContent += `required:${sheet.sheetName}:${columnLetter}:*:${schema.fieldName} is required:error\n`;
+          }
+        }
+
+        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Content-Disposition', `attachment; filename="${template.name}-validation-rules.txt"`);
+        res.send(txtContent);
+      }
+      else {
+        res.status(400).json({ error: "Unsupported format. Use json, yaml, csv, excel, or txt." });
+      }
+    } catch (error) {
+      console.error("Error generating validation template:", error);
+      res.status(500).json({ error: "Failed to generate validation template" });
+    }
+  });
+
   // Get Excel data for viewer
   app.get(
     "/api/templates/:id/excel-data",
