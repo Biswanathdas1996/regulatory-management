@@ -309,7 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const newUser = await storage.createUser({
           username,
           password: hashedPassword,
-          role: "user",
+          role: role,
           category: userCategory,
         });
 
@@ -603,20 +603,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/templates", async (req: AuthenticatedRequest, res) => {
     try {
       const templates = await storage.getTemplates();
-      
+
       // Filter templates based on user role and category
       let filteredTemplates = templates;
-      
+
       if (req.user && req.user.category) {
         // IFSCA users and reporting entities can only see templates for their category
-        if (req.user.role === "ifsca_user" || req.user.role === "reporting_entity") {
+        if (
+          req.user.role === "ifsca_user" ||
+          req.user.role === "reporting_entity"
+        ) {
           filteredTemplates = templates.filter(
             (template) => template.category === req.user!.category
           );
         }
       }
       // Super admins see all templates
-      
+
       res.json(filteredTemplates);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch templates" });
@@ -624,39 +627,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get templates with validation rules (filtered by user category for IFSCA users and reporting entities)
-  app.get("/api/templates/with-rules", async (req: AuthenticatedRequest, res) => {
-    try {
-      const templates = await storage.getTemplates();
-      
-      // Filter templates based on user role and category
-      let filteredTemplates = templates;
-      
-      if (req.user && req.user.category) {
-        // IFSCA users and reporting entities can only see templates for their category
-        if (req.user.role === "ifsca_user" || req.user.role === "reporting_entity") {
-          filteredTemplates = templates.filter(
-            (template) => template.category === req.user!.category
-          );
-        }
-      }
-      // Super admins see all templates
-      
-      // Get templates that have validation files uploaded
-      const templatesWithRules = filteredTemplates
-        .filter((template) => template.validationFileUploaded)
-        .map((template) => ({
-          ...template,
-          rulesCount: template.validationFileUploaded ? 1 : 0, // Show that rules exist via file upload
-        }));
+  app.get(
+    "/api/templates/with-rules",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const templates = await storage.getTemplates();
 
-      res.json(templatesWithRules);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch templates" });
+        // Filter templates based on user role and category
+        let filteredTemplates = templates;
+
+        if (req.user && req.user.category) {
+          // IFSCA users and reporting entities can only see templates for their category
+          if (
+            req.user.role === "ifsca_user" ||
+            req.user.role === "reporting_entity"
+          ) {
+            filteredTemplates = templates.filter(
+              (template) => template.category === req.user!.category
+            );
+          }
+        }
+        // Super admins see all templates
+
+        // Get templates that have validation files uploaded
+        const templatesWithRules = filteredTemplates
+          .filter((template) => template.validationFileUploaded)
+          .map((template) => ({
+            ...template,
+            rulesCount: template.validationFileUploaded ? 1 : 0, // Show that rules exist via file upload
+          }));
+
+        res.json(templatesWithRules);
+      } catch (error) {
+        res.status(500).json({ error: "Failed to fetch templates" });
+      }
     }
-  });
+  );
 
   // Get template by ID
-  app.get("/api/templates/:id", async (req, res) => {
+  app.get("/api/templates/:id", async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const template = await storage.getTemplate(id);
@@ -686,14 +695,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const templateFile = req.files.template[0];
         const validationFile = req.files.validationRules?.[0];
-        const { templateType, templateName, frequency, lastSubmissionDate } = req.body;
-        
+        const { templateType, templateName, frequency, lastSubmissionDate } =
+          req.body;
+
         console.log("Template upload request body:", {
           templateType,
           templateName,
           frequency,
           lastSubmissionDate,
-          category: req.body.category
+          category: req.body.category,
         });
 
         // Validate template type
@@ -719,16 +729,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           templateType,
           category: category, // Store the category based on uploader
           frequency: frequency || "monthly", // Default to monthly if not provided
-          lastSubmissionDate: lastSubmissionDate ? new Date(lastSubmissionDate) : null,
+          lastSubmissionDate: lastSubmissionDate
+            ? new Date(lastSubmissionDate)
+            : null,
           fileName: templateFile.originalname,
           filePath: templateFile.path,
           fileSize: templateFile.size,
           createdBy: req.user?.id || 1, // Use authenticated user ID or default to 1
           validationRulesPath: validationFile?.path,
         };
-        
+
         console.log("Creating template with data:", templateData);
-        
+
         const template = await storage.createTemplate(templateData);
 
         // Parse and store validation rules if provided
@@ -902,103 +914,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   // Download validation file for a template
-  app.get("/api/templates/:id/validation-file/download", async (req, res) => {
-    try {
-      const templateId = parseInt(req.params.id);
+  app.get(
+    "/api/templates/:id/validation-file/download",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const templateId = parseInt(req.params.id);
 
-      // Check if template exists
-      const template = await storage.getTemplate(templateId);
-      if (!template) {
-        return res.status(404).json({ error: "Template not found" });
+        // Check if template exists
+        const template = await storage.getTemplate(templateId);
+        if (!template) {
+          return res.status(404).json({ error: "Template not found" });
+        }
+
+        // Check if validation file exists
+        if (!template.validationRulesPath || !template.validationFileUploaded) {
+          return res
+            .status(404)
+            .json({ error: "No validation file found for this template" });
+        }
+
+        // Check if file exists on disk
+        if (!fs.existsSync(template.validationRulesPath)) {
+          return res
+            .status(404)
+            .json({ error: "Validation file not found on disk" });
+        }
+
+        // Extract filename from path
+        const filename = path.basename(template.validationRulesPath);
+
+        // Set appropriate headers
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${filename}"`
+        );
+        res.setHeader("Content-Type", "application/octet-stream");
+
+        // Stream the file to response
+        const fileStream = fs.createReadStream(template.validationRulesPath);
+        fileStream.pipe(res);
+      } catch (error) {
+        console.error("Validation file download error:", error);
+        res.status(500).json({ error: "Failed to download validation file" });
       }
-
-      // Check if validation file exists
-      if (!template.validationRulesPath || !template.validationFileUploaded) {
-        return res
-          .status(404)
-          .json({ error: "No validation file found for this template" });
-      }
-
-      // Check if file exists on disk
-      if (!fs.existsSync(template.validationRulesPath)) {
-        return res
-          .status(404)
-          .json({ error: "Validation file not found on disk" });
-      }
-
-      // Extract filename from path
-      const filename = path.basename(template.validationRulesPath);
-
-      // Set appropriate headers
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${filename}"`
-      );
-      res.setHeader("Content-Type", "application/octet-stream");
-
-      // Stream the file to response
-      const fileStream = fs.createReadStream(template.validationRulesPath);
-      fileStream.pipe(res);
-    } catch (error) {
-      console.error("Validation file download error:", error);
-      res.status(500).json({ error: "Failed to download validation file" });
     }
-  });
+  );
 
   // Get processing status
-  app.get("/api/templates/:id/status", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const statuses = await storage.getProcessingStatus(id);
-      res.json(statuses);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch processing status" });
+  app.get(
+    "/api/templates/:id/status",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const statuses = await storage.getProcessingStatus(id);
+        res.json(statuses);
+      } catch (error) {
+        res.status(500).json({ error: "Failed to fetch processing status" });
+      }
     }
-  });
+  );
 
   // Get template sheets
-  app.get("/api/templates/:id/sheets", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const sheets = await storage.getTemplateSheets(id);
-      res.json(sheets);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch template sheets" });
+  app.get(
+    "/api/templates/:id/sheets",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const sheets = await storage.getTemplateSheets(id);
+        res.json(sheets);
+      } catch (error) {
+        res.status(500).json({ error: "Failed to fetch template sheets" });
+      }
     }
-  });
+  );
 
   // Get template schemas
-  app.get("/api/templates/:id/schemas", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const schemas = await storage.getTemplateSchemas(id);
-      res.json(schemas);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch template schemas" });
+  app.get(
+    "/api/templates/:id/schemas",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const schemas = await storage.getTemplateSchemas(id);
+        res.json(schemas);
+      } catch (error) {
+        res.status(500).json({ error: "Failed to fetch template schemas" });
+      }
     }
-  });
+  );
 
   // Get specific schema
-  app.get("/api/templates/:id/schemas/:sheetId?", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const sheetId = req.params.sheetId
-        ? parseInt(req.params.sheetId)
-        : undefined;
-      const schema = await storage.getTemplateSchema(id, sheetId);
+  app.get(
+    "/api/templates/:id/schemas/:sheetId?",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const sheetId = req.params.sheetId
+          ? parseInt(req.params.sheetId)
+          : undefined;
+        const schema = await storage.getTemplateSchema(id, sheetId);
 
-      if (!schema) {
-        return res.status(404).json({ error: "Schema not found" });
+        if (!schema) {
+          return res.status(404).json({ error: "Schema not found" });
+        }
+
+        res.json(schema);
+      } catch (error) {
+        res.status(500).json({ error: "Failed to fetch schema" });
       }
-
-      res.json(schema);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch schema" });
     }
-  });
+  );
 
   // Delete template
-  app.delete("/api/templates/:id", async (req, res) => {
+  app.delete("/api/templates/:id", async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteTemplate(id);
@@ -1009,58 +1036,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Trigger processing for a template (for manual processing)
-  app.post("/api/templates/:id/process", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
+  app.post(
+    "/api/templates/:id/process",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
 
-      // Check if template exists
-      const template = await storage.getTemplate(id);
-      if (!template) {
-        return res.status(404).json({ error: "Template not found" });
+        // Check if template exists
+        const template = await storage.getTemplate(id);
+        if (!template) {
+          return res.status(404).json({ error: "Template not found" });
+        }
+
+        // Start processing in background
+        processTemplateAsync(id).catch((error) => {
+          console.error(
+            `Background processing failed for template ${id}:`,
+            error
+          );
+        });
+
+        res.json({
+          message: "Processing started",
+          templateId: id,
+        });
+      } catch (error) {
+        res.status(500).json({ error: "Failed to start processing" });
       }
-
-      // Start processing in background
-      processTemplateAsync(id).catch((error) => {
-        console.error(
-          `Background processing failed for template ${id}:`,
-          error
-        );
-      });
-
-      res.json({
-        message: "Processing started",
-        templateId: id,
-      });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to start processing" });
     }
-  });
+  );
 
   // Generate schemas for a template (manual trigger)
-  app.post("/api/templates/:id/generate-schemas", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
+  app.post(
+    "/api/templates/:id/generate-schemas",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
 
-      // Check if template exists
-      const template = await storage.getTemplate(id);
-      if (!template) {
-        return res.status(404).json({ error: "Template not found" });
+        // Check if template exists
+        const template = await storage.getTemplate(id);
+        if (!template) {
+          return res.status(404).json({ error: "Template not found" });
+        }
+
+        // Start schema generation in background
+        FileProcessor.generateSchemas(id).catch((error) => {
+          console.error(`Schema generation failed for template ${id}:`, error);
+        });
+
+        res.json({ message: "Schema generation started" });
+      } catch (error) {
+        console.error("Generate schemas error:", error);
+        res.status(500).json({ error: "Failed to start schema generation" });
       }
-
-      // Start schema generation in background
-      FileProcessor.generateSchemas(id).catch((error) => {
-        console.error(`Schema generation failed for template ${id}:`, error);
-      });
-
-      res.json({ message: "Schema generation started" });
-    } catch (error) {
-      console.error("Generate schemas error:", error);
-      res.status(500).json({ error: "Failed to start schema generation" });
     }
-  });
+  );
 
   // Get template types
-  app.get("/api/template-types", (req, res) => {
+  app.get("/api/template-types", (req: AuthenticatedRequest, res) => {
     const types = [
       {
         value: "monthly-clearing",
@@ -1085,7 +1118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // System stats
-  app.get("/api/stats", async (req, res) => {
+  app.get("/api/stats", async (req: AuthenticatedRequest, res) => {
     try {
       const templates = await storage.getTemplates();
       const totalTemplates = templates.length;
@@ -1110,140 +1143,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Download template file
-  app.get("/api/templates/:id/download", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const template = await storage.getTemplate(id);
+  app.get(
+    "/api/templates/:id/download",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const template = await storage.getTemplate(id);
 
-      if (!template) {
-        return res.status(404).json({ error: "Template not found" });
+        if (!template) {
+          return res.status(404).json({ error: "Template not found" });
+        }
+
+        res.download(template.filePath, template.fileName);
+      } catch (error) {
+        res.status(500).json({ error: "Failed to download template" });
       }
-
-      res.download(template.filePath, template.fileName);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to download template" });
     }
-  });
+  );
 
   // Get validation rules for a template (with optional sheet filtering)
-  app.get("/api/templates/:id/validation-rules", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const sheetId = req.query.sheetId
-        ? parseInt(req.query.sheetId as string)
-        : undefined;
+  app.get(
+    "/api/templates/:id/validation-rules",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const sheetId = req.query.sheetId
+          ? parseInt(req.query.sheetId as string)
+          : undefined;
 
-      let rules = await storage.getValidationRules(id);
+        let rules = await storage.getValidationRules(id);
 
-      // Filter by sheet if sheetId is provided
-      if (sheetId !== undefined) {
-        rules = rules.filter((rule) => rule.sheetId === sheetId);
+        // Filter by sheet if sheetId is provided
+        if (sheetId !== undefined) {
+          rules = rules.filter((rule) => rule.sheetId === sheetId);
+        }
+
+        res.json(rules);
+      } catch (error) {
+        res.status(500).json({ error: "Failed to fetch validation rules" });
       }
-
-      res.json(rules);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch validation rules" });
     }
-  });
+  );
 
   // Create a new validation rule
-  app.post("/api/templates/:id/validation-rules", async (req, res) => {
-    try {
-      const templateId = parseInt(req.params.id);
-      const { sheetId, ruleType, field, condition, errorMessage, severity } =
-        req.body;
+  app.post(
+    "/api/templates/:id/validation-rules",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const templateId = parseInt(req.params.id);
+        const { sheetId, ruleType, field, condition, errorMessage, severity } =
+          req.body;
 
-      // Validate required fields
-      if (!ruleType || !field || !condition || !errorMessage) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
+        // Validate required fields
+        if (!ruleType || !field || !condition || !errorMessage) {
+          return res.status(400).json({ error: "Missing required fields" });
+        }
 
-      // Validate rule type
-      const validRuleTypes = ["required", "format", "range", "custom"];
-      if (!validRuleTypes.includes(ruleType)) {
-        return res.status(400).json({ error: "Invalid rule type" });
-      }
+        // Validate rule type
+        const validRuleTypes = ["required", "format", "range", "custom"];
+        if (!validRuleTypes.includes(ruleType)) {
+          return res.status(400).json({ error: "Invalid rule type" });
+        }
 
-      // Validate severity
-      const validSeverities = ["error", "warning"];
-      if (severity && !validSeverities.includes(severity)) {
-        return res.status(400).json({ error: "Invalid severity" });
-      }
+        // Validate severity
+        const validSeverities = ["error", "warning"];
+        if (severity && !validSeverities.includes(severity)) {
+          return res.status(400).json({ error: "Invalid severity" });
+        }
 
-      const rule = await storage.createValidationRule({
-        templateId,
-        sheetId: sheetId || null,
-        ruleType,
-        field,
-        condition,
-        errorMessage,
-        severity: severity || "error",
-      });
-
-      res.json(rule);
-    } catch (error) {
-      console.error("Create validation rule error:", error);
-      res.status(500).json({ error: "Failed to create validation rule" });
-    }
-  });
-
-  // Update a validation rule
-  app.put("/api/templates/:id/validation-rules/:ruleId", async (req, res) => {
-    try {
-      const templateId = parseInt(req.params.id);
-      const ruleId = parseInt(req.params.ruleId);
-      const { ruleType, field, condition, errorMessage, severity } = req.body;
-
-      // Validate required fields
-      if (!ruleType || !field || !condition || !errorMessage) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-
-      // Check if rule exists
-      const existingRules = await storage.getValidationRules(templateId);
-      const ruleExists = existingRules.some((r) => r.id === ruleId);
-      if (!ruleExists) {
-        return res.status(404).json({ error: "Validation rule not found" });
-      }
-
-      // Delete old rule and create new one (since we don't have an update method)
-      await storage.deleteValidationRules(templateId);
-
-      // Re-create all rules except the one being updated
-      const rulesToKeep = existingRules.filter((r) => r.id !== ruleId);
-      const updatedRules = [
-        ...rulesToKeep.map((r) => ({
-          templateId: r.templateId,
-          sheetId: r.sheetId,
-          ruleType: r.ruleType,
-          field: r.field,
-          condition: r.condition,
-          errorMessage: r.errorMessage,
-          severity: r.severity,
-        })),
-        {
+        const rule = await storage.createValidationRule({
           templateId,
-          sheetId: req.body.sheetId || null,
+          sheetId: sheetId || null,
           ruleType,
           field,
           condition,
           errorMessage,
           severity: severity || "error",
-        },
-      ];
+        });
 
-      await storage.createValidationRules(updatedRules);
-      res.json({ message: "Validation rule updated successfully" });
-    } catch (error) {
-      console.error("Update validation rule error:", error);
-      res.status(500).json({ error: "Failed to update validation rule" });
+        res.json(rule);
+      } catch (error) {
+        console.error("Create validation rule error:", error);
+        res.status(500).json({ error: "Failed to create validation rule" });
+      }
     }
-  });
+  );
+
+  // Update a validation rule
+  app.put(
+    "/api/templates/:id/validation-rules/:ruleId",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const templateId = parseInt(req.params.id);
+        const ruleId = parseInt(req.params.ruleId);
+        const { ruleType, field, condition, errorMessage, severity } = req.body;
+
+        // Validate required fields
+        if (!ruleType || !field || !condition || !errorMessage) {
+          return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        // Check if rule exists
+        const existingRules = await storage.getValidationRules(templateId);
+        const ruleExists = existingRules.some((r) => r.id === ruleId);
+        if (!ruleExists) {
+          return res.status(404).json({ error: "Validation rule not found" });
+        }
+
+        // Delete old rule and create new one (since we don't have an update method)
+        await storage.deleteValidationRules(templateId);
+
+        // Re-create all rules except the one being updated
+        const rulesToKeep = existingRules.filter((r) => r.id !== ruleId);
+        const updatedRules = [
+          ...rulesToKeep.map((r) => ({
+            templateId: r.templateId,
+            sheetId: r.sheetId,
+            ruleType: r.ruleType,
+            field: r.field,
+            condition: r.condition,
+            errorMessage: r.errorMessage,
+            severity: r.severity,
+          })),
+          {
+            templateId,
+            sheetId: req.body.sheetId || null,
+            ruleType,
+            field,
+            condition,
+            errorMessage,
+            severity: severity || "error",
+          },
+        ];
+
+        await storage.createValidationRules(updatedRules);
+        res.json({ message: "Validation rule updated successfully" });
+      } catch (error) {
+        console.error("Update validation rule error:", error);
+        res.status(500).json({ error: "Failed to update validation rule" });
+      }
+    }
+  );
 
   // Delete a validation rule
   app.delete(
     "/api/templates/:id/validation-rules/:ruleId",
-    async (req, res) => {
+    async (req: AuthenticatedRequest, res) => {
       try {
         const templateId = parseInt(req.params.id);
         const ruleId = parseInt(req.params.ruleId);
@@ -1285,7 +1330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Bulk delete validation rules
   app.post(
     "/api/templates/:id/validation-rules/bulk-delete",
-    async (req, res) => {
+    async (req: AuthenticatedRequest, res) => {
       try {
         const templateId = parseInt(req.params.id);
         const { ruleIds } = req.body;
@@ -1325,60 +1370,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Import validation rules from text
   // Export validation rules to Excel
-  app.post("/api/export/validation-rules", async (req, res) => {
-    try {
-      const { headers, rows } = req.body;
+  app.post(
+    "/api/export/validation-rules",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const { headers, rows } = req.body;
 
-      if (!headers || !rows) {
-        return res.status(400).json({ error: "Invalid export data" });
-      }
+        if (!headers || !rows) {
+          return res.status(400).json({ error: "Invalid export data" });
+        }
 
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet("Validation Rules");
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Validation Rules");
 
-      // Add headers
-      worksheet.addRow(headers);
+        // Add headers
+        worksheet.addRow(headers);
 
-      // Style the header row
-      worksheet.getRow(1).font = { bold: true };
-      worksheet.getRow(1).fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFE0E0E0" },
-      };
+        // Style the header row
+        worksheet.getRow(1).font = { bold: true };
+        worksheet.getRow(1).fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFE0E0E0" },
+        };
 
-      // Add data rows
-      rows.forEach((row: any[]) => worksheet.addRow(row));
+        // Add data rows
+        rows.forEach((row: any[]) => worksheet.addRow(row));
 
-      // Auto-fit columns
-      worksheet.columns.forEach((column: any) => {
-        let maxLength = 0;
-        column.eachCell({ includeEmpty: true }, (cell: any) => {
-          const length = cell.value ? cell.value.toString().length : 10;
-          if (length > maxLength) maxLength = length;
+        // Auto-fit columns
+        worksheet.columns.forEach((column: any) => {
+          let maxLength = 0;
+          column.eachCell({ includeEmpty: true }, (cell: any) => {
+            const length = cell.value ? cell.value.toString().length : 10;
+            if (length > maxLength) maxLength = length;
+          });
+          column.width = Math.min(maxLength + 2, 50);
         });
-        column.width = Math.min(maxLength + 2, 50);
-      });
 
-      // Generate Excel file
-      const buffer = await workbook.xlsx.writeBuffer();
+        // Generate Excel file
+        const buffer = await workbook.xlsx.writeBuffer();
 
-      res.setHeader(
-        "Content-Type",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      );
-      res.setHeader(
-        "Content-Disposition",
-        "attachment; filename=validation-rules.xlsx"
-      );
-      res.send(buffer);
-    } catch (error: any) {
-      console.error("Error exporting validation rules:", error);
-      res
-        .status(500)
-        .json({ error: error.message || "Failed to export validation rules" });
+        res.setHeader(
+          "Content-Type",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        );
+        res.setHeader(
+          "Content-Disposition",
+          "attachment; filename=validation-rules.xlsx"
+        );
+        res.send(buffer);
+      } catch (error: any) {
+        console.error("Error exporting validation rules:", error);
+        res.status(500).json({
+          error: error.message || "Failed to export validation rules",
+        });
+      }
     }
-  });
+  );
 
   // Import validation rules from Excel file
   app.post(
@@ -1491,65 +1539,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
-  app.post("/api/templates/:id/validation-rules/import", async (req, res) => {
-    try {
-      const templateId = parseInt(req.params.id);
-      const { rulesText } = req.body;
+  app.post(
+    "/api/templates/:id/validation-rules/import",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const templateId = parseInt(req.params.id);
+        const { rulesText } = req.body;
 
-      if (!rulesText || typeof rulesText !== "string") {
-        return res.status(400).json({ error: "Invalid rules text provided" });
+        if (!rulesText || typeof rulesText !== "string") {
+          return res.status(400).json({ error: "Invalid rules text provided" });
+        }
+
+        // Parse the rules text
+        const parsedRules = ValidationRulesParser.parseRulesContent(rulesText);
+
+        if (parsedRules.length === 0) {
+          return res
+            .status(400)
+            .json({ error: "No valid rules found in the provided text" });
+        }
+
+        // Create the rules
+        const rules = parsedRules.map((rule) => ({
+          templateId,
+          ...rule,
+        }));
+
+        await storage.createValidationRules(rules);
+
+        res.json({
+          message: "Rules imported successfully",
+          imported: rules.length,
+        });
+      } catch (error) {
+        console.error("Import validation rules error:", error);
+        res.status(500).json({ error: "Failed to import validation rules" });
       }
-
-      // Parse the rules text
-      const parsedRules = ValidationRulesParser.parseRulesContent(rulesText);
-
-      if (parsedRules.length === 0) {
-        return res
-          .status(400)
-          .json({ error: "No valid rules found in the provided text" });
-      }
-
-      // Create the rules
-      const rules = parsedRules.map((rule) => ({
-        templateId,
-        ...rule,
-      }));
-
-      await storage.createValidationRules(rules);
-
-      res.json({
-        message: "Rules imported successfully",
-        imported: rules.length,
-      });
-    } catch (error) {
-      console.error("Import validation rules error:", error);
-      res.status(500).json({ error: "Failed to import validation rules" });
     }
-  });
+  );
 
   // Get generation progress
-  app.get("/api/generation-progress/:sessionId", async (req, res) => {
-    const sessionId = req.params.sessionId;
-    const progress = generationProgress.get(sessionId);
+  app.get(
+    "/api/generation-progress/:sessionId",
+    async (req: AuthenticatedRequest, res) => {
+      const sessionId = req.params.sessionId;
+      const progress = generationProgress.get(sessionId);
 
-    if (!progress) {
-      return res.status(404).json({ error: "Progress not found" });
+      if (!progress) {
+        return res.status(404).json({ error: "Progress not found" });
+      }
+
+      res.json(progress);
+
+      // Clean up completed or errored progress after 5 minutes
+      if (progress.status === "completed" || progress.status === "error") {
+        setTimeout(() => {
+          generationProgress.delete(sessionId);
+        }, 5 * 60 * 1000);
+      }
     }
-
-    res.json(progress);
-
-    // Clean up completed or errored progress after 5 minutes
-    if (progress.status === "completed" || progress.status === "error") {
-      setTimeout(() => {
-        generationProgress.delete(sessionId);
-      }, 5 * 60 * 1000);
-    }
-  });
+  );
 
   // Generate validation rules for a specific sheet using AI
   app.post(
     "/api/templates/:templateId/sheets/:sheetId/generate-rules",
-    async (req, res) => {
+    async (req: AuthenticatedRequest, res) => {
       try {
         const templateId = parseInt(req.params.templateId);
         const sheetId = parseInt(req.params.sheetId);
@@ -1783,7 +1837,7 @@ Only return the JSON array, no additional text.
 
         const { templateId, reportingPeriod } = req.body;
         const userId = req.user?.id || 1; // Get from authenticated user
-        const userCategory = req.user?.category || 'banking'; // Get user's category
+        const userCategory = req.user?.category || "banking"; // Get user's category
 
         if (!templateId) {
           return res.status(400).json({ error: "Template ID is required" });
@@ -1829,39 +1883,58 @@ Only return the JSON array, no additional text.
   );
 
   // Get user submissions (filtered by category for non-super admins)
-  app.get("/api/submissions", async (req, res) => {
+  app.get("/api/submissions", async (req: AuthenticatedRequest, res) => {
     try {
       const { userId, templateId } = req.query;
-      console.log("Fetching submissions with params:", { userId, templateId, userRole: req.user?.role, userCategory: req.user?.category });
-      
+      console.log("Fetching submissions with params:", {
+        userId,
+        templateId,
+        userRole: req.user?.role,
+        userCategory: req.user?.category,
+      });
+
       let submissions = await storage.getSubmissions(
         userId ? parseInt(userId as string) : undefined,
         templateId ? parseInt(templateId as string) : undefined
       );
-      
+
       console.log("Retrieved submissions:", submissions.length);
-      
+
       // Filter submissions by category for IFSCA users and reporting entities
       if (req.user && req.user.category) {
-        if (req.user.role === "ifsca_user" || req.user.role === "reporting_entity") {
+        if (
+          req.user.role === "ifsca_user" ||
+          req.user.role === "reporting_entity"
+        ) {
           submissions = submissions.filter(
             (submission: any) => submission.category === req.user!.category
           );
           console.log("Filtered submissions by category:", submissions.length);
         }
       }
-      
+
       res.json(submissions);
     } catch (error) {
       console.error("Submissions API error:", error);
-      res.status(500).json({ error: "Failed to fetch submissions", details: error instanceof Error ? error.message : String(error) });
+      res.status(500).json({
+        error: "Failed to fetch submissions",
+        details: error instanceof Error ? error.message : String(error),
+      });
     }
   });
 
   // Get all submissions for admin view
-  app.get("/api/admin/submissions", async (req, res) => {
+  app.get("/api/admin/submissions", async (req: AuthenticatedRequest, res) => {
     try {
-      const submissions = await storage.getSubmissions();
+      const { category } = req.query;
+      let submissions = await storage.getSubmissions();
+
+      // Filter by category if provided in query params
+      if (category && typeof category === "string") {
+        submissions = submissions.filter(
+          (submission: any) => submission.category === category
+        );
+      }
 
       // Add user information to each submission
       const submissionsWithUsers = [];
@@ -1881,7 +1954,7 @@ Only return the JSON array, no additional text.
   });
 
   // Get submission details
-  app.get("/api/submissions/:id", async (req, res) => {
+  app.get("/api/submissions/:id", async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const submission = await storage.getSubmission(id);
@@ -2103,48 +2176,54 @@ Only return the JSON array, no additional text.
   );
 
   // Get validation results for a submission
-  app.get("/api/submissions/:id/results", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const results = await storage.getValidationResults(id);
-      res.json(results);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch validation results" });
+  app.get(
+    "/api/submissions/:id/results",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const results = await storage.getValidationResults(id);
+        res.json(results);
+      } catch (error) {
+        res.status(500).json({ error: "Failed to fetch validation results" });
+      }
     }
-  });
+  );
 
   // Download submission file
-  app.get("/api/submissions/:id/download", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const submission = await storage.getSubmission(id);
+  app.get(
+    "/api/submissions/:id/download",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        const submission = await storage.getSubmission(id);
 
-      if (!submission) {
-        return res.status(404).json({ error: "Submission not found" });
+        if (!submission) {
+          return res.status(404).json({ error: "Submission not found" });
+        }
+
+        // Check if file exists
+        if (!fs.existsSync(submission.filePath)) {
+          return res.status(404).json({ error: "File not found" });
+        }
+
+        // Set headers for file download
+        res.setHeader("Content-Type", "application/octet-stream");
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${submission.fileName}"`
+        );
+
+        // Stream the file
+        const fileStream = fs.createReadStream(submission.filePath);
+        fileStream.pipe(res);
+      } catch (error) {
+        res.status(500).json({ error: "Failed to download file" });
       }
-
-      // Check if file exists
-      if (!fs.existsSync(submission.filePath)) {
-        return res.status(404).json({ error: "File not found" });
-      }
-
-      // Set headers for file download
-      res.setHeader("Content-Type", "application/octet-stream");
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${submission.fileName}"`
-      );
-
-      // Stream the file
-      const fileStream = fs.createReadStream(submission.filePath);
-      fileStream.pipe(res);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to download file" });
     }
-  });
+  );
 
   // Delete submission
-  app.delete("/api/submissions/:id", async (req, res) => {
+  app.delete("/api/submissions/:id", async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const submission = await storage.getSubmission(id);
@@ -2172,184 +2251,192 @@ Only return the JSON array, no additional text.
   });
 
   // Generate example validation rules file
-  app.get("/api/validation-rules/example", (req, res) => {
+  app.get("/api/validation-rules/example", (req: AuthenticatedRequest, res) => {
     const example = ValidationRulesParser.generateExampleRules();
     res.type("text/plain").send(example);
   });
 
   // Get Excel data for viewer
-  app.get("/api/templates/:id/excel-data", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      console.log(`Fetching Excel data for template ID: ${id}`);
+  app.get(
+    "/api/templates/:id/excel-data",
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const id = parseInt(req.params.id);
+        console.log(`Fetching Excel data for template ID: ${id}`);
 
-      const template = await storage.getTemplate(id);
+        const template = await storage.getTemplate(id);
 
-      if (!template) {
-        console.log(`Template ${id} not found`);
-        return res.status(404).json({ error: "Template not found" });
-      }
+        if (!template) {
+          console.log(`Template ${id} not found`);
+          return res.status(404).json({ error: "Template not found" });
+        }
 
-      console.log(
-        `Template found: ${template.name}, file path: ${template.filePath}`
-      );
-
-      // Get the sheets for this template
-      const sheets = await storage.getTemplateSheets(id);
-      console.log(`Found ${sheets.length} sheets for template ${id}`);
-
-      if (sheets.length === 0) {
         console.log(
-          `No sheets found for template ${id}, returning empty array`
+          `Template found: ${template.name}, file path: ${template.filePath}`
         );
-        return res.json([]);
-      }
 
-      // Check if file exists
-      const fs = await import("fs");
-      if (!fs.existsSync(template.filePath)) {
-        console.error(`Template file not found at path: ${template.filePath}`);
-        return res.status(404).json({ error: "Template file not found" });
-      }
+        // Get the sheets for this template
+        const sheets = await storage.getTemplateSheets(id);
+        console.log(`Found ${sheets.length} sheets for template ${id}`);
 
-      // Parse the Excel file to get data
-      const workbook = new ExcelJS.Workbook();
-      const ext = path.extname(template.filePath).toLowerCase();
-      console.log(`File extension: ${ext}`);
-
-      if (ext === ".xlsx" || ext === ".xls") {
-        await workbook.xlsx.readFile(template.filePath);
-      } else if (ext === ".csv") {
-        await workbook.csv.readFile(template.filePath);
-      } else {
-        console.error(`Unsupported file type: ${ext}`);
-        return res.status(400).json({ error: "Unsupported file type" });
-      }
-
-      console.log(`Workbook loaded, worksheets: ${workbook.worksheets.length}`);
-
-      // Get all worksheets data with proper formatting for ExcelViewer
-      const sheetData = [];
-      for (const sheet of sheets) {
-        console.log(`Processing sheet: ${sheet.sheetName}`);
-        const worksheet = workbook.getWorksheet(sheet.sheetName);
-        if (worksheet) {
+        if (sheets.length === 0) {
           console.log(
-            `Worksheet found, rows: ${worksheet.rowCount}, cols: ${worksheet.columnCount}`
+            `No sheets found for template ${id}, returning empty array`
           );
-          const cellData: (any | null)[][] = [];
-          const mergedCells: Array<{
-            top: number;
-            left: number;
-            bottom: number;
-            right: number;
-          }> = [];
+          return res.json([]);
+        }
 
-          // Get merged cell ranges
-          const mergedRanges = worksheet.model.merges || [];
-          mergedRanges.forEach((range: any) => {
-            mergedCells.push({
-              top: range.top - 1, // Convert to 0-based indexing
-              left: range.left - 1,
-              bottom: range.bottom - 1,
-              right: range.right - 1,
+        // Check if file exists
+        const fs = await import("fs");
+        if (!fs.existsSync(template.filePath)) {
+          console.error(
+            `Template file not found at path: ${template.filePath}`
+          );
+          return res.status(404).json({ error: "Template file not found" });
+        }
+
+        // Parse the Excel file to get data
+        const workbook = new ExcelJS.Workbook();
+        const ext = path.extname(template.filePath).toLowerCase();
+        console.log(`File extension: ${ext}`);
+
+        if (ext === ".xlsx" || ext === ".xls") {
+          await workbook.xlsx.readFile(template.filePath);
+        } else if (ext === ".csv") {
+          await workbook.csv.readFile(template.filePath);
+        } else {
+          console.error(`Unsupported file type: ${ext}`);
+          return res.status(400).json({ error: "Unsupported file type" });
+        }
+
+        console.log(
+          `Workbook loaded, worksheets: ${workbook.worksheets.length}`
+        );
+
+        // Get all worksheets data with proper formatting for ExcelViewer
+        const sheetData = [];
+        for (const sheet of sheets) {
+          console.log(`Processing sheet: ${sheet.sheetName}`);
+          const worksheet = workbook.getWorksheet(sheet.sheetName);
+          if (worksheet) {
+            console.log(
+              `Worksheet found, rows: ${worksheet.rowCount}, cols: ${worksheet.columnCount}`
+            );
+            const cellData: (any | null)[][] = [];
+            const mergedCells: Array<{
+              top: number;
+              left: number;
+              bottom: number;
+              right: number;
+            }> = [];
+
+            // Get merged cell ranges
+            const mergedRanges = worksheet.model.merges || [];
+            mergedRanges.forEach((range: any) => {
+              mergedCells.push({
+                top: range.top - 1, // Convert to 0-based indexing
+                left: range.left - 1,
+                bottom: range.bottom - 1,
+                right: range.right - 1,
+              });
             });
-          });
 
-          // Process rows (limit to first 100 for preview)
-          for (
-            let rowNum = 1;
-            rowNum <= Math.min(100, worksheet.rowCount);
-            rowNum++
-          ) {
-            const row = worksheet.getRow(rowNum);
-            const rowData: (any | null)[] = [];
+            // Process rows (limit to first 100 for preview)
+            for (
+              let rowNum = 1;
+              rowNum <= Math.min(100, worksheet.rowCount);
+              rowNum++
+            ) {
+              const row = worksheet.getRow(rowNum);
+              const rowData: (any | null)[] = [];
 
-            for (let colNum = 1; colNum <= worksheet.columnCount; colNum++) {
-              const cell = row.getCell(colNum);
-              let cellObj: any = null;
+              for (let colNum = 1; colNum <= worksheet.columnCount; colNum++) {
+                const cell = row.getCell(colNum);
+                let cellObj: any = null;
 
-              if (cell.value !== null && cell.value !== undefined) {
-                // Check if this cell is part of a merged range
-                const rowIndex = rowNum - 1; // 0-based
-                const colIndex = colNum - 1; // 0-based
+                if (cell.value !== null && cell.value !== undefined) {
+                  // Check if this cell is part of a merged range
+                  const rowIndex = rowNum - 1; // 0-based
+                  const colIndex = colNum - 1; // 0-based
 
-                let mergeInfo = null;
-                let isMerged = false;
+                  let mergeInfo = null;
+                  let isMerged = false;
 
-                for (const merge of mergedCells) {
-                  if (
-                    rowIndex >= merge.top &&
-                    rowIndex <= merge.bottom &&
-                    colIndex >= merge.left &&
-                    colIndex <= merge.right
-                  ) {
-                    isMerged = true;
-                    mergeInfo = {
-                      top: merge.top,
-                      left: merge.left,
-                      bottom: merge.bottom,
-                      right: merge.right,
-                      isTopLeft:
-                        rowIndex === merge.top && colIndex === merge.left,
-                    };
-                    break;
+                  for (const merge of mergedCells) {
+                    if (
+                      rowIndex >= merge.top &&
+                      rowIndex <= merge.bottom &&
+                      colIndex >= merge.left &&
+                      colIndex <= merge.right
+                    ) {
+                      isMerged = true;
+                      mergeInfo = {
+                        top: merge.top,
+                        left: merge.left,
+                        bottom: merge.bottom,
+                        right: merge.right,
+                        isTopLeft:
+                          rowIndex === merge.top && colIndex === merge.left,
+                      };
+                      break;
+                    }
                   }
+
+                  cellObj = {
+                    // Only set value for top-left cell of merged range, or non-merged cells
+                    value:
+                      isMerged && mergeInfo && !mergeInfo.isTopLeft
+                        ? null
+                        : cell.value,
+                    merged: isMerged,
+                    mergeInfo: mergeInfo,
+                    style: {
+                      backgroundColor:
+                        cell.style?.fill &&
+                        "fgColor" in cell.style.fill &&
+                        cell.style.fill.fgColor?.argb
+                          ? `#${cell.style.fill.fgColor.argb.slice(2)}`
+                          : null,
+                      color: cell.style?.font?.color?.argb
+                        ? `#${cell.style.font.color.argb.slice(2)}`
+                        : null,
+                      fontWeight: cell.style?.font?.bold ? "bold" : "normal",
+                      textAlign: cell.style?.alignment?.horizontal || "left",
+                      verticalAlign:
+                        cell.style?.alignment?.vertical || "middle",
+                    },
+                  };
                 }
 
-                cellObj = {
-                  // Only set value for top-left cell of merged range, or non-merged cells
-                  value:
-                    isMerged && mergeInfo && !mergeInfo.isTopLeft
-                      ? null
-                      : cell.value,
-                  merged: isMerged,
-                  mergeInfo: mergeInfo,
-                  style: {
-                    backgroundColor:
-                      cell.style?.fill &&
-                      "fgColor" in cell.style.fill &&
-                      cell.style.fill.fgColor?.argb
-                        ? `#${cell.style.fill.fgColor.argb.slice(2)}`
-                        : null,
-                    color: cell.style?.font?.color?.argb
-                      ? `#${cell.style.font.color.argb.slice(2)}`
-                      : null,
-                    fontWeight: cell.style?.font?.bold ? "bold" : "normal",
-                    textAlign: cell.style?.alignment?.horizontal || "left",
-                    verticalAlign: cell.style?.alignment?.vertical || "middle",
-                  },
-                };
+                rowData.push(cellObj);
               }
 
-              rowData.push(cellObj);
+              cellData.push(rowData);
             }
 
-            cellData.push(rowData);
+            const processedSheet = {
+              sheetName: sheet.sheetName,
+              data: cellData,
+              mergedCells: mergedCells,
+            };
+
+            console.log(
+              `Processed sheet ${sheet.sheetName}: ${cellData.length} rows`
+            );
+            sheetData.push(processedSheet);
+          } else {
+            console.warn(`Worksheet not found: ${sheet.sheetName}`);
           }
-
-          const processedSheet = {
-            sheetName: sheet.sheetName,
-            data: cellData,
-            mergedCells: mergedCells,
-          };
-
-          console.log(
-            `Processed sheet ${sheet.sheetName}: ${cellData.length} rows`
-          );
-          sheetData.push(processedSheet);
-        } else {
-          console.warn(`Worksheet not found: ${sheet.sheetName}`);
         }
-      }
 
-      console.log(`Returning ${sheetData.length} sheets of data`);
-      res.json(sheetData);
-    } catch (error) {
-      console.error("Error reading Excel file:", error);
-      res.status(500).json({ error: "Failed to read template file" });
+        console.log(`Returning ${sheetData.length} sheets of data`);
+        res.json(sheetData);
+      } catch (error) {
+        console.error("Error reading Excel file:", error);
+        res.status(500).json({ error: "Failed to read template file" });
+      }
     }
-  });
+  );
 
   // Get comments for a submission
   app.get(
@@ -2431,7 +2518,7 @@ Only return the JSON array, no additional text.
   // Super Admin IFSCA User Management Endpoints
 
   // Test endpoint to verify API routing is working
-  app.get("/api/test", (req, res) => {
+  app.get("/api/test", (req: AuthenticatedRequest, res) => {
     console.log("TEST endpoint hit!");
     res.json({
       message: "API routing is working",

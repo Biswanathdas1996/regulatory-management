@@ -34,6 +34,7 @@ import {
 import { format } from "date-fns";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Submission {
   id: number;
@@ -56,7 +57,9 @@ export default function AdminSubmissionsPage() {
   const [selectedSubmission, setSelectedSubmission] =
     useState<Submission | null>(null);
   const [reason, setReason] = useState("");
-
+  // Get user context to display user categories
+  const { user } = useAuth(); // Assuming you have an auth context
+  const userCategories = user?.category;
   console.log("Dialog state:", {
     actionDialogOpen,
     selectedSubmission,
@@ -64,7 +67,7 @@ export default function AdminSubmissionsPage() {
   }); // Debug log
 
   const { data: submissions = [], isLoading } = useQuery<Submission[]>({
-    queryKey: ["/api/admin/submissions"],
+    queryKey: [`/api/admin/submissions?category=${userCategories}`],
   });
 
   // Mutation for submission actions
@@ -112,7 +115,7 @@ export default function AdminSubmissionsPage() {
       setSelectedSubmission(null);
 
       // Refresh submissions list
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/submissions"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/admin/submissions`] });
     },
     onError: (error: any) => {
       toast({
@@ -168,8 +171,11 @@ export default function AdminSubmissionsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-blue-600" />
-            All Submissions
+            All Submissions ({submissions.length})
           </CardTitle>
+          <div className="text-sm text-gray-600 mt-1">
+            User Categories: {userCategories}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (

@@ -146,7 +146,7 @@ export default function UserManagementPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setEditDialogOpen(false);
       setEditingUser(null);
-      setEditFormData({ username: "", password: "", role: "user" });
+      setEditFormData({ username: "", password: "", role: "reporting_entity" });
       setError("");
       toast({
         title: "Success",
@@ -328,7 +328,11 @@ export default function UserManagementPage() {
 
                 <div>
                   <Label htmlFor="role">Role</Label>
-                  <Input value="User" disabled className="bg-gray-50" />
+                  <Input
+                    value="reporting_entity"
+                    disabled
+                    className="bg-gray-50"
+                  />
                   <p className="text-sm text-gray-500 mt-1">
                     All users created here will have User role with the same
                     category as your account
