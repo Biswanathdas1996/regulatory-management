@@ -23,16 +23,23 @@ import { Link } from "wouter";
 import UserLayout from "@/components/UserLayout";
 
 export default function UserDashboardPage() {
-  const userId = 1; // TODO: Get from authenticated user
+  // Get authenticated user info
+  const { data: user } = useQuery({
+    queryKey: ["/api/auth/me"],
+  });
+
+  const userId = user?.id;
 
   const { data: submissions, isLoading: submissionsLoading } = useQuery({
     queryKey: ["/api/submissions", userId],
     queryFn: async () => {
+      if (!userId) return [];
       const params = new URLSearchParams();
       params.append("userId", userId.toString());
       const response = await fetch(`/api/submissions?${params}`);
       return response.json();
     },
+    enabled: !!userId, // Only run when we have a userId
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
@@ -46,7 +53,7 @@ export default function UserDashboardPage() {
     refetchInterval: 60000,
   });
 
-  if (submissionsLoading || templatesLoading || statsLoading) {
+  if (submissionsLoading || templatesLoading || statsLoading || !user) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-8">
