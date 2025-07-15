@@ -11,6 +11,16 @@ The application validates submissions against predefined IFSCA-compliant rules w
 
 ## Recent Changes (January 15, 2025)
 
+### Database Schema Migration for Submissions Category (January 15, 2025) ✓
+
+- Fixed critical bug where submission categories weren't saving correctly due to schema mismatch
+- Migrated submissions.category column from text type to integer type with foreign key relationship
+- Established proper database relationship: submissions.category → categories.id
+- Updated storage interface and TypeScript types to use integer category IDs
+- Applied database migration to convert existing text data to integer category IDs
+- Verified data integrity with foreign key constraint ensuring referential integrity
+- Fixed submission filtering which now works correctly with proper category ID matching
+
 ### Data Cleanup Feature for Super Admin (January 15, 2025) ✓
 
 - Added comprehensive data cleanup functionality for super admin users
