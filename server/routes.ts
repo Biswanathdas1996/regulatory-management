@@ -246,12 +246,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Filter users based on role
         if (req.user?.role === "super_admin") {
           // Super admin sees all users
-          users = await storage.getAllUsers();
+          const allUsers = await storage.getAllUsers();
+          users = allUsers.map((user) => ({
+            ...user,
+            category: user.category?.toString() || null,
+          }));
         } else if (req.user?.role === "ifsca_user") {
           // IFSCA user only sees users in their category
-          users = (await storage.getAllUsers()).filter(
-            (user) => user.category === req.user?.category
-          );
+          const allUsers = await storage.getAllUsers();
+          const userCategoryId = req.user?.category
+            ? parseInt(req.user.category)
+            : null;
+          users = allUsers
+            .filter((user) => user.category === userCategoryId)
+            .map((user) => ({
+              ...user,
+              category: user.category?.toString() || null,
+            }));
         } else {
           // Other roles get an empty array or handle accordingly
           users = [];
@@ -262,7 +273,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             let categoryData = null;
             if (user.category) {
               const categories = await storage.getCategories();
-              categoryData = categories.find(cat => cat.id === user.category);
+              categoryData = categories.find(
+                (cat) => cat.id === parseInt(user.category as string)
+              );
             }
             return {
               id: user.id,
@@ -329,7 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           username,
           password: hashedPassword,
           role: role,
-          category: userCategory,
+          category: userCategory ? parseInt(userCategory) : null,
         });
 
         // Return user without password
@@ -741,18 +754,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Get uploader's category (for IFSCA users) or use body category
         let categoryId: number;
-        
+
         console.log("Template upload - user info:", {
           userId: req.user?.id,
           role: req.user?.role,
           userCategory: req.user?.category,
-          bodyCategory: req.body.category
+          bodyCategory: req.body.category,
         });
-        
+
         if (req.user && req.user.role === "ifsca_user" && req.user.category) {
           // For IFSCA users, use their category ID regardless of form input
           categoryId = parseInt(req.user.category);
-          console.log("Template upload - using IFSCA user category ID:", categoryId);
+          console.log(
+            "Template upload - using IFSCA user category ID:",
+            categoryId
+          );
         } else if (req.body.category) {
           // Use the provided category ID
           categoryId = parseInt(req.body.category);
@@ -760,7 +776,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else {
           // Default to banking category (ID 1)
           categoryId = 1;
-          console.log("Template upload - using default category ID:", categoryId);
+          console.log(
+            "Template upload - using default category ID:",
+            categoryId
+          );
         }
 
         // Create template record
@@ -1158,15 +1177,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get categories - accessible by all authenticated users
-  app.get("/api/categories", requireAuth, async (req: AuthenticatedRequest, res) => {
-    try {
-      const categories = await storage.getCategories();
-      res.json(categories);
-    } catch (error) {
-      console.error("Get categories error:", error);
-      res.status(500).json({ error: "Failed to fetch categories" });
+  app.get(
+    "/api/categories",
+    requireAuth,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const categories = await storage.getCategories();
+        res.json(categories);
+      } catch (error) {
+        console.error("Get categories error:", error);
+        res.status(500).json({ error: "Failed to fetch categories" });
+      }
     }
-  });
+  );
 
   // System stats
   app.get("/api/stats", async (req: AuthenticatedRequest, res) => {
@@ -1904,7 +1927,10 @@ Only return the JSON array, no additional text.
         const submission = await storage.createSubmission({
           templateId: parseInt(templateId),
           userId,
-          category: userCategory, // Include user's category
+          category:
+            typeof userCategory === "string"
+              ? parseInt(userCategory)
+              : userCategory, // Include user's category
           fileName: req.file.originalname,
           filePath: req.file.path,
           fileSize: req.file.size,
@@ -1981,9 +2007,9 @@ Only return the JSON array, no additional text.
       let submissions = await storage.getSubmissions();
 
       // Filter by category if provided in query params
-      if (category && typeof category === "string") {
+      if (category) {
         submissions = submissions.filter(
-          (submission: any) => submission.category === category
+          (submission: any) => submission.category == category
         );
       }
 
@@ -2592,8 +2618,8 @@ Only return the JSON array, no additional text.
 
         const users = await storage.getAllUsers();
         const categories = await storage.getCategories();
-        const categoryMap = new Map(categories.map(c => [c.id, c]));
-        
+        const categoryMap = new Map(categories.map((c) => [c.id, c]));
+
         console.log(
           `Found ${users.length} total users:`,
           users.map((u) => ({
@@ -2649,8 +2675,8 @@ Only return the JSON array, no additional text.
 
         const users = await storage.getAllUsers();
         const categories = await storage.getCategories();
-        const categoryMap = new Map(categories.map(c => [c.id, c]));
-        
+        const categoryMap = new Map(categories.map((c) => [c.id, c]));
+
         console.log(
           `Found ${users.length} total users:`,
           users.map((u) => ({
@@ -2713,7 +2739,7 @@ Only return the JSON array, no additional text.
 
         // Validate category exists
         const categories = await storage.getCategories();
-        const categoryExists = categories.find(c => c.id === categoryId);
+        const categoryExists = categories.find((c) => c.id === categoryId);
         if (!categoryExists) {
           return res.status(400).json({
             error: "Invalid category ID. Category does not exist",
@@ -2782,7 +2808,7 @@ Only return the JSON array, no additional text.
 
         if (categoryId) {
           const categories = await storage.getCategories();
-          const categoryExists = categories.find(c => c.id === categoryId);
+          const categoryExists = categories.find((c) => c.id === categoryId);
           if (!categoryExists) {
             return res.status(400).json({ error: "Invalid category ID" });
           }
@@ -2805,7 +2831,7 @@ Only return the JSON array, no additional text.
   );
 
   // Category Management Endpoints (Super Admin only)
-  
+
   // Get all categories
   app.get(
     "/api/super-admin/categories",
@@ -2835,21 +2861,21 @@ Only return the JSON array, no additional text.
 
         // Validate required fields
         if (!name || !displayName) {
-          return res.status(400).json({ 
-            error: "Name and display name are required" 
+          return res.status(400).json({
+            error: "Name and display name are required",
           });
         }
 
         // Check if category already exists
         const existingCategory = await storage.getCategoryByName(name);
         if (existingCategory) {
-          return res.status(409).json({ 
-            error: "Category with this name already exists" 
+          return res.status(409).json({
+            error: "Category with this name already exists",
           });
         }
 
         const category = await storage.createCategory({
-          name: name.toLowerCase().replace(/\s+/g, '_'),
+          name: name.toLowerCase().replace(/\s+/g, "_"),
           displayName,
           description,
           color: color || "#3B82F6",
@@ -2900,7 +2926,7 @@ Only return the JSON array, no additional text.
       try {
         console.log("========== DELETE CATEGORY ENDPOINT HIT ==========");
         const categoryId = parseInt(req.params.id);
-        
+
         await storage.deleteCategory(categoryId);
         res.json({ message: "Category deleted successfully" });
       } catch (error) {
@@ -2923,7 +2949,7 @@ Only return the JSON array, no additional text.
 
         // Clean tables in order to respect foreign key constraints
         // First, delete tables that depend on others
-        
+
         // Delete validation results
         await db.delete(validationResults).execute();
         console.log("✓ Deleted all validation results");
@@ -2960,18 +2986,19 @@ Only return the JSON array, no additional text.
 
         console.log("Data cleanup completed successfully");
 
-        res.json({ 
-          message: "All data cleaned successfully (except users and categories)",
+        res.json({
+          message:
+            "All data cleaned successfully (except users and categories)",
           deletedTables: [
             "validation_results",
-            "comments", 
+            "comments",
             "submissions",
             "validation_rules",
             "template_schemas",
             "template_sheets",
             "processing_status",
-            "templates"
-          ]
+            "templates",
+          ],
         });
       } catch (error) {
         console.error("Clean data error:", error);

@@ -121,7 +121,9 @@ export default function SuperAdminCategoryManagementPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/super-admin/categories"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/super-admin/categories"],
+      });
       setIsCreateDialogOpen(false);
       resetForm();
       toast({
@@ -155,7 +157,9 @@ export default function SuperAdminCategoryManagementPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/super-admin/categories"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/super-admin/categories"],
+      });
       setIsEditDialogOpen(false);
       setEditingCategory(null);
       resetForm();
@@ -186,7 +190,9 @@ export default function SuperAdminCategoryManagementPage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/super-admin/categories"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/super-admin/categories"],
+      });
       toast({
         title: "Success",
         description: "Category deleted successfully",
@@ -259,7 +265,7 @@ export default function SuperAdminCategoryManagementPage() {
     return (
       <SuperAdminLayout
         title="Category Management"
-        subtitle="Create and manage system categories"
+        subtitle="Create and manage Sectors"
       >
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
@@ -272,7 +278,7 @@ export default function SuperAdminCategoryManagementPage() {
   return (
     <SuperAdminLayout
       title="Category Management"
-      subtitle="Create and manage system categories"
+      subtitle="Create and manage Sectors"
       headerActions={
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
@@ -380,7 +386,9 @@ export default function SuperAdminCategoryManagementPage() {
                 onClick={handleCreateCategory}
                 disabled={createCategoryMutation.isPending}
               >
-                {createCategoryMutation.isPending ? "Creating..." : "Create Category"}
+                {createCategoryMutation.isPending
+                  ? "Creating..."
+                  : "Create Category"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -396,7 +404,9 @@ export default function SuperAdminCategoryManagementPage() {
                 <Tag className="h-5 w-5 text-red-600" />
               </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Total Categories</p>
+                <p className="text-sm font-medium text-gray-500">
+                  Total Categories
+                </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {categories?.length || 0}
                 </p>
@@ -408,7 +418,7 @@ export default function SuperAdminCategoryManagementPage() {
         {/* Categories Table */}
         <Card className="border-0 shadow-sm">
           <CardHeader>
-            <CardTitle>System Categories</CardTitle>
+            <CardTitle>Sectors</CardTitle>
           </CardHeader>
           <CardContent>
             {!categories || categories.length === 0 ? (
@@ -444,16 +454,18 @@ export default function SuperAdminCategoryManagementPage() {
                                 {getIconComponent(category.icon)}
                               </div>
                             </div>
-                            <span className="font-medium">{category.displayName}</span>
+                            <span className="font-medium">
+                              {category.displayName}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
-                            style={{ 
+                            style={{
                               borderColor: category.color,
                               color: category.color,
-                              backgroundColor: `${category.color}10` 
+                              backgroundColor: `${category.color}10`,
                             }}
                           >
                             {category.name}
@@ -595,7 +607,9 @@ export default function SuperAdminCategoryManagementPage() {
                 onClick={handleUpdateCategory}
                 disabled={updateCategoryMutation.isPending}
               >
-                {updateCategoryMutation.isPending ? "Updating..." : "Update Category"}
+                {updateCategoryMutation.isPending
+                  ? "Updating..."
+                  : "Update Category"}
               </Button>
             </DialogFooter>
           </DialogContent>
