@@ -599,7 +599,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
-  // Get all templates (filtered by user category for IFSCA users)
+  // Get all templates (filtered by user category for IFSCA users and reporting entities)
   app.get("/api/templates", async (req: AuthenticatedRequest, res) => {
     try {
       const templates = await storage.getTemplates();
@@ -607,13 +607,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Filter templates based on user role and category
       let filteredTemplates = templates;
       
-      if (req.user && req.user.role === "ifsca_user" && req.user.category) {
-        // IFSCA users can only see templates for their category
-        filteredTemplates = templates.filter(
-          (template) => template.category === req.user!.category
-        );
+      if (req.user && req.user.category) {
+        // IFSCA users and reporting entities can only see templates for their category
+        if (req.user.role === "ifsca_user" || req.user.role === "reporting_entity") {
+          filteredTemplates = templates.filter(
+            (template) => template.category === req.user!.category
+          );
+        }
       }
-      // Super admins and reporting entities see all templates
+      // Super admins see all templates
       
       res.json(filteredTemplates);
     } catch (error) {
@@ -621,7 +623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get templates with validation rules (filtered by user category for IFSCA users)
+  // Get templates with validation rules (filtered by user category for IFSCA users and reporting entities)
   app.get("/api/templates/with-rules", async (req: AuthenticatedRequest, res) => {
     try {
       const templates = await storage.getTemplates();
@@ -629,13 +631,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Filter templates based on user role and category
       let filteredTemplates = templates;
       
-      if (req.user && req.user.role === "ifsca_user" && req.user.category) {
-        // IFSCA users can only see templates for their category
-        filteredTemplates = templates.filter(
-          (template) => template.category === req.user!.category
-        );
+      if (req.user && req.user.category) {
+        // IFSCA users and reporting entities can only see templates for their category
+        if (req.user.role === "ifsca_user" || req.user.role === "reporting_entity") {
+          filteredTemplates = templates.filter(
+            (template) => template.category === req.user!.category
+          );
+        }
       }
-      // Super admins and reporting entities see all templates
+      // Super admins see all templates
       
       // Get templates that have validation files uploaded
       const templatesWithRules = filteredTemplates
