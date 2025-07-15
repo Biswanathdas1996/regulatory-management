@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 const uploadSchema = z.object({
   templateType: z.string().min(1, "Template type is required"),
   templateName: z.string().min(1, "Template name is required"),
+  category: z.string().min(1, "Category is required"),
   templateFile: z
     .instanceof(FileList)
     .refine((files) => files.length > 0, "Template file is required"),
@@ -51,11 +52,22 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
     queryKey: ["/api/template-types"],
   });
 
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/auth/me"],
+  });
+
+  const categories = [
+    { value: "banking", label: "Banking" },
+    { value: "nbfc", label: "NBFC" },
+    { value: "stock_exchange", label: "Stock Exchange" },
+  ];
+
   const form = useForm<UploadFormData>({
     resolver: zodResolver(uploadSchema),
     defaultValues: {
       templateType: "",
       templateName: "",
+      category: currentUser?.role === "ifsca_user" ? currentUser.category : "",
       templateFile: undefined,
     },
   });
@@ -69,6 +81,7 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
       formData.append("template", data.templateFile[0]);
       formData.append("templateType", data.templateType);
       formData.append("templateName", data.templateName);
+      formData.append("category", data.category);
 
       // Simulate upload progress
       const progressInterval = setInterval(() => {
@@ -169,7 +182,7 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Template Configuration */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FormField
                 control={form.control}
                 name="templateType"
@@ -192,6 +205,40 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
                       </SelectContent>
                     </Select>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
+                      disabled={currentUser?.role === "ifsca_user"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    {currentUser?.role === "ifsca_user" && (
+                      <p className="text-sm text-gray-500">
+                        Category is automatically set based on your role
+                      </p>
+                    )}
                   </FormItem>
                 )}
               />

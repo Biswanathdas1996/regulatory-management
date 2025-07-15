@@ -589,22 +589,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   );
 
-  // Get all templates
-  app.get("/api/templates", async (req, res) => {
+  // Get all templates (filtered by user category for IFSCA users)
+  app.get("/api/templates", async (req: AuthenticatedRequest, res) => {
     try {
       const templates = await storage.getTemplates();
-      res.json(templates);
+      
+      // Filter templates based on user role and category
+      let filteredTemplates = templates;
+      
+      if (req.user && req.user.role === "ifsca_user" && req.user.category) {
+        // IFSCA users can only see templates for their category
+        filteredTemplates = templates.filter(
+          (template) => template.category === req.user!.category
+        );
+      }
+      // Super admins and reporting entities see all templates
+      
+      res.json(filteredTemplates);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch templates" });
     }
   });
 
-  // Get templates with validation rules
-  app.get("/api/templates/with-rules", async (req, res) => {
+  // Get templates with validation rules (filtered by user category for IFSCA users)
+  app.get("/api/templates/with-rules", async (req: AuthenticatedRequest, res) => {
     try {
       const templates = await storage.getTemplates();
+      
+      // Filter templates based on user role and category
+      let filteredTemplates = templates;
+      
+      if (req.user && req.user.role === "ifsca_user" && req.user.category) {
+        // IFSCA users can only see templates for their category
+        filteredTemplates = templates.filter(
+          (template) => template.category === req.user!.category
+        );
+      }
+      // Super admins and reporting entities see all templates
+      
       // Get templates that have validation files uploaded
-      const templatesWithRules = templates
+      const templatesWithRules = filteredTemplates
         .filter((template) => template.validationFileUploaded)
         .map((template) => ({
           ...template,
@@ -660,11 +684,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ error: "Template name is required" });
         }
 
+        // Get uploader's category (for IFSCA users) or use body category
+        let category = req.body.category || templateType;
+        if (req.user && req.user.role === "ifsca_user" && req.user.category) {
+          // For IFSCA users, use their category regardless of form input
+          category = req.user.category;
+        }
+
         // Create template record
         const template = await storage.createTemplate({
           name: templateName.trim(),
           templateType,
-          category: templateType, // Use templateType as category
+          category: category, // Store the category based on uploader
           fileName: templateFile.originalname,
           filePath: templateFile.path,
           fileSize: templateFile.size,
