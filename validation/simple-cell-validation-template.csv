@@ -1,0 +1,12 @@
+RuleType,SheetName,Column,Row,Description,Severity
+cell,Financial Data,A,1,Header must contain 'Institution Name',error
+cell,Financial Data,B,1,Header must contain 'Total Assets',error
+cell,Financial Data,C,1,Header must contain 'Currency Code',error
+cell,Financial Data,A,2,First institution name required,error
+cell,Financial Data,B,2,First institution assets must be positive,error
+cell,Financial Data,C,2,First institution currency (3 letters),error
+cell,Financial Data,A,3,Second institution name (optional),warning
+cell,Financial Data,B,3,Second institution assets (if present),warning
+cell,Financial Data,D,5,Total summary value required,error
+cell,Financial Data,E,5,Reporting date required,error
+cell,Financial Data,F,10,Authorized signature required,error

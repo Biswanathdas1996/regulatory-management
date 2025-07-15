@@ -1,0 +1,13 @@
+RuleType,SheetName,Column,Row,Field,Required,DataType,Description,Severity
+cell,Sheet1,A,1,Header_InstitutionName,true,string,Cell A1 must contain Institution Name header,error
+cell,Sheet1,B,1,Header_TotalAssets,true,string,Cell B1 must contain Total Assets header,error
+cell,Sheet1,C,1,Header_Currency,true,string,Cell C1 must contain Currency header,error
+cell,Sheet1,A,2,Institution_1,true,string,Cell A2 must contain first institution name,error
+cell,Sheet1,B,2,Assets_1,true,number,Cell B2 must contain first institution assets,error
+cell,Sheet1,C,2,Currency_1,true,string,Cell C2 must contain first institution currency,error
+cell,Sheet1,A,3,Institution_2,false,string,Cell A3 second institution (optional),warning
+cell,Sheet1,B,3,Assets_2,false,number,Cell B3 second institution assets,warning
+cell,Sheet1,C,3,Currency_2,false,string,Cell C3 second institution currency,warning
+cell,Sheet1,D,5,Total_Summary,true,number,Cell D5 must contain total summary,error
+cell,Sheet1,E,5,Report_Date,true,date,Cell E5 must contain reporting date,error
+cell,Sheet1,F,10,Signature,true,string,Cell F10 must contain signature,error

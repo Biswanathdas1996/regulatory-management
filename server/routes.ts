@@ -2407,19 +2407,38 @@ sheetValidations:
         res.send(yamlContent);
       }
       else if (format === 'csv') {
-        let csvContent = 'RuleType,SheetName,Column,DataType,Required,MinLength,MaxLength,Minimum,Maximum,EnumValues,Pattern,Description,Expression,Severity\n';
+        let csvContent = 'RuleType,SheetName,Column,Row,Field,Required,DataType,MinLength,MaxLength,Minimum,Maximum,Pattern,EnumValues,Expression,Description,Severity,RowRange,ColumnRange,CellRange,ApplyToAllRows\n';
         
+        // Add header validation examples first
         for (const sheet of sheets) {
           const sheetSchemas = schemas.filter(s => s.sheetId === sheet.id);
-          for (const schema of sheetSchemas) {
-            let columnLetter = 'A';
+          for (let i = 0; i < sheetSchemas.length; i++) {
+            const schema = sheetSchemas[i];
+            let columnLetter = String.fromCharCode(65 + i); // A, B, C, etc.
             if (schema.columnName) {
               columnLetter = schema.columnName;
-            } else if (schema.fieldName && typeof schema.fieldName === 'string' && schema.fieldName.length > 0) {
-              columnLetter = schema.fieldName.charAt(0);
             }
             
-            csvContent += `column,${sheet.sheetName},${columnLetter},string,true,,,,,,"",${schema.fieldName || 'Field'},,\n`;
+            // Header cell validation
+            csvContent += `cell,${sheet.sheetName},${columnLetter},1,Header_${schema.fieldName || 'Field'},true,string,,,,,,,,"Cell ${columnLetter}1 must contain '${schema.fieldName || 'Field'}' header",error,1,${columnLetter},${columnLetter}1,false\n`;
+          }
+        }
+        
+        // Add data validation examples
+        for (const sheet of sheets) {
+          const sheetSchemas = schemas.filter(s => s.sheetId === sheet.id);
+          for (let i = 0; i < sheetSchemas.length; i++) {
+            const schema = sheetSchemas[i];
+            let columnLetter = String.fromCharCode(65 + i); // A, B, C, etc.
+            if (schema.columnName) {
+              columnLetter = schema.columnName;
+            }
+            
+            // Column data validation
+            csvContent += `column,${sheet.sheetName},${columnLetter},,${schema.fieldName || 'Field'},true,string,,,,,,,,"Column ${columnLetter} validation for ${schema.fieldName || 'Field'}",error,2-*,${columnLetter},${columnLetter}2:${columnLetter}1000,true\n`;
+            
+            // First data cell validation
+            csvContent += `cell,${sheet.sheetName},${columnLetter},2,First_${schema.fieldName || 'Field'},true,string,,,,,,,,"Cell ${columnLetter}2 must contain first ${schema.fieldName || 'Field'}",error,2,${columnLetter},${columnLetter}2,false\n`;
           }
         }
 
@@ -2431,50 +2450,119 @@ sheetValidations:
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Validation Rules');
 
-        // Add headers
+        // Add headers including Row and cell-based validation fields
         worksheet.columns = [
           { header: 'RuleType', key: 'ruleType', width: 15 },
           { header: 'SheetName', key: 'sheetName', width: 20 },
           { header: 'Column', key: 'column', width: 10 },
-          { header: 'DataType', key: 'dataType', width: 15 },
+          { header: 'Row', key: 'row', width: 8 },
+          { header: 'Field', key: 'field', width: 20 },
           { header: 'Required', key: 'required', width: 10 },
+          { header: 'DataType', key: 'dataType', width: 15 },
           { header: 'MinLength', key: 'minLength', width: 12 },
           { header: 'MaxLength', key: 'maxLength', width: 12 },
           { header: 'Minimum', key: 'minimum', width: 10 },
           { header: 'Maximum', key: 'maximum', width: 10 },
-          { header: 'EnumValues', key: 'enumValues', width: 20 },
           { header: 'Pattern', key: 'pattern', width: 20 },
-          { header: 'Description', key: 'description', width: 30 },
+          { header: 'EnumValues', key: 'enumValues', width: 20 },
           { header: 'Expression', key: 'expression', width: 30 },
-          { header: 'Severity', key: 'severity', width: 10 }
+          { header: 'Description', key: 'description', width: 40 },
+          { header: 'Severity', key: 'severity', width: 10 },
+          { header: 'RowRange', key: 'rowRange', width: 12 },
+          { header: 'ColumnRange', key: 'columnRange', width: 15 },
+          { header: 'CellRange', key: 'cellRange', width: 15 },
+          { header: 'ApplyToAllRows', key: 'applyToAllRows', width: 15 }
         ];
 
-        // Add data rows
+        // Add data rows with cell-based validation examples
         for (const sheet of sheets) {
           const sheetSchemas = schemas.filter(s => s.sheetId === sheet.id);
-          for (const schema of sheetSchemas) {
-            let columnLetter = 'A';
+          
+          // Add header validation rows
+          for (let i = 0; i < sheetSchemas.length; i++) {
+            const schema = sheetSchemas[i];
+            let columnLetter = String.fromCharCode(65 + i); // A, B, C, etc.
             if (schema.columnName) {
               columnLetter = schema.columnName;
-            } else if (schema.fieldName && typeof schema.fieldName === 'string' && schema.fieldName.length > 0) {
-              columnLetter = schema.fieldName.charAt(0);
+            }
+            
+            worksheet.addRow({
+              ruleType: 'cell',
+              sheetName: sheet.sheetName,
+              column: columnLetter,
+              row: '1',
+              field: `Header_${schema.fieldName || 'Field'}`,
+              required: 'true',
+              dataType: 'string',
+              minLength: '',
+              maxLength: '',
+              minimum: '',
+              maximum: '',
+              pattern: '',
+              enumValues: '',
+              expression: '',
+              description: `Cell ${columnLetter}1 must contain '${schema.fieldName || 'Field'}' header`,
+              severity: 'error',
+              rowRange: '1',
+              columnRange: columnLetter,
+              cellRange: `${columnLetter}1`,
+              applyToAllRows: 'false'
+            });
+          }
+          
+          // Add column validation rows
+          for (let i = 0; i < sheetSchemas.length; i++) {
+            const schema = sheetSchemas[i];
+            let columnLetter = String.fromCharCode(65 + i); // A, B, C, etc.
+            if (schema.columnName) {
+              columnLetter = schema.columnName;
             }
             
             worksheet.addRow({
               ruleType: 'column',
               sheetName: sheet.sheetName,
               column: columnLetter,
-              dataType: 'string',
+              row: '',
+              field: schema.fieldName || 'Field',
               required: 'true',
+              dataType: 'string',
               minLength: '',
               maxLength: '',
               minimum: '',
               maximum: '',
-              enumValues: '',
               pattern: '',
-              description: schema.fieldName || 'Field',
+              enumValues: '',
               expression: '',
-              severity: ''
+              description: `Column ${columnLetter} validation for ${schema.fieldName || 'Field'}`,
+              severity: 'error',
+              rowRange: '2-*',
+              columnRange: columnLetter,
+              cellRange: `${columnLetter}2:${columnLetter}1000`,
+              applyToAllRows: 'true'
+            });
+            
+            // Add first data cell validation
+            worksheet.addRow({
+              ruleType: 'cell',
+              sheetName: sheet.sheetName,
+              column: columnLetter,
+              row: '2',
+              field: `First_${schema.fieldName || 'Field'}`,
+              required: 'true',
+              dataType: 'string',
+              minLength: '',
+              maxLength: '',
+              minimum: '',
+              maximum: '',
+              pattern: '',
+              enumValues: '',
+              expression: '',
+              description: `Cell ${columnLetter}2 must contain first ${schema.fieldName || 'Field'}`,
+              severity: 'error',
+              rowRange: '2',
+              columnRange: columnLetter,
+              cellRange: `${columnLetter}2`,
+              applyToAllRows: 'false'
             });
           }
         }
