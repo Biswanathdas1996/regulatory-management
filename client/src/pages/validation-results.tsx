@@ -39,15 +39,21 @@ import { CommentSection } from "@/components/CommentSection";
 export default function ValidationResultsPage() {
   const { id } = useParams<{ id: string }>();
   const submissionId = parseInt(id || "0");
-  
+
   // State for admin rejection modal
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
-  const [selectedSubmission, setSelectedSubmission] = useState<number | null>(null);
-  const [actionType, setActionType] = useState<'reject' | 'return'>('reject');
+  const [selectedSubmission, setSelectedSubmission] = useState<number | null>(
+    null
+  );
+  const [actionType, setActionType] = useState<"reject" | "return">("reject");
   const [rejectionReason, setRejectionReason] = useState("");
-  
+
   // Debug logging for dialog state
-  console.log("Dialog state:", { actionDialogOpen, selectedSubmission, actionType });
+  console.log("Dialog state:", {
+    actionDialogOpen,
+    selectedSubmission,
+    actionType,
+  });
 
   const { data: submission, isLoading: submissionLoading } = useQuery({
     queryKey: [`/api/submissions/${submissionId}`],
@@ -68,14 +74,14 @@ export default function ValidationResultsPage() {
   });
 
   const handleAction = async (action: string, reason?: string) => {
-    if (action === 'reject' || action === 'return') {
+    if (action === "reject" || action === "return") {
       // For reject/return actions, open modal first
-      setActionType(action as 'reject' | 'return');
+      setActionType(action as "reject" | "return");
       setSelectedSubmission(submissionId);
       setActionDialogOpen(true);
       return;
     }
-    
+
     // For approve action, proceed directly
     try {
       const response = await fetch(
@@ -115,14 +121,18 @@ export default function ValidationResultsPage() {
         }
       );
       if (!response.ok) throw new Error("Action failed");
-      
-      alert(`Submission ${actionType === 'reject' ? 'rejected' : 'returned to user'} successfully.`);
-      
+
+      alert(
+        `Submission ${
+          actionType === "reject" ? "rejected" : "returned to user"
+        } successfully.`
+      );
+
       // Reset state and close modal
       setActionDialogOpen(false);
       setSelectedSubmission(null);
       setRejectionReason("");
-      
+
       window.location.reload();
     } catch (error) {
       console.error(error);
@@ -219,7 +229,7 @@ export default function ValidationResultsPage() {
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <div className="flex items-center gap-4 mb-2">
-                    <Link to="/user-submission">
+                    <Link to="/reporting-entity/submission">
                       <Button variant="ghost" size="sm">
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         Back to Submissions
@@ -528,13 +538,12 @@ export default function ValidationResultsPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {actionType === 'reject' ? 'Reject Submission' : 'Return to User'}
+              {actionType === "reject" ? "Reject Submission" : "Return to User"}
             </DialogTitle>
             <DialogDescription>
-              {actionType === 'reject' 
-                ? 'Please provide a reason for rejecting this submission. This will be visible to the user.'
-                : 'Please provide a reason for returning this submission to the user for revision.'
-              }
+              {actionType === "reject"
+                ? "Please provide a reason for rejecting this submission. This will be visible to the user."
+                : "Please provide a reason for returning this submission to the user for revision."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -543,9 +552,9 @@ export default function ValidationResultsPage() {
               <Textarea
                 id="reason"
                 placeholder={
-                  actionType === 'reject' 
-                    ? 'e.g., Data validation errors, missing required information...'
-                    : 'e.g., Please correct the following issues and resubmit...'
+                  actionType === "reject"
+                    ? "e.g., Data validation errors, missing required information..."
+                    : "e.g., Please correct the following issues and resubmit..."
                 }
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
@@ -564,11 +573,11 @@ export default function ValidationResultsPage() {
               Cancel
             </Button>
             <Button
-              variant={actionType === 'reject' ? 'destructive' : 'default'}
+              variant={actionType === "reject" ? "destructive" : "default"}
               onClick={handleActionConfirm}
               disabled={!rejectionReason.trim()}
             >
-              {actionType === 'reject' ? 'Reject Submission' : 'Return to User'}
+              {actionType === "reject" ? "Reject Submission" : "Return to User"}
             </Button>
           </DialogFooter>
         </DialogContent>

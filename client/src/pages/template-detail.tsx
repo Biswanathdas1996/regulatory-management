@@ -108,7 +108,7 @@ export default function TemplateDetail() {
       <div className="mb-8">
         <Button
           variant="ghost"
-          onClick={() => navigate("/template-management")}
+          onClick={() => navigate("/regulator/template-management")}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -161,21 +161,26 @@ export default function TemplateDetail() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Category</p>
-              <p className="text-lg text-gray-900 capitalize">{template.category}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Submission Frequency</p>
               <p className="text-lg text-gray-900 capitalize">
-                {template.frequency?.replace('_', ' ') || 'Not specified'}
+                {template.category}
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Last Submission Date</p>
+              <p className="text-sm font-medium text-gray-500">
+                Submission Frequency
+              </p>
+              <p className="text-lg text-gray-900 capitalize">
+                {template.frequency?.replace("_", " ") || "Not specified"}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">
+                Last Submission Date
+              </p>
               <p className="text-lg text-gray-900">
-                {template.lastSubmissionDate 
+                {template.lastSubmissionDate
                   ? new Date(template.lastSubmissionDate).toLocaleDateString()
-                  : 'Not specified'
-                }
+                  : "Not specified"}
               </p>
             </div>
             <div>

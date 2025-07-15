@@ -76,9 +76,15 @@ export default function UserDashboardPage() {
   // Calculate KPIs - ensure submissions is an array
   const submissionsArray = Array.isArray(submissions) ? submissions : [];
   const totalSubmissions = submissionsArray.length;
-  const passedSubmissions = submissionsArray.filter((s: any) => s.status === "passed").length;
-  const failedSubmissions = submissionsArray.filter((s: any) => s.status === "failed").length;
-  const validatingSubmissions = submissionsArray.filter((s: any) => s.status === "validating").length;
+  const passedSubmissions = submissionsArray.filter(
+    (s: any) => s.status === "passed"
+  ).length;
+  const failedSubmissions = submissionsArray.filter(
+    (s: any) => s.status === "failed"
+  ).length;
+  const validatingSubmissions = submissionsArray.filter(
+    (s: any) => s.status === "validating"
+  ).length;
   const successRate =
     totalSubmissions > 0
       ? Math.round((passedSubmissions / totalSubmissions) * 100)
@@ -86,7 +92,9 @@ export default function UserDashboardPage() {
 
   // Recent activity (last 7 days)
   const last7Days = subDays(new Date(), 7);
-  const recentSubmissions = submissionsArray.filter((s: any) => new Date(s.createdAt) > last7Days);
+  const recentSubmissions = submissionsArray.filter(
+    (s: any) => new Date(s.createdAt) > last7Days
+  );
 
   // Template usage stats
   const templateUsage = submissionsArray.reduce((acc: any, sub: any) => {
@@ -105,7 +113,9 @@ export default function UserDashboardPage() {
 
   // Monthly trend (last 30 days)
   const last30Days = subDays(new Date(), 30);
-  const monthlySubmissions = submissionsArray.filter((s: any) => new Date(s.createdAt) > last30Days);
+  const monthlySubmissions = submissionsArray.filter(
+    (s: any) => new Date(s.createdAt) > last30Days
+  );
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -138,7 +148,7 @@ export default function UserDashboardPage() {
       title="Reporting Entity Dashboard"
       subtitle="Track your template submissions and validation results"
       headerActions={
-        <Link to="/user-submission">
+        <Link to="/reporting-entity/submission">
           <Button>
             <Upload className="h-4 w-4 mr-2" />
             New Submission
@@ -397,7 +407,7 @@ export default function UserDashboardPage() {
                     <AlertDescription>
                       No submissions found.{" "}
                       <Link
-                        to="/user-submission"
+                        to="/reporting-entity/submission"
                         className="text-blue-600 hover:underline"
                       >
                         Upload your first submission

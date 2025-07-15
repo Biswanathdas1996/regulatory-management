@@ -53,33 +53,33 @@ export default function AdminLayout({
   const menuItems = [
     {
       name: "Dashboard",
-      href: "/admin-dashboard",
+      href: "/regulator/dashboard",
       icon: LayoutDashboard,
-      current: location === "/admin-dashboard",
+      current: location === "/regulator/dashboard",
     },
     {
       name: "Template Management",
-      href: "/template-management",
+      href: "/regulator/template-management",
       icon: FileText,
-      current: location === "/template-management",
+      current: location === "/regulator/template-management",
     },
     {
       name: "All Submissions",
-      href: "/admin-submissions",
+      href: "/regulator/view-submissions",
       icon: FileCheck,
-      current: location === "/admin-submissions",
+      current: location === "/regulator/view-submissions",
     },
     {
-      name: "Admin Templates",
-      href: "/admin-templates",
+      name: "Templates",
+      href: "/regulator/templates",
       icon: FolderOpen,
-      current: location === "/admin-templates",
+      current: location === "/regulator/templates",
     },
     {
       name: "Reporting Entity Management",
-      href: "/user-management",
+      href: "/regulator/re-management",
       icon: Users,
-      current: location === "/user-management",
+      current: location === "/regulator/re-management",
     },
     {
       name: "Excel Analyzer",
@@ -153,7 +153,7 @@ export default function AdminLayout({
                 );
               })}
             </div>
-            
+
             {/* Logout Button */}
             <div className="mt-auto pt-6 border-t border-gray-200">
               <button

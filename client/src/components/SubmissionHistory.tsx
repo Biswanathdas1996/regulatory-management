@@ -22,6 +22,7 @@ import {
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
 
 interface SubmissionHistoryProps {
   userId?: number;
@@ -36,7 +37,7 @@ export function SubmissionHistory({
 }: SubmissionHistoryProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
+  const [, setLocation] = useLocation();
   const { data: submissions, isLoading } = useQuery({
     queryKey: showAllSubmissions
       ? ["/api/admin/submissions"]
@@ -229,7 +230,9 @@ export function SubmissionHistory({
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            window.location.href = `/submission-view/${submission.id}`;
+                            setLocation(
+                              `/reporting-entity/submission-view/${submission.id}`
+                            );
                           }}
                         >
                           <Eye className="h-4 w-4" />

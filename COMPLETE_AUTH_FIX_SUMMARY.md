@@ -225,8 +225,8 @@ Expected: Login → Immediate logout + "Access denied"
 
 ### Already Using Auth Context (No Changes)
 
-4. `client/src/pages/admin-login.tsx` - Already correct ✅
-5. `client/src/pages/user-login.tsx` - Already correct ✅
+4. `client/src/pages/regulator/login.tsx` - Already correct ✅
+5. `client/src/pages/reporting-entity/login.tsx` - Already correct ✅
 
 ### New Testing Tools
 

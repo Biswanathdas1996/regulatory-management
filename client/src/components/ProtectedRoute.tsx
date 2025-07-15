@@ -33,7 +33,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
     // Check admin requirements
     if (requireAdmin && !isAdmin) {
-      setLocation(redirectTo || "/admin-login");
+      setLocation(redirectTo || "/regulator/login");
       return;
     }
 
@@ -79,7 +79,7 @@ interface AdminRouteProps {
 }
 
 export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => (
-  <ProtectedRoute requireAuth requireAdmin redirectTo="/admin-login">
+  <ProtectedRoute requireAuth requireAdmin redirectTo="/regulator/login">
     {children}
   </ProtectedRoute>
 );
@@ -242,7 +242,7 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({
       } else if (isIFSCAUser) {
         setLocation("/ifsca/dashboard");
       } else if (isReportingEntity) {
-        setLocation("/user-dashboard");
+        setLocation("/reporting-entity/dashboard");
       }
     }
   }, [

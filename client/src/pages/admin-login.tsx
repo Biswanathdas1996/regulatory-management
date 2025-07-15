@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
   const onSubmit = async (data: AdminLoginForm) => {
     try {
       await login({ username: data.username, password: data.password });
-      setLocation("/admin-dashboard");
+      setLocation("/regulator/dashboard");
     } catch (error) {
       // Error handling is done in the auth context
       console.error("Login failed:", error);
@@ -140,7 +140,7 @@ export default function AdminLoginPage() {
             <div className="mt-6 pt-6 border-t border-gray-200">
               <p className="text-center text-sm text-gray-600">
                 Need user access?{" "}
-                <Link to="/user-login">
+                <Link to="/reporting-entity/login">
                   <Button variant="link" className="h-auto p-0 text-blue-600">
                     User Login
                   </Button>
@@ -150,7 +150,9 @@ export default function AdminLoginPage() {
 
             {/* Demo Credentials */}
             <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-xs text-gray-500 text-center">Demo: username: "admin", Password: "admin123"</p>
+              <p className="text-xs text-gray-500 text-center">
+                Demo: username: "admin", Password: "admin123"
+              </p>
             </div>
           </CardContent>
         </Card>

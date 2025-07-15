@@ -45,36 +45,36 @@ export default function SuperAdminLayout({
       icon: Users,
       current: location === "/super-admin/ifsca-users",
     },
-    {
-      name: "All Reporting Entities",
-      href: "/super-admin/reporting-entities",
-      icon: Building,
-      current: location === "/super-admin/reporting-entities",
-    },
-    {
-      name: "System Templates",
-      href: "/super-admin/templates",
-      icon: FileText,
-      current: location === "/super-admin/templates",
-    },
-    {
-      name: "System Activity",
-      href: "/super-admin/activity",
-      icon: Activity,
-      current: location === "/super-admin/activity",
-    },
-    {
-      name: "Database Management",
-      href: "/super-admin/database",
-      icon: Database,
-      current: location === "/super-admin/database",
-    },
-    {
-      name: "Platform Settings",
-      href: "/super-admin/settings",
-      icon: Settings,
-      current: location === "/super-admin/settings",
-    },
+    // {
+    //   name: "All Reporting Entities",
+    //   href: "/super-admin/reporting-entities",
+    //   icon: Building,
+    //   current: location === "/super-admin/reporting-entities",
+    // },
+    // {
+    //   name: "System Templates",
+    //   href: "/super-admin/templates",
+    //   icon: FileText,
+    //   current: location === "/super-admin/templates",
+    // },
+    // {
+    //   name: "System Activity",
+    //   href: "/super-admin/activity",
+    //   icon: Activity,
+    //   current: location === "/super-admin/activity",
+    // },
+    // {
+    //   name: "Database Management",
+    //   href: "/super-admin/database",
+    //   icon: Database,
+    //   current: location === "/super-admin/database",
+    // },
+    // {
+    //   name: "Platform Settings",
+    //   href: "/super-admin/settings",
+    //   icon: Settings,
+    //   current: location === "/super-admin/settings",
+    // },
   ];
 
   if (!showSidebar) {
@@ -114,7 +114,9 @@ export default function SuperAdminLayout({
             <div className="p-1.5 bg-red-600 rounded-md">
               <Shield className="h-5 w-5 text-white" />
             </div>
-            <span className="text-lg font-semibold text-gray-900">Super Admin</span>
+            <span className="text-lg font-semibold text-gray-900">
+              Super Admin
+            </span>
           </div>
           <Button
             variant="ghost"
@@ -135,8 +137,8 @@ export default function SuperAdminLayout({
                   <Button
                     variant={item.current ? "default" : "ghost"}
                     className={`w-full justify-start mb-1 ${
-                      item.current 
-                        ? "bg-red-600 text-white hover:bg-red-700" 
+                      item.current
+                        ? "bg-red-600 text-white hover:bg-red-700"
                         : "text-gray-700 hover:bg-gray-100"
                     }`}
                     onClick={() => setSidebarOpen(false)}

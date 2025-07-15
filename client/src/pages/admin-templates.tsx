@@ -3,8 +3,23 @@ import AdminLayout from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, Download, Upload, CheckCircle, XCircle, Clock, Settings } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  FileText,
+  Download,
+  Upload,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Settings,
+} from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
 
@@ -19,25 +34,36 @@ export default function AdminTemplatesPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "processed": return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "processing": return <Clock className="h-4 w-4 text-yellow-500 animate-spin" />;
-      case "error": return <XCircle className="h-4 w-4 text-red-500" />;
-      default: return <Clock className="h-4 w-4 text-gray-500" />;
+      case "processed":
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case "processing":
+        return <Clock className="h-4 w-4 text-yellow-500 animate-spin" />;
+      case "error":
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-500" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "processed": return "bg-green-100 text-green-800";
-      case "processing": return "bg-yellow-100 text-yellow-800";
-      case "error": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "processed":
+        return "bg-green-100 text-green-800";
+      case "processing":
+        return "bg-yellow-100 text-yellow-800";
+      case "error":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   if (isLoading) {
     return (
-      <AdminLayout title="Template Library" subtitle="Manage all system templates">
+      <AdminLayout
+        title="Template Library"
+        subtitle="Manage all system templates"
+      >
         <Card className="border-0 shadow-sm">
           <CardContent className="py-8">
             <div className="animate-pulse space-y-4">
@@ -52,11 +78,11 @@ export default function AdminTemplatesPage() {
   }
 
   return (
-    <AdminLayout 
-      title="Template Library" 
+    <AdminLayout
+      title="Template Library"
       subtitle="Manage all system templates and validation rules"
       headerActions={
-        <Link to="/template-management">
+        <Link to="/regulator/template-management">
           <Button>
             <Upload className="h-4 w-4 mr-2" />
             Upload Template
@@ -78,7 +104,7 @@ export default function AdminTemplatesPage() {
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">No templates available</p>
-              <Link to="/template-management">
+              <Link to="/regulator/template-management">
                 <Button className="mt-4">
                   <Upload className="h-4 w-4 mr-2" />
                   Upload First Template
@@ -110,7 +136,7 @@ export default function AdminTemplatesPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {template.templateType || 'Standard'}
+                          {template.templateType || "Standard"}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -125,12 +151,16 @@ export default function AdminTemplatesPage() {
                         {template.validationRulesCount > 0 ? (
                           <div className="flex items-center gap-2">
                             <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span className="text-sm font-medium">{template.validationRulesCount} rules</span>
+                            <span className="text-sm font-medium">
+                              {template.validationRulesCount} rules
+                            </span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
                             <XCircle className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm text-gray-500">No rules</span>
+                            <span className="text-sm text-gray-500">
+                              No rules
+                            </span>
                           </div>
                         )}
                       </TableCell>
@@ -153,7 +183,9 @@ export default function AdminTemplatesPage() {
                               <Download className="h-4 w-4" />
                             </Button>
                           </a>
-                          <Link to={`/template-management?template=${template.id}`}>
+                          <Link
+                            to={`/regulator/template-management?template=${template.id}`}
+                          >
                             <Button size="sm" variant="outline">
                               <Settings className="h-4 w-4" />
                             </Button>

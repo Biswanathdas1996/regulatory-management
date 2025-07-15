@@ -1,7 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Settings, Upload, FileText, User, ArrowRight, Shield, CheckCircle, BarChart3, Clock, TrendingUp, Building2, Globe, Scale } from "lucide-react";
+import {
+  Settings,
+  Upload,
+  FileText,
+  User,
+  ArrowRight,
+  Shield,
+  CheckCircle,
+  BarChart3,
+  Clock,
+  TrendingUp,
+  Building2,
+  Globe,
+  Scale,
+} from "lucide-react";
 
 export default function Home() {
   return (
@@ -24,8 +38,9 @@ export default function Home() {
                 </span>
               </h1>
               <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed mb-8">
-                Comprehensive digital solution for GIFT City financial institutions to submit, validate, 
-                and manage regulatory reports with 100% accuracy and real-time compliance monitoring.
+                Comprehensive digital solution for GIFT City financial
+                institutions to submit, validate, and manage regulatory reports
+                with 100% accuracy and real-time compliance monitoring.
               </p>
               <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500">
                 <div className="flex items-center">
@@ -49,29 +64,45 @@ export default function Home() {
                 <div className="h-12 w-12 bg-emerald-100 rounded-xl flex items-center justify-center mx-auto mb-4">
                   <CheckCircle className="h-6 w-6 text-emerald-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">IFSCA Compliant</h3>
-                <p className="text-gray-600 text-sm">Fully aligned with GIFT City regulatory requirements</p>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  IFSCA Compliant
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Fully aligned with GIFT City regulatory requirements
+                </p>
               </div>
               <div className="text-center p-6 bg-white/50 rounded-xl backdrop-blur-sm">
                 <div className="h-12 w-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
                   <Scale className="h-6 w-6 text-blue-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Regulatory Templates</h3>
-                <p className="text-gray-600 text-sm">Pre-built templates for all IFSCA reporting formats</p>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  Regulatory Templates
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Pre-built templates for all IFSCA reporting formats
+                </p>
               </div>
               <div className="text-center p-6 bg-white/50 rounded-xl backdrop-blur-sm">
                 <div className="h-12 w-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
                   <Clock className="h-6 w-6 text-purple-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Automated Validation</h3>
-                <p className="text-gray-600 text-sm">Real-time compliance checking and error detection</p>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  Automated Validation
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Real-time compliance checking and error detection
+                </p>
               </div>
               <div className="text-center p-6 bg-white/50 rounded-xl backdrop-blur-sm">
                 <div className="h-12 w-12 bg-orange-100 rounded-xl flex items-center justify-center mx-auto mb-4">
                   <BarChart3 className="h-6 w-6 text-orange-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Audit Trail</h3>
-                <p className="text-gray-600 text-sm">Complete submission history and compliance tracking</p>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  Audit Trail
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Complete submission history and compliance tracking
+                </p>
               </div>
             </div>
           </div>
@@ -93,7 +124,9 @@ export default function Home() {
                       <h3 className="text-lg font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">
                         Super Admin Portal
                       </h3>
-                      <p className="text-sm text-gray-600">Global system administration and user management</p>
+                      <p className="text-sm text-gray-600">
+                        Global system administration and user management
+                      </p>
                     </div>
                   </div>
                   <Link href="/super-admin/login">
@@ -118,24 +151,33 @@ export default function Home() {
                 <CardTitle className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
                   Institution Portal
                 </CardTitle>
-                <p className="text-gray-500 text-sm">For GIFT City financial institutions</p>
+                <p className="text-gray-500 text-sm">
+                  For GIFT City financial institutions
+                </p>
               </CardHeader>
               <CardContent className="px-6 pb-6">
                 <p className="text-gray-600 mb-6 text-center text-sm leading-relaxed">
-                  Submit regulatory reports, track compliance status, and access real-time validation results.
+                  Submit regulatory reports, track compliance status, and access
+                  real-time validation results.
                 </p>
                 <div className="grid grid-cols-1 gap-2 mb-6">
                   <div className="flex items-center p-2.5 bg-emerald-50 rounded-lg">
                     <FileText className="h-4 w-4 text-emerald-600 mr-2.5 flex-shrink-0" />
-                    <span className="text-xs text-gray-700 font-medium">Report Submission</span>
+                    <span className="text-xs text-gray-700 font-medium">
+                      Report Submission
+                    </span>
                   </div>
                   <div className="flex items-center p-2.5 bg-emerald-50 rounded-lg">
                     <CheckCircle className="h-4 w-4 text-emerald-600 mr-2.5 flex-shrink-0" />
-                    <span className="text-xs text-gray-700 font-medium">Real-time Validation</span>
+                    <span className="text-xs text-gray-700 font-medium">
+                      Real-time Validation
+                    </span>
                   </div>
                   <div className="flex items-center p-2.5 bg-emerald-50 rounded-lg">
                     <TrendingUp className="h-4 w-4 text-emerald-600 mr-2.5 flex-shrink-0" />
-                    <span className="text-xs text-gray-700 font-medium">Analytics Dashboard</span>
+                    <span className="text-xs text-gray-700 font-medium">
+                      Analytics Dashboard
+                    </span>
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -158,28 +200,37 @@ export default function Home() {
                 <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
                   IFSCA User Console
                 </CardTitle>
-                <p className="text-gray-500 text-sm">For regulatory administrators</p>
+                <p className="text-gray-500 text-sm">
+                  For regulatory administrators
+                </p>
               </CardHeader>
               <CardContent className="px-6 pb-6">
                 <p className="text-gray-600 mb-6 text-center text-sm leading-relaxed">
-                  Manage templates, configure validation rules, and monitor compliance submissions.
+                  Manage templates, configure validation rules, and monitor
+                  compliance submissions.
                 </p>
                 <div className="grid grid-cols-1 gap-2 mb-6">
                   <div className="flex items-center p-2.5 bg-blue-50 rounded-lg">
                     <Settings className="h-4 w-4 text-blue-600 mr-2.5 flex-shrink-0" />
-                    <span className="text-xs text-gray-700 font-medium">Template Configuration</span>
+                    <span className="text-xs text-gray-700 font-medium">
+                      Template Configuration
+                    </span>
                   </div>
                   <div className="flex items-center p-2.5 bg-blue-50 rounded-lg">
                     <BarChart3 className="h-4 w-4 text-blue-600 mr-2.5 flex-shrink-0" />
-                    <span className="text-xs text-gray-700 font-medium">Compliance Monitoring</span>
+                    <span className="text-xs text-gray-700 font-medium">
+                      Compliance Monitoring
+                    </span>
                   </div>
                   <div className="flex items-center p-2.5 bg-blue-50 rounded-lg">
                     <Upload className="h-4 w-4 text-blue-600 mr-2.5 flex-shrink-0" />
-                    <span className="text-xs text-gray-700 font-medium">Submission Oversight</span>
+                    <span className="text-xs text-gray-700 font-medium">
+                      Submission Oversight
+                    </span>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Link href="/ifsca/login">
+                  <Link href="/regulator/login">
                     <Button className="w-full h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg shadow-md shadow-blue-500/25 transition-all duration-200 text-sm">
                       IFSCA Access
                       <ArrowRight className="h-4 w-4 ml-2" />
@@ -196,7 +247,9 @@ export default function Home() {
             <div className="bg-gradient-to-br from-emerald-50 to-blue-50 rounded-xl p-6 border border-emerald-200/50">
               <div className="flex items-center mb-4">
                 <Scale className="h-6 w-6 text-emerald-600 mr-3" />
-                <h3 className="text-lg font-bold text-gray-900">IFSCA Compliance</h3>
+                <h3 className="text-lg font-bold text-gray-900">
+                  IFSCA Compliance
+                </h3>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
@@ -209,7 +262,9 @@ export default function Home() {
                   <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
                     <Globe className="h-6 w-6 text-blue-600" />
                   </div>
-                  <p className="text-xs font-medium text-gray-700">Global Standards</p>
+                  <p className="text-xs font-medium text-gray-700">
+                    Global Standards
+                  </p>
                 </div>
               </div>
             </div>
@@ -218,11 +273,15 @@ export default function Home() {
             <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-gray-200/50">
               <div className="flex items-center mb-4">
                 <BarChart3 className="h-6 w-6 text-blue-600 mr-3" />
-                <h3 className="text-lg font-bold text-gray-900">Platform Stats</h3>
+                <h3 className="text-lg font-bold text-gray-900">
+                  Platform Stats
+                </h3>
               </div>
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-bold text-emerald-600">99.9%</div>
+                  <div className="text-2xl font-bold text-emerald-600">
+                    99.9%
+                  </div>
                   <div className="text-xs text-gray-600">Uptime</div>
                 </div>
                 <div>
@@ -235,7 +294,9 @@ export default function Home() {
 
           {/* Compact Footer */}
           <div className="text-center">
-            <p className="text-gray-500 mb-2">Ready to enhance your IFSCA regulatory reporting?</p>
+            <p className="text-gray-500 mb-2">
+              Ready to enhance your IFSCA regulatory reporting?
+            </p>
             <div className="text-xs text-gray-400">
               Authorized by IFSCA | GIFT City, Gujarat, India
             </div>

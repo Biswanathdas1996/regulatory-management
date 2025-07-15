@@ -57,13 +57,13 @@ function Router() {
           </PublicRoute>
         </Layout>
       </Route>
-      <Route path="/reporting-entity/login">
+      {/* <Route path="/reporting-entity/login">
         <Layout showHeader={false}>
           <PublicRoute redirectIfAuthenticated>
             <ReportingEntityLogin />
           </PublicRoute>
         </Layout>
-      </Route>
+      </Route> */}
 
       {/* Dashboard routes */}
       <Route path="/super-admin/dashboard">
@@ -85,14 +85,14 @@ function Router() {
       </Route>
 
       {/* Legacy login routes for backward compatibility */}
-      <Route path="/admin-login">
+      <Route path="/regulator/login">
         <Layout showHeader={false}>
           <PublicRoute redirectIfAuthenticated>
             <AdminLoginPage />
           </PublicRoute>
         </Layout>
       </Route>
-      <Route path="/user-login">
+      <Route path="/reporting-entity/login">
         <Layout showHeader={false}>
           <PublicRoute redirectIfAuthenticated>
             <UserLoginPage />
@@ -120,22 +120,22 @@ function Router() {
       </Route>
 
       {/* Legacy admin route for backward compatibility */}
-      <Route path="/admin-dashboard">
+      <Route path="/regulator/dashboard">
         <AdminRoute>
           <AdminDashboardPage />
         </AdminRoute>
       </Route>
-      <Route path="/admin-submissions">
+      <Route path="/regulator/view-submissions">
         <AdminRoute>
           <AdminSubmissionsPage />
         </AdminRoute>
       </Route>
-      <Route path="/admin-templates">
+      <Route path="/regulator/templates">
         <AdminRoute>
           <AdminTemplatesPage />
         </AdminRoute>
       </Route>
-      <Route path="/user-management">
+      <Route path="/regulator/re-management">
         <AdminRoute>
           <UserManagementPage />
         </AdminRoute>
@@ -147,24 +147,24 @@ function Router() {
       </Route>
 
       {/* Reporting Entity protected routes */}
-      <Route path="/user-dashboard">
+      <Route path="/reporting-entity/dashboard">
         <ReportingEntityRoute>
           <UserDashboardPage />
         </ReportingEntityRoute>
       </Route>
-      <Route path="/user-submission">
+      <Route path="/reporting-entity/submission">
         <ReportingEntityRoute>
           <UserSubmissionPage />
         </ReportingEntityRoute>
       </Route>
-      <Route path="/submission-history">
+      <Route path="/reporting-entity/submission-history">
         <ReportingEntityRoute>
           <SubmissionHistoryPage />
         </ReportingEntityRoute>
       </Route>
 
       {/* Mixed authentication routes */}
-      <Route path="/template-management">
+      <Route path="/regulator/template-management">
         <ProtectedRoute>
           <TemplateManagement />
         </ProtectedRoute>
@@ -174,7 +174,7 @@ function Router() {
           <ValidationResultsPage />
         </ProtectedRoute>
       </Route>
-      <Route path="/submission-view/:id">
+      <Route path="/reporting-entity/submission-view/:id">
         <ProtectedRoute>
           <SubmissionViewPage />
         </ProtectedRoute>

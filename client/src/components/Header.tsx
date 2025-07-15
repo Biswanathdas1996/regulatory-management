@@ -45,13 +45,13 @@ export const Header: React.FC = () => {
             </h1>
           </Link>
           <div className="flex gap-2">
-            <Link to="/admin-login">
+            <Link to="/regulator/login">
               <Button variant="outline" size="sm">
                 <Shield className="h-4 w-4 mr-2" />
                 IFSCA User
               </Button>
             </Link>
-            <Link to="/user-login">
+            <Link to="/reporting-entity/login">
               <Button size="sm">
                 <User className="h-4 w-4 mr-2" />
                 Reporting Entity Login
@@ -83,22 +83,22 @@ export const Header: React.FC = () => {
 
             {user.role === "admin" ? (
               <>
-                <Link to="/admin-dashboard">
+                <Link to="/regulator/dashboard">
                   <Button variant="ghost" size="sm">
                     Dashboard
                   </Button>
                 </Link>
-                <Link to="/admin-submissions">
+                <Link to="/regulator/view-submissions">
                   <Button variant="ghost" size="sm">
                     Submissions
                   </Button>
                 </Link>
-                <Link to="/admin-templates">
+                <Link to="/regulator/templates">
                   <Button variant="ghost" size="sm">
                     Templates
                   </Button>
                 </Link>
-                <Link to="/user-management">
+                <Link to="/regulator/re-management">
                   <Button variant="ghost" size="sm">
                     Users
                   </Button>
@@ -106,17 +106,17 @@ export const Header: React.FC = () => {
               </>
             ) : (
               <>
-                <Link to="/user-dashboard">
+                <Link to="/reporting-entity/dashboard">
                   <Button variant="ghost" size="sm">
                     Dashboard
                   </Button>
                 </Link>
-                <Link to="/user-submission">
+                <Link to="/reporting-entity/submission">
                   <Button variant="ghost" size="sm">
                     Submit
                   </Button>
                 </Link>
-                <Link to="/submission-history">
+                <Link to="/reporting-entity/submission-history">
                   <Button variant="ghost" size="sm">
                     History
                   </Button>
@@ -148,7 +148,9 @@ export const Header: React.FC = () => {
                     {user.username}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user.role === "admin" ? "IFSCA User" : "Reporting Entity Account"}
+                    {user.role === "admin"
+                      ? "IFSCA User"
+                      : "Reporting Entity Account"}
                   </p>
                 </div>
               </DropdownMenuLabel>
@@ -158,8 +160,8 @@ export const Header: React.FC = () => {
                 onClick={() =>
                   setLocation(
                     user.role === "admin"
-                      ? "/admin-dashboard"
-                      : "/user-dashboard"
+                      ? "/regulator/dashboard"
+                      : "/reporting-entity/dashboard"
                   )
                 }
               >

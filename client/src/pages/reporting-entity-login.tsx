@@ -48,7 +48,7 @@ export default function ReportingEntityLogin() {
           title: "Login successful",
           description: `Welcome to your ${user.category} reporting dashboard`,
         });
-        setLocation("/user-dashboard");
+        setLocation("/reporting-entity/dashboard");
       } else {
         // User logged in but not reporting entity - logout and show error
         toast({

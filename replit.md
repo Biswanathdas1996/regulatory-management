@@ -3,6 +3,7 @@
 ## Overview
 
 This is a comprehensive digital solution for GIFT City financial institutions to submit, validate, and manage regulatory reports with 100% accuracy and real-time compliance monitoring. The platform is specifically designed for IFSCA (International Financial Services Centres Authority) regulatory requirements and provides two distinct workflows:
+
 1. **Institution Portal**: For GIFT City financial institutions to submit regulatory reports and track compliance
 2. **IFSCA Admin Console**: For regulatory administrators to manage templates and monitor submissions
 
@@ -11,6 +12,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 ## Recent Changes (January 15, 2025)
 
 ### Submission Calendar Feature Implementation (January 15, 2025) ✓
+
 - Added comprehensive submission calendar component for Reporting Entity Portal
 - Calendar automatically calculates next due dates based on template frequency (weekly, monthly, quarterly, yearly)
 - Shows submission reminders with color-coded status: upcoming (blue), due (yellow), overdue (red)
@@ -23,6 +25,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Real-time data integration with template frequencies and submission history
 
 ### Category-Based Template Filtering Implementation (January 15, 2025) ✓
+
 - Implemented category-based template filtering where IFSCA users can only view templates relevant to their specific category
 - Modified GET /api/templates and /api/templates/with-rules endpoints to filter templates by user category for IFSCA users
 - Updated template upload functionality to capture and store uploader's category automatically
@@ -33,6 +36,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Fixed category field display issue with useEffect to properly populate IFSCA user category
 
 ### 3-Tier User Hierarchy System Implementation (January 14, 2025) ✓
+
 - Successfully implemented comprehensive role-based access control with category segregation
 - Three distinct user roles: Super Admin, IFSCA User (category-level), Reporting Entity
 - Category-based segregation: Banking, NBFC, Stock Exchange
@@ -45,6 +49,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 ## Recent Changes (January 13, 2025)
 
 ### Home Page Modernization and Template Access Removal (January 13, 2025)
+
 - Redesigned main content section to be 60% more compact with modern styling
 - Applied refined gradients, better spacing, and cleaner typography throughout
 - Consolidated regulatory info and performance metrics into efficient 2-column grid
@@ -56,10 +61,11 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Maintained all essential functionality while improving overall aesthetics and user flow
 
 ### Comprehensive Terminology Update (January 13, 2025)
+
 - Updated all application text references throughout the entire codebase
 - "Admin" → "IFSCA User" across all components, pages, and interfaces
 - "User" → "Reporting Entity User" for consistency with regulatory context
-- Updated sidebar navigation in AdminLayout: "User Management" → "Reporting Entity Management"  
+- Updated sidebar navigation in AdminLayout: "User Management" → "Reporting Entity Management"
 - Modified login pages, dashboard titles, and role badges with new terminology
 - Updated Header component dropdown menus and user account references
 - Enhanced admin login placeholder text to "Enter IFSCA username"
@@ -67,6 +73,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Maintained GIFT City regulatory context throughout all user-facing elements
 
 ### Admin Rejection Modal with Reason Input (January 13, 2025)
+
 - Added comprehensive admin rejection modal on validation results page
 - Modal appears when admin clicks "Reject" or "Return to User" buttons
 - Required reason input field with textarea for detailed feedback
@@ -77,6 +84,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Enhanced user experience with contextual placeholders and styling
 
 ### Simplified Validation Rules Management (January 13, 2025)
+
 - Completely simplified ValidationRulesManager component to only handle file uploads
 - Removed all manual rule creation, editing, display, and management functionality
 - Validation rules are now set exclusively through file uploads
@@ -90,6 +98,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Streamlined user experience focused solely on file-based rule configuration
 
 ### IFSCA Landing Page Transformation (January 13, 2025)
+
 - Transformed landing page to IFSCA Regulatory Reports Management Platform branding
 - Updated hero section with IFSCA-specific messaging and GIFT City references
 - Changed color scheme from blue to emerald/blue gradient for regulatory authority feel
@@ -100,6 +109,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Updated performance metrics and footer with IFSCA authorization disclaimer
 
 ### Migration to Replit Environment (January 13, 2025)
+
 - Successfully migrated project from Replit Agent to standard Replit environment
 - Set up PostgreSQL database with proper environment variables
 - Installed all required dependencies including tsx for TypeScript execution
@@ -109,14 +119,16 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Verified all core functionality works in Replit deployment environment
 
 ### Separated Route Architecture (January 13, 2025)
+
 - Refactored application from single-page tabs to dedicated routes
-- Created `/template-management` route for admin functionality
-- Created `/user-submission` route for user functionality
+- Created `/regulator/template-management` route for admin functionality
+- Created `/reporting-entity/submission` route for user functionality
 - Updated home page to navigation landing page with clear workflow selection
 - Moved template upload, library management, and stats to dedicated admin route
 - Moved user submission and validation results to dedicated user route
 
 ### Enhanced User Submission Interface
+
 - Added reporting period selection field to user submission form
 - Implemented automatic template download link that appears when template is selected
 - Updated database schema to include reporting period in submissions table
@@ -136,6 +148,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
   - Provides count of total failed checks vs total checks per rule
 
 ### Enhanced Submission Management System (January 13, 2025)
+
 - All user-submitted documents are now stored on the server with database records
 - Added comprehensive submission tracking with status updates (pending, validating, passed, failed)
 - Implemented SubmissionHistory component showing:
@@ -152,6 +165,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 ## Recent Changes (January 13, 2025)
 
 ### Authentication System Implementation (January 13, 2025)
+
 - Created dedicated admin login page with red-themed design and Shield icon
 - Built user login page with blue-themed design and User icon
 - Added proper form validation using react-hook-form and zod
@@ -161,6 +175,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Added routing for both login pages in the application
 
 ### Enhanced Admin Submissions Management (January 13, 2025)
+
 - Modified admin submissions page to show only successful validations
 - Added user name display for each successful submission
 - Enhanced API endpoint to filter submissions by "passed" status
@@ -169,6 +184,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Simplified admin view to focus on completed, validated submissions only
 
 ### Comprehensive User Dashboard System (January 13, 2025)
+
 - Created comprehensive user dashboard with key performance indicators (KPIs)
 - Implemented four-tab navigation: Overview, Submissions, Templates, Analytics
 - Added key metrics cards showing: Total submissions, Success rate, Failed submissions, Active validations
@@ -181,6 +197,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Enhanced navigation from home page to prioritize user dashboard over individual submission page
 
 ### Unified Sidebar Navigation System (January 13, 2025)
+
 - Created shared UserLayout component with consistent sidebar navigation
 - Implemented responsive sidebar with mobile hamburger menu and overlay
 - Added four main navigation items: Dashboard, New Submission, Submission History, Templates
@@ -190,7 +207,8 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Maintained existing functionality while improving overall navigation experience
 
 ### Dedicated Submission History Page (January 13, 2025)
-- Created new dedicated submission history page at `/submission-history`
+
+- Created new dedicated submission history page at `/reporting-entity/submission-history`
 - Applied consistent UserLayout with sidebar navigation
 - Integrated existing SubmissionHistory component with proper title and subtitle
 - Updated routing system to include the new page
@@ -198,6 +216,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Improved user experience with focused, dedicated page for submission management
 
 ### Enhanced Validation Rules Management
+
 - Added a visual Validation Rules Manager component on template detail pages
 - Implemented CRUD operations for validation rules with pagination
 - Added bulk operations (select all, bulk delete)
@@ -206,6 +225,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Added progress tracking for validation processing
 
 ### Sheet-wise Validation Rules Support (January 13, 2025)
+
 - Updated database schema to add sheetId field to validation rules table
 - Added sheet selector to ValidationRulesManager for filtering and creating sheet-specific rules
 - Modified validation engine to apply rules only to their designated sheets
@@ -214,6 +234,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Backward compatibility maintained - rules without sheetId apply to all sheets
 
 ### AI-Powered Validation Rule Generation (January 13, 2025)
+
 - Added "Generate validation rules" button in ExcelViewer component
 - Integrated Gemini AI (via @google/genai SDK) for intelligent rule generation
 - AI analyzes sheet data patterns to automatically suggest validation rules
@@ -227,6 +248,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
   - Returns metadata about chunks processed
 
 ### Real-time Progress Tracking for Rule Generation (January 13, 2025)
+
 - Added sessionId-based progress tracking for AI rule generation
 - Implemented progress bar UI showing chunk processing status (current/total chunks)
 - Background processing with Map-based storage for progress data
@@ -235,6 +257,7 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Automatic cleanup of progress data after completion
 
 ### Field Name Display in Validation Rules (January 13, 2025)
+
 - Enhanced validation rules table to show field names alongside cell references
 - Field names are retrieved from template schemas and displayed below cell references
 - Helps users understand which field each validation rule applies to
@@ -247,6 +270,7 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Frontend Architecture
+
 - **Framework**: React 18 with TypeScript
 - **Build Tool**: Vite for fast development and optimized builds
 - **Routing**: Wouter for lightweight client-side routing
@@ -255,6 +279,7 @@ Preferred communication style: Simple, everyday language.
 - **UI Components**: Radix UI primitives for accessibility and consistency
 
 ### Backend Architecture
+
 - **Runtime**: Node.js with Express.js framework
 - **Language**: TypeScript with ES modules
 - **API Style**: RESTful API with JSON responses
@@ -263,6 +288,7 @@ Preferred communication style: Simple, everyday language.
 - **Rules Parser**: Validation rules parser for .txt file processing
 
 ### Database Architecture
+
 - **ORM**: Drizzle ORM for type-safe database operations
 - **Database**: PostgreSQL (Neon Database serverless)
 - **Migration**: Drizzle Kit for schema migrations
@@ -271,6 +297,7 @@ Preferred communication style: Simple, everyday language.
 ## Key Components
 
 ### Core Services
+
 1. **FileProcessor**: Handles Excel and CSV file parsing and data extraction
 2. **ValidationEngine**: Rules-based validation engine for accurate submission validation
 3. **ValidationRulesParser**: Parses .txt validation rules files into structured format
@@ -279,6 +306,7 @@ Preferred communication style: Simple, everyday language.
 6. **Submission Management**: Handles user submissions and validation results
 
 ### Frontend Components
+
 1. **FileUpload**: Drag-and-drop file upload for templates and validation rules
 2. **UserSubmission**: Interface for users to submit filled templates for validation
 3. **TemplateLibrary**: Template management with download functionality and validation rules status
@@ -291,6 +319,7 @@ Preferred communication style: Simple, everyday language.
    - Rule builder with field reference helpers
 
 ### Database Schema
+
 - **Users**: User authentication and management
 - **Templates**: Template file metadata and validation rules path
 - **Validation Rules**: Structured validation rules for each template
@@ -301,12 +330,14 @@ Preferred communication style: Simple, everyday language.
 ## Data Flow
 
 ### Admin Workflow
+
 1. **Template Upload**: Admin uploads Excel/CSV template with optional validation rules (.txt file)
 2. **Rules Processing**: Validation rules parser converts .txt rules into structured format
 3. **Storage**: Template and validation rules stored in PostgreSQL database
 4. **Template Available**: Template becomes available for users to download and fill
 
 ### User Workflow
+
 1. **Template Download**: User downloads template file from the system
 2. **Fill Template**: User fills out the template with their data
 3. **Submit for Validation**: User uploads filled template through submission interface
@@ -317,20 +348,24 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 ### Validation System
+
 - **Rules-based Engine**: Custom validation engine for 100% accurate validation
 - **Validation Rules Format**: Text-based rules format with support for required, format, range, and custom validations
 - **Cell Reference Support**: Direct Excel cell references (e.g., A1, B2) and named fields
 
 ### Database Services
+
 - **Neon Database**: Serverless PostgreSQL for production
 - **Connection Pooling**: Built-in connection management for scalability
 
 ### File Processing
+
 - **ExcelJS**: Excel file parsing and manipulation
 - **CSV Parser**: Streaming CSV processing for large files
 - **Multer**: File upload handling with validation
 
 ### UI Libraries
+
 - **Radix UI**: Accessible component primitives
 - **Tailwind CSS**: Utility-first styling framework
 - **Lucide React**: Icon library for consistent iconography
@@ -338,21 +373,25 @@ Preferred communication style: Simple, everyday language.
 ## Deployment Strategy
 
 ### Development Setup
+
 - **Hot Reload**: Vite development server with HMR
 - **API Proxy**: Vite proxies API requests to Express server
 - **Type Safety**: Shared TypeScript types between frontend and backend
 
 ### Production Build
+
 - **Frontend**: Vite builds optimized static assets
 - **Backend**: esbuild bundles Node.js server code
 - **Deployment**: Single artifact deployment with static file serving
 
 ### Environment Configuration
+
 - **Database**: PostgreSQL connection via DATABASE_URL
 - **AI Service**: Gemini API key configuration
 - **File Storage**: Local file system with configurable upload directory
 
 ### Monitoring and Logging
+
 - **Request Logging**: Structured logging for API requests
 - **Error Handling**: Centralized error handling with user-friendly messages
 - **Performance Tracking**: Processing time and confidence score metrics
@@ -360,35 +399,41 @@ Preferred communication style: Simple, everyday language.
 ## Key Architectural Decisions
 
 ### Monorepo Structure
+
 - **Problem**: Managing shared types and utilities between frontend and backend
 - **Solution**: Monorepo with shared directory for common TypeScript types
 - **Benefits**: Type safety across the stack, reduced duplication
 
 ### Rules-Based Validation System
+
 - **Problem**: Need for 100% accurate validation without AI variability
 - **Solution**: Custom rules-based validation engine with text file configuration
 - **Benefits**: Deterministic results, flexible rule definitions, clear error messages
 
 ### Enhanced Validation for Large Datasets
+
 - **Problem**: Memory issues and timeouts when validating large files
 - **Solution**: Chunked validation processing with configurable batch sizes
-- **Benefits**: 
+- **Benefits**:
   - Process files with millions of rows without memory overflow
   - Progress tracking for long-running validations
   - Batch storage of validation results for better performance
   - Support for streaming validation of CSV files
 
 ### Streaming File Processing
+
 - **Problem**: Large files can cause memory issues and timeouts
 - **Solution**: Chunked processing with progress tracking
 - **Benefits**: Handles large files efficiently, provides user feedback
 
 ### Abstract Storage Layer
+
 - **Problem**: Need flexibility for different storage backends
 - **Solution**: Interface-based storage with pluggable implementations
 - **Benefits**: Easy testing, future-proof architecture, clear separation of concerns
 
 ### Real-time Status Updates
+
 - **Problem**: Users need visibility into long-running processing tasks
 - **Solution**: Polling-based status updates with progress indicators
 - **Benefits**: Better user experience, transparent processing pipeline

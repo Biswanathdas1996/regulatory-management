@@ -277,14 +277,15 @@ export default function UserManagementPage() {
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Create User
+                Create New Reporting Entity
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New User</DialogTitle>
+                <DialogTitle>Create New Reporting Entity</DialogTitle>
                 <DialogDescription>
-                  Add a new user to the system with their role and credentials.
+                  Add a New Reporting Entity to the system with their role and
+                  credentials.
                 </DialogDescription>
               </DialogHeader>
 
@@ -334,8 +335,8 @@ export default function UserManagementPage() {
                     className="bg-gray-50"
                   />
                   <p className="text-sm text-gray-500 mt-1">
-                    All users created here will have User role with the same
-                    category as your account
+                    All Reporting Entities created here will have User role with
+                    the same category as your account
                   </p>
                 </div>
               </div>
@@ -354,7 +355,9 @@ export default function UserManagementPage() {
                   onClick={handleCreateUser}
                   disabled={createUserMutation.isPending}
                 >
-                  {createUserMutation.isPending ? "Creating..." : "Create User"}
+                  {createUserMutation.isPending
+                    ? "Creating..."
+                    : "Create New Reporting Entity"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -364,7 +367,7 @@ export default function UserManagementPage() {
         {/* Users Table */}
         <Card>
           <CardHeader>
-            <CardTitle>All Users</CardTitle>
+            <CardTitle>All Reporting Entity</CardTitle>
           </CardHeader>
           <CardContent>
             {users && users.length > 0 ? (

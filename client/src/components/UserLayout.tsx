@@ -36,20 +36,20 @@ export default function UserLayout({
     {
       name: "Dashboard",
       icon: LayoutDashboard,
-      href: "/user-dashboard",
-      current: location === "/user-dashboard",
+      href: "/reporting-entity/dashboard",
+      current: location === "/reporting-entity/dashboard",
     },
     {
       name: "New Submission",
       icon: Upload,
-      href: "/user-submission",
-      current: location === "/user-submission",
+      href: "/reporting-entity/submission",
+      current: location === "/reporting-entity/submission",
     },
     {
       name: "Submission History",
       icon: History,
-      href: "/submission-history",
-      current: location === "/submission-history",
+      href: "/reporting-entity/submission-history",
+      current: location === "/reporting-entity/submission-history",
     },
   ];
 
