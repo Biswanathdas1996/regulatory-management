@@ -10,18 +10,6 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table must come first to avoid circular dependency
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  role: text("role").notNull().default("reporting_entity"), // super_admin, ifsca_user, reporting_entity
-  category: integer("category"), // Reference to categories table (null for super_admin)
-  createdBy: integer("created_by"), // ID of user who created this user
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
 // Categories table for dynamic category management
 export const categoryTable = pgTable("categories", {
   id: serial("id").primaryKey(),
@@ -31,7 +19,19 @@ export const categoryTable = pgTable("categories", {
   color: text("color").default("#3B82F6"), // Hex color for UI
   icon: text("icon").default("Building"), // Lucide icon name
   isActive: boolean("is_active").default(true),
-  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdBy: integer("created_by"), // Will be set as foreign key after users table is created
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Users table - moved after categoryTable to resolve circular dependency
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  role: text("role").notNull().default("reporting_entity"), // super_admin, ifsca_user, reporting_entity
+  category: integer("category").references(() => categoryTable.id),
+  createdBy: integer("created_by"), // ID of user who created this user
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -51,7 +51,9 @@ export const templates = pgTable("templates", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   templateType: text("template_type").notNull(),
-  category: integer("category").notNull().references(() => categoryTable.id), // Reference to categories table
+  category: integer("category")
+    .notNull()
+    .references(() => categoryTable.id), // Reference to categories table
   frequency: text("frequency", {
     enum: ["daily", "weekly", "monthly", "quarterly", "half_yearly", "yearly"],
   }).notNull(),
@@ -63,7 +65,9 @@ export const templates = pgTable("templates", {
   validationRulesPath: text("validation_rules_path"), // Path to validation rules .txt file
   validationFileUploaded: boolean("validation_file_uploaded").default(false), // Track if validation file is uploaded
   status: text("status").notNull().default("active"), // active, inactive
-  createdBy: integer("created_by").references(() => users.id).notNull(), // ID of IFSCA user who created this template
+  createdBy: integer("created_by")
+    .references(() => users.id)
+    .notNull(), // ID of IFSCA user who created this template
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -145,7 +149,9 @@ export const submissions = pgTable("submissions", {
   userId: integer("user_id")
     .references(() => users.id)
     .notNull(),
-  category: integer("category").references(() => categoryTable.id).notNull(), // Reference to category table
+  category: integer("category")
+    .references(() => categoryTable.id)
+    .notNull(), // Reference to category table
   status: text("status").notNull().default("pending"), // pending, approved, rejected, returned
   statusUpdatedBy: integer("status_updated_by").references(() => users.id),
   statusUpdatedAt: timestamp("status_updated_at"),
@@ -190,16 +196,12 @@ export type InsertCategory = typeof categoryTable.$inferInsert;
 // User role constants
 export const userRoles = [
   "super_admin",
-  "ifsca_user", 
-  "reporting_entity"
+  "ifsca_user",
+  "reporting_entity",
 ] as const;
 
-// Category constants  
-export const categories = [
-  "banking",
-  "nbfc", 
-  "stock_exchange"
-] as const;
+// Category constants
+export const categories = ["banking", "nbfc", "stock_exchange"] as const;
 
 // Template types array
 export const templateTypes = [
