@@ -130,6 +130,7 @@ export const submissions = pgTable("submissions", {
   userId: integer("user_id")
     .references(() => users.id)
     .notNull(),
+  category: text("category").notNull(), // banking, nbfc, stock_exchange
   status: text("status").notNull().default("pending"), // pending, approved, rejected, returned
   statusUpdatedBy: integer("status_updated_by").references(() => users.id),
   statusUpdatedAt: timestamp("status_updated_at"),

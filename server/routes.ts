@@ -1782,7 +1782,8 @@ Only return the JSON array, no additional text.
         }
 
         const { templateId, reportingPeriod } = req.body;
-        const userId = 1; // TODO: Get from authenticated user
+        const userId = req.user?.id || 1; // Get from authenticated user
+        const userCategory = req.user?.category || 'banking'; // Get user's category
 
         if (!templateId) {
           return res.status(400).json({ error: "Template ID is required" });
@@ -1798,6 +1799,7 @@ Only return the JSON array, no additional text.
         const submission = await storage.createSubmission({
           templateId: parseInt(templateId),
           userId,
+          category: userCategory, // Include user's category
           fileName: req.file.originalname,
           filePath: req.file.path,
           fileSize: req.file.size,
@@ -1826,14 +1828,24 @@ Only return the JSON array, no additional text.
     }
   );
 
-  // Get user submissions
+  // Get user submissions (filtered by category for non-super admins)
   app.get("/api/submissions", async (req, res) => {
     try {
       const { userId, templateId } = req.query;
-      const submissions = await storage.getSubmissions(
+      let submissions = await storage.getSubmissions(
         userId ? parseInt(userId as string) : undefined,
         templateId ? parseInt(templateId as string) : undefined
       );
+      
+      // Filter submissions by category for IFSCA users and reporting entities
+      if (req.user && req.user.category) {
+        if (req.user.role === "ifsca_user" || req.user.role === "reporting_entity") {
+          submissions = submissions.filter(
+            (submission: any) => submission.category === req.user!.category
+          );
+        }
+      }
+      
       res.json(submissions);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch submissions" });
@@ -2047,6 +2059,7 @@ Only return the JSON array, no additional text.
         const newSubmission = await storage.createSubmission({
           userId: submission.userId,
           templateId: submission.templateId,
+          category: submission.category, // Keep the same category from original submission
           fileName: file.originalname,
           filePath: file.path,
           fileSize: file.size,

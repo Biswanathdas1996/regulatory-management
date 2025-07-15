@@ -84,7 +84,7 @@ export interface IStorage {
   // Submission methods
   createSubmission(submission: InsertSubmission): Promise<Submission>;
   getSubmission(id: number): Promise<Submission | undefined>;
-  getSubmissions(userId?: number, templateId?: number): Promise<Submission[]>;
+  getSubmissions(userId?: number, templateId?: number, category?: string): Promise<Submission[]>;
   updateSubmissionStatus(
     submissionId: number,
     status:
@@ -371,7 +371,8 @@ export class DatabaseStorage implements IStorage {
 
   async getSubmissions(
     userId?: number,
-    templateId?: number
+    templateId?: number,
+    category?: string
   ): Promise<Submission[]> {
     const conditions = [];
     if (userId !== undefined) {
@@ -380,17 +381,16 @@ export class DatabaseStorage implements IStorage {
     if (templateId !== undefined) {
       conditions.push(eq(submissions.templateId, templateId));
     }
+    if (category !== undefined) {
+      conditions.push(eq(submissions.category, category));
+    }
 
     const query = db.select().from(submissions);
     if (conditions.length > 0) {
-      const whereClause =
-        conditions.length === 1
-          ? conditions[0]
-          : conditions.reduce((acc, condition) => acc && condition);
-      return await query.where(whereClause).orderBy(submissions.createdAt);
+      return await query.where(and(...conditions)).orderBy(desc(submissions.createdAt));
     }
 
-    return await query.orderBy(submissions.createdAt);
+    return await query.orderBy(desc(submissions.createdAt));
   }
 
   // Update submission status
