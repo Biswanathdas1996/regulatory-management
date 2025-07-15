@@ -1,0 +1,6 @@
+Institution Name,Total Assets,Currency Code,Reporting Date
+ABC Bank,1000000,USD,2024-01-15
+XYZ Corp,500000,INR,2024-01-16
+,250000,USD,2024-01-17
+DEF Ltd,750000,XY,2024-01-18
+GHI Bank,-100000,EUR,invalid-date

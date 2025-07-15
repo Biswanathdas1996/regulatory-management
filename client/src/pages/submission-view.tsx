@@ -486,8 +486,8 @@ export default function SubmissionViewPage() {
                 </div>
               </div>
 
-              {/* Summary Cards - Only show if results are available */}
-              {results && (
+              {/* Summary Cards - Always show for completed submissions */}
+              {(results || submission.status !== 'pending') && (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                   <Card>
                     <CardHeader className="pb-3">
@@ -625,19 +625,23 @@ export default function SubmissionViewPage() {
                 </CardContent>
               </Card>
 
-              {/* Detailed Results - Only show if validation results are available */}
-              {results && ruleGroups.length > 0 && (
+              {/* Detailed Results Section */}
+              {submission.status !== 'pending' && (
                 <Card>
                   <CardHeader>
                     <CardTitle>Validation Details</CardTitle>
                     <p className="text-sm text-gray-600">
-                      {ruleGroups.length} validation rules applied •{" "}
-                      {failedChecks} issues found
+                      {results && ruleGroups.length > 0 
+                        ? `${ruleGroups.length} validation rules applied • ${failedChecks} issues found`
+                        : submission.status === 'passed' 
+                          ? 'No validation issues found'
+                          : 'Validation completed'}
                     </p>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-6">
-                      {ruleGroups.map((group: any, index: number) => {
+                    {results && ruleGroups.length > 0 ? (
+                      <div className="space-y-6">
+                        {ruleGroups.map((group: any, index: number) => {
                         const failedResults = group.results.filter(
                           (r: any) => !r.passed
                         );
@@ -750,7 +754,36 @@ export default function SubmissionViewPage() {
                           </div>
                         );
                       })}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        {submission.status === 'passed' ? (
+                          <div className="space-y-3">
+                            <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
+                            <div>
+                              <h3 className="text-lg font-medium text-gray-900">All checks passed!</h3>
+                              <p className="text-gray-600">Your submission meets all validation requirements.</p>
+                            </div>
+                          </div>
+                        ) : submission.status === 'failed' ? (
+                          <div className="space-y-3">
+                            <XCircle className="mx-auto h-12 w-12 text-red-500" />
+                            <div>
+                              <h3 className="text-lg font-medium text-gray-900">Validation completed</h3>
+                              <p className="text-gray-600">Your submission has been processed.</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                            <div>
+                              <h3 className="text-lg font-medium text-gray-900">Validation in progress</h3>
+                              <p className="text-gray-600">Please wait while we process your submission.</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
