@@ -9,6 +9,9 @@ import {
   AdminRoute,
   UserRoute,
   PublicRoute,
+  SuperAdminRoute,
+  IFSCARoute,
+  ReportingEntityRoute,
 } from "@/components/ProtectedRoute";
 import { Layout } from "@/components/Layout";
 import NotFound from "@/pages/not-found";
@@ -65,31 +68,20 @@ function Router() {
       {/* Dashboard routes */}
       <Route path="/super-admin/dashboard">
         <Layout>
-          <ProtectedRoute requireAuth>
+          <SuperAdminRoute>
             <SuperAdminDashboard />
-          </ProtectedRoute>
+          </SuperAdminRoute>
         </Layout>
       </Route>
       <Route path="/super-admin/ifsca-users">
         <Layout>
-          <ProtectedRoute requireAuth>
+          <SuperAdminRoute>
             <SuperAdminIFSCAUsers />
-          </ProtectedRoute>
+          </SuperAdminRoute>
         </Layout>
       </Route>
       <Route path="/ifsca/dashboard">
-        <Layout>
-          <ProtectedRoute requireAuth>
-            <IFSCADashboard />
-          </ProtectedRoute>
-        </Layout>
-      </Route>
-      <Route path="/reporting-entity/dashboard">
-        <Layout>
-          <ProtectedRoute requireAuth>
-            <ReportingEntityDashboard />
-          </ProtectedRoute>
-        </Layout>
+        <UserDashboardPage />
       </Route>
 
       {/* Legacy login routes for backward compatibility */}
@@ -127,7 +119,7 @@ function Router() {
         </Layout>
       </Route>
 
-      {/* Admin protected routes */}
+      {/* Legacy admin route for backward compatibility */}
       <Route path="/admin-dashboard">
         <AdminRoute>
           <AdminDashboardPage />
@@ -154,21 +146,21 @@ function Router() {
         </AdminRoute>
       </Route>
 
-      {/* User protected routes */}
+      {/* Reporting Entity protected routes */}
       <Route path="/user-dashboard">
-        <UserRoute>
+        <ReportingEntityRoute>
           <UserDashboardPage />
-        </UserRoute>
+        </ReportingEntityRoute>
       </Route>
       <Route path="/user-submission">
-        <UserRoute>
+        <ReportingEntityRoute>
           <UserSubmissionPage />
-        </UserRoute>
+        </ReportingEntityRoute>
       </Route>
       <Route path="/submission-history">
-        <UserRoute>
+        <ReportingEntityRoute>
           <SubmissionHistoryPage />
-        </UserRoute>
+        </ReportingEntityRoute>
       </Route>
 
       {/* Mixed authentication routes */}

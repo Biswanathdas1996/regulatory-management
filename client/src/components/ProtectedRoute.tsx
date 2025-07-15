@@ -84,21 +84,131 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => (
   </ProtectedRoute>
 );
 
+interface SuperAdminRouteProps {
+  children: ReactNode;
+}
+
+export const SuperAdminRoute: React.FC<SuperAdminRouteProps> = ({
+  children,
+}) => {
+  const { isSuperAdmin, isLoading, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!isAuthenticated) {
+      setLocation("/super-admin/login");
+      return;
+    }
+
+    if (!isSuperAdmin) {
+      setLocation("/super-admin/login");
+      return;
+    }
+  }, [isLoading, isAuthenticated, isSuperAdmin, setLocation]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !isSuperAdmin) return null;
+
+  return <>{children}</>;
+};
+
+interface IFSCARouteProps {
+  children: ReactNode;
+}
+
+export const IFSCARoute: React.FC<IFSCARouteProps> = ({ children }) => {
+  const { isIFSCAUser, isLoading, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!isAuthenticated) {
+      setLocation("/ifsca/login");
+      return;
+    }
+
+    if (!isIFSCAUser) {
+      setLocation("/ifsca/login");
+      return;
+    }
+  }, [isLoading, isAuthenticated, isIFSCAUser, setLocation]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !isIFSCAUser) return null;
+
+  return <>{children}</>;
+};
+
+interface ReportingEntityRouteProps {
+  children: ReactNode;
+}
+
+export const ReportingEntityRoute: React.FC<ReportingEntityRouteProps> = ({
+  children,
+}) => {
+  const { user, isReportingEntity, isLoading, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!isAuthenticated) {
+      setLocation("/reporting-entity/login");
+      return;
+    }
+
+    if (!isReportingEntity) {
+      setLocation("/reporting-entity/login");
+      return;
+    }
+  }, [isLoading, isAuthenticated, isReportingEntity, setLocation]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !isReportingEntity) return null;
+
+  return <>{children}</>;
+};
+
 interface ReportingEntityRouteProps {
   children: ReactNode;
 }
 
 export const UserRoute: React.FC<ReportingEntityRouteProps> = ({
   children,
-}) => (
-  <ProtectedRoute
-    requireAuth
-    requireReportingEntity
-    redirectTo="/reporting-entity/login"
-  >
-    {children}
-  </ProtectedRoute>
-);
+}) => <ReportingEntityRoute>{children}</ReportingEntityRoute>;
 
 interface PublicRouteProps {
   children: ReactNode;
@@ -110,8 +220,6 @@ interface PublicRouteProps {
 export const PublicRoute: React.FC<PublicRouteProps> = ({
   children,
   redirectIfAuthenticated = false,
-  adminRedirectTo = "/admin-dashboard",
-  userRedirectTo = "/reporting-entity/dashboard",
 }) => {
   const {
     isAuthenticated,
@@ -134,7 +242,7 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({
       } else if (isIFSCAUser) {
         setLocation("/ifsca/dashboard");
       } else if (isReportingEntity) {
-        setLocation("/reporting-entity/dashboard");
+        setLocation("/user-dashboard");
       }
     }
   }, [

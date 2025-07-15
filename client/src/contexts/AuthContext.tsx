@@ -115,12 +115,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         },
         credentials: "include",
         body: JSON.stringify(loginData),
-      }).catch(err => {
+      }).catch((err) => {
         throw new Error(`Network error: ${err.message}`);
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: "Login failed" }));
+        const error = await response
+          .json()
+          .catch(() => ({ error: "Login failed" }));
         throw new Error(error.error || "Login failed");
       }
 
@@ -180,6 +182,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const isIFSCAUser = user?.role === "ifsca_user";
   const isReportingEntity = user?.role === "reporting_entity";
   const isAdmin = isSuperAdmin || isIFSCAUser; // Backward compatibility
+
+  console.log("==user=====>", user);
 
   const value: AuthContextType = {
     user,

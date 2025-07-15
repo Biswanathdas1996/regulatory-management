@@ -19,7 +19,7 @@ import bcrypt from "bcrypt";
 
 // Extend Request type to include authenticated user property
 interface AuthenticatedRequest extends Request {
-  user?: { id: number; username: string; role: string };
+  user?: { id: number; username: string; role: string; category?: string };
 }
 
 // Extend Request type to include file property
@@ -150,7 +150,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(401).json({ error: "Authentication required" });
     }
     if (req.user.role !== "super_admin") {
-      console.log("requireSuperAdmin: User role is not super_admin:", req.user.role);
+      console.log(
+        "requireSuperAdmin: User role is not super_admin:",
+        req.user.role
+      );
       return res.status(403).json({ error: "Super Admin access required" });
     }
     console.log("requireSuperAdmin: Access granted");
@@ -209,12 +212,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     requireAdmin,
     async (req: AuthenticatedRequest, res) => {
       try {
-        const users = await storage.getAllUsers();
+        interface User {
+          id: number;
+          username: string;
+          role: string;
+          category?: string | null;
+          createdAt: Date;
+          password?: string;
+          updatedAt?: Date;
+        }
+
+        let users: User[] = [];
+
+        // Filter users based on role
+        if (req.user?.role === "super_admin") {
+          // Super admin sees all users
+          users = await storage.getAllUsers();
+        } else if (req.user?.role === "ifsca_user") {
+          // IFSCA user only sees users in their category
+          users = (await storage.getAllUsers()).filter(
+            (user) => user.category === req.user?.category
+          );
+        } else {
+          // Other roles get an empty array or handle accordingly
+          users = [];
+        }
         // Don't return passwords
-        const safeUsers = users.map((user) => ({
+        const safeUsers = users?.map((user) => ({
           id: user.id,
           username: user.username,
-          role: user.role || 0, // Keep as number: 0 for user, 1 for admin
+          role: user.role,
+          category: user.category,
+          createdAt: user.createdAt,
         }));
         res.json(safeUsers);
       } catch (error) {
@@ -254,9 +283,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .json({ error: "Password must be at least 6 characters long" });
         }
 
-        // Validate role - frontend sends 0 or 1
-        const userRole = role === 1 ? 1 : 0;
-
         // Check if username already exists
         const existingUser = await storage.getUserByUsername(username);
         if (existingUser) {
@@ -266,18 +292,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Set role to "user" and category same as current IFSCA user
+        const userCategory = req.user?.category || null;
+
         // Create user
         const newUser = await storage.createUser({
           username,
           password: hashedPassword,
-          role: userRole.toString(),
+          role: "user",
+          category: userCategory,
         });
 
         // Return user without password
         res.status(201).json({
           id: newUser.id,
           username: newUser.username,
-          role: newUser.role || 0, // Keep as number: 0 for user, 1 for admin
+          role: newUser.role,
+          category: newUser.category,
           message: "User created successfully",
         });
       } catch (error) {
@@ -2319,6 +2350,214 @@ Only return the JSON array, no additional text.
     }
   );
 
+  // Super Admin IFSCA User Management Endpoints
+
+  // Test endpoint to verify API routing is working
+  app.get("/api/test", (req, res) => {
+    console.log("TEST endpoint hit!");
+    res.json({
+      message: "API routing is working",
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // Get all IFSCA users (Super Admin only)
+  app.get(
+    "/api/super-admin/ifsca-users",
+    requireAuth,
+    requireSuperAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        console.log(
+          "========== SUPER ADMIN IFSCA USERS ENDPOINT HIT =========="
+        );
+        console.log("Request user:", req.user);
+        console.log("Fetching all users for super admin...");
+
+        const users = await storage.getAllUsers();
+        console.log(
+          `Found ${users.length} total users:`,
+          users.map((u) => ({
+            id: u.id,
+            username: u.username,
+            role: u.role,
+            category: u.category,
+          }))
+        );
+
+        // Filter to only IFSCA users and exclude super admin
+        const ifscaUsers = users
+          .filter((user) => user.role === "ifsca_user")
+          .map((user) => ({
+            id: user.id,
+            username: user.username,
+            role: user.role,
+            category: user.category,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+          }));
+
+        console.log(
+          `Filtered to ${ifscaUsers.length} IFSCA users:`,
+          ifscaUsers
+        );
+        console.log("About to send response...");
+
+        // Add explicit headers to ensure JSON response
+        res.setHeader("Content-Type", "application/json");
+        res.status(200).json(ifscaUsers);
+        console.log("Response sent successfully");
+      } catch (error) {
+        console.error("Get IFSCA users error:", error);
+        res.status(500).json({ error: "Failed to fetch IFSCA users" });
+      }
+    }
+  );
+
+  // Create new IFSCA user (Super Admin only)
+  app.post(
+    "/api/super-admin/ifsca-users",
+    requireAuth,
+    requireSuperAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        console.log("========== CREATE IFSCA USER ENDPOINT HIT ==========");
+        console.log("Request user:", req.user);
+        console.log("Request body:", req.body);
+
+        const { username, password, category } = req.body;
+
+        // Validate required fields
+        if (!username || !password || !category) {
+          return res
+            .status(400)
+            .json({ error: "Username, password, and category are required" });
+        }
+
+        // Validate category
+        const validCategories = ["banking", "nbfc", "stock_exchange"];
+        if (!validCategories.includes(category)) {
+          return res.status(400).json({
+            error: "Invalid category. Must be banking, nbfc, or stock_exchange",
+          });
+        }
+
+        // Check if username already exists
+        const existingUser = await storage.getUserByUsername(username);
+        if (existingUser) {
+          return res.status(400).json({ error: "Username already exists" });
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create IFSCA user
+        const newUser = await storage.createUser({
+          username,
+          password: hashedPassword,
+          role: "ifsca_user",
+          category,
+        });
+
+        // Return user without password
+        const { password: _, ...userWithoutPassword } = newUser;
+        console.log("About to send create user response:", userWithoutPassword);
+
+        // Ensure JSON response with explicit headers
+        res.setHeader("Content-Type", "application/json");
+        res.status(201).json(userWithoutPassword);
+        console.log("Create user response sent successfully");
+      } catch (error) {
+        console.error("Create IFSCA user error:", error);
+        res.status(500).json({ error: "Failed to create IFSCA user" });
+      }
+    }
+  );
+
+  // Update IFSCA user (Super Admin only)
+  app.put(
+    "/api/super-admin/ifsca-users/:id",
+    requireAuth,
+    requireSuperAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const userId = parseInt(req.params.id);
+        const { username, category, password } = req.body;
+
+        // Check if user exists and is IFSCA user
+        const existingUser = await storage.getUser(userId);
+        if (!existingUser || existingUser.role !== "ifsca_user") {
+          return res.status(404).json({ error: "IFSCA user not found" });
+        }
+
+        // Prepare update data
+        const updateData: any = {};
+
+        if (username) {
+          // Check if new username is available
+          const usernameExists = await storage.getUserByUsername(username);
+          if (usernameExists && usernameExists.id !== userId) {
+            return res.status(400).json({ error: "Username already exists" });
+          }
+          updateData.username = username;
+        }
+
+        if (category) {
+          const validCategories = ["banking", "nbfc", "stock_exchange"];
+          if (!validCategories.includes(category)) {
+            return res.status(400).json({ error: "Invalid category" });
+          }
+          updateData.category = category;
+        }
+
+        if (password) {
+          updateData.password = await bcrypt.hash(password, 10);
+        }
+
+        // Update user
+        const updatedUser = await storage.updateUser(userId, updateData);
+        const { password: _, ...userWithoutPassword } = updatedUser;
+        res.json(userWithoutPassword);
+      } catch (error) {
+        console.error("Update IFSCA user error:", error);
+        res.status(500).json({ error: "Failed to update IFSCA user" });
+      }
+    }
+  );
+
+  // Delete IFSCA user (Super Admin only)
+  app.delete(
+    "/api/super-admin/ifsca-users/:id",
+    requireAuth,
+    requireSuperAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const userId = parseInt(req.params.id);
+
+        // Check if user exists and is IFSCA user
+        const existingUser = await storage.getUser(userId);
+        if (!existingUser || existingUser.role !== "ifsca_user") {
+          return res.status(404).json({ error: "IFSCA user not found" });
+        }
+
+        // Check if user has any submissions or reporting entities
+        const userSubmissions = await storage.getSubmissions(userId);
+        if (userSubmissions.length > 0) {
+          return res.status(400).json({
+            error: `Cannot delete IFSCA user with ${userSubmissions.length} submissions. Please transfer or delete submissions first.`,
+          });
+        }
+
+        // Delete user
+        await storage.deleteUser(userId);
+        res.json({ message: "IFSCA user deleted successfully" });
+      } catch (error) {
+        console.error("Delete IFSCA user error:", error);
+        res.status(500).json({ error: "Failed to delete IFSCA user" });
+      }
+    }
+  );
+
   const server = createServer(app);
   return server;
 }
@@ -2507,193 +2746,4 @@ async function processTemplateAsync(templateId: number) {
       );
     }
   }
-
-  // Super Admin IFSCA User Management Endpoints
-  
-  // Test endpoint to verify API routing is working
-  app.get("/api/test", (req, res) => {
-    console.log("TEST endpoint hit!");
-    res.json({ message: "API routing is working", timestamp: new Date().toISOString() });
-  });
-  
-  // Get all IFSCA users (Super Admin only)
-  app.get(
-    "/api/super-admin/ifsca-users",
-    requireAuth,
-    requireSuperAdmin,
-    async (req: AuthenticatedRequest, res) => {
-      try {
-        console.log("========== SUPER ADMIN IFSCA USERS ENDPOINT HIT ==========");
-        console.log("Request user:", req.user);
-        console.log("Fetching all users for super admin...");
-        
-        const users = await storage.getAllUsers();
-        console.log(`Found ${users.length} total users:`, users.map(u => ({ id: u.id, username: u.username, role: u.role, category: u.category })));
-        
-        // Filter to only IFSCA users and exclude super admin
-        const ifscaUsers = users
-          .filter(user => user.role === "ifsca_user")
-          .map(user => ({
-            id: user.id,
-            username: user.username,
-            role: user.role,
-            category: user.category,
-            createdAt: user.created_at || user.createdAt,
-            updatedAt: user.updated_at || user.updatedAt,
-          }));
-        
-        console.log(`Filtered to ${ifscaUsers.length} IFSCA users:`, ifscaUsers);
-        console.log("About to send response...");
-        
-        // Add explicit headers to ensure JSON response
-        res.setHeader('Content-Type', 'application/json');
-        res.status(200).json(ifscaUsers);
-        console.log("Response sent successfully");
-      } catch (error) {
-        console.error("Get IFSCA users error:", error);
-        res.status(500).json({ error: "Failed to fetch IFSCA users" });
-      }
-    }
-  );
-
-  // Create new IFSCA user (Super Admin only)
-  app.post(
-    "/api/super-admin/ifsca-users",
-    requireAuth,
-    requireSuperAdmin,
-    async (req: AuthenticatedRequest, res) => {
-      try {
-        console.log("========== CREATE IFSCA USER ENDPOINT HIT ==========");
-        console.log("Request user:", req.user);
-        console.log("Request body:", req.body);
-        
-        const { username, password, category } = req.body;
-
-        // Validate required fields
-        if (!username || !password || !category) {
-          return res.status(400).json({ error: "Username, password, and category are required" });
-        }
-
-        // Validate category
-        const validCategories = ["banking", "nbfc", "stock_exchange"];
-        if (!validCategories.includes(category)) {
-          return res.status(400).json({ error: "Invalid category. Must be banking, nbfc, or stock_exchange" });
-        }
-
-        // Check if username already exists
-        const existingUser = await storage.getUserByUsername(username);
-        if (existingUser) {
-          return res.status(400).json({ error: "Username already exists" });
-        }
-
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Create IFSCA user
-        const newUser = await storage.createUser({
-          username,
-          password: hashedPassword,
-          role: "ifsca_user",
-          category,
-        });
-
-        // Return user without password
-        const { password: _, ...userWithoutPassword } = newUser;
-        console.log("About to send create user response:", userWithoutPassword);
-        
-        // Ensure JSON response with explicit headers
-        res.setHeader('Content-Type', 'application/json');
-        res.status(201).json(userWithoutPassword);
-        console.log("Create user response sent successfully");
-      } catch (error) {
-        console.error("Create IFSCA user error:", error);
-        res.status(500).json({ error: "Failed to create IFSCA user" });
-      }
-    }
-  );
-
-  // Update IFSCA user (Super Admin only)
-  app.put(
-    "/api/super-admin/ifsca-users/:id",
-    requireAuth,
-    requireSuperAdmin,
-    async (req: AuthenticatedRequest, res) => {
-      try {
-        const userId = parseInt(req.params.id);
-        const { username, category, password } = req.body;
-
-        // Check if user exists and is IFSCA user
-        const existingUser = await storage.getUser(userId);
-        if (!existingUser || existingUser.role !== "ifsca_user") {
-          return res.status(404).json({ error: "IFSCA user not found" });
-        }
-
-        // Prepare update data
-        const updateData: any = {};
-        
-        if (username) {
-          // Check if new username is available
-          const usernameExists = await storage.getUserByUsername(username);
-          if (usernameExists && usernameExists.id !== userId) {
-            return res.status(400).json({ error: "Username already exists" });
-          }
-          updateData.username = username;
-        }
-
-        if (category) {
-          const validCategories = ["banking", "nbfc", "stock_exchange"];
-          if (!validCategories.includes(category)) {
-            return res.status(400).json({ error: "Invalid category" });
-          }
-          updateData.category = category;
-        }
-
-        if (password) {
-          updateData.password = await bcrypt.hash(password, 10);
-        }
-
-        // Update user
-        const updatedUser = await storage.updateUser(userId, updateData);
-        const { password: _, ...userWithoutPassword } = updatedUser;
-        res.json(userWithoutPassword);
-      } catch (error) {
-        console.error("Update IFSCA user error:", error);
-        res.status(500).json({ error: "Failed to update IFSCA user" });
-      }
-    }
-  );
-
-  // Delete IFSCA user (Super Admin only)
-  app.delete(
-    "/api/super-admin/ifsca-users/:id",
-    requireAuth,
-    requireSuperAdmin,
-    async (req: AuthenticatedRequest, res) => {
-      try {
-        const userId = parseInt(req.params.id);
-
-        // Check if user exists and is IFSCA user
-        const existingUser = await storage.getUser(userId);
-        if (!existingUser || existingUser.role !== "ifsca_user") {
-          return res.status(404).json({ error: "IFSCA user not found" });
-        }
-
-        // Check if user has any submissions or reporting entities
-        const userSubmissions = await storage.getSubmissions(userId);
-        if (userSubmissions.length > 0) {
-          return res.status(400).json({
-            error: `Cannot delete IFSCA user with ${userSubmissions.length} submissions. Please transfer or delete submissions first.`,
-          });
-        }
-
-        // Delete user
-        await storage.deleteUser(userId);
-        res.json({ message: "IFSCA user deleted successfully" });
-      } catch (error) {
-        console.error("Delete IFSCA user error:", error);
-        res.status(500).json({ error: "Failed to delete IFSCA user" });
-      }
-    }
-  );
-
 }

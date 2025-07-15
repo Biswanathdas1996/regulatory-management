@@ -49,20 +49,21 @@ import { useToast } from "@/hooks/use-toast";
 interface User {
   id: number;
   username: string;
-  role: number;
+  role: string;
+  category?: string;
   createdAt?: string;
 }
 
 interface CreateUserData {
   username: string;
   password: string;
-  role: number;
+  role: string;
 }
 
 interface UpdateUserData {
   username: string;
   password?: string;
-  role: number;
+  role: string;
 }
 
 export default function UserManagementPage() {
@@ -72,12 +73,12 @@ export default function UserManagementPage() {
   const [createFormData, setCreateFormData] = useState<CreateUserData>({
     username: "",
     password: "",
-    role: 0,
+    role: "reporting_entity",
   });
   const [editFormData, setEditFormData] = useState<UpdateUserData>({
     username: "",
     password: "",
-    role: 0,
+    role: "reporting_entity",
   });
   const [error, setError] = useState<string>("");
 
@@ -111,7 +112,11 @@ export default function UserManagementPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setCreateDialogOpen(false);
-      setCreateFormData({ username: "", password: "", role: 0 });
+      setCreateFormData({
+        username: "",
+        password: "",
+        role: "reporting_entity",
+      });
       setError("");
       toast({
         title: "Success",
@@ -141,7 +146,7 @@ export default function UserManagementPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setEditDialogOpen(false);
       setEditingUser(null);
-      setEditFormData({ username: "", password: "", role: 0 });
+      setEditFormData({ username: "", password: "", role: "user" });
       setError("");
       toast({
         title: "Success",
@@ -217,15 +222,26 @@ export default function UserManagementPage() {
     deleteUserMutation.mutate(userId);
   };
 
-  const getRoleBadge = (role: number) => {
-    if (role === 1) {
+  const getRoleBadge = (role: string) => {
+    if (role === "super_admin") {
+      return (
+        <Badge className="bg-purple-100 text-purple-800">Super Admin</Badge>
+      );
+    }
+    if (role === "ifsca_user") {
       return <Badge className="bg-red-100 text-red-800">IFSCA User</Badge>;
     }
-    return <Badge variant="outline">Reporting Entity User</Badge>;
+    if (role === "reporting_entity") {
+      return <Badge variant="outline">Reporting Entity User</Badge>;
+    }
+    return <Badge variant="outline">{role}</Badge>;
   };
 
-  const getRoleLabel = (role: number) => {
-    return role === 1 ? "IFSCA User" : "Reporting Entity User";
+  const getRoleLabel = (role: string) => {
+    if (role === "super_admin") return "Super Admin";
+    if (role === "ifsca_user") return "IFSCA User";
+    if (role === "reporting_entity") return "Reporting Entity User";
+    return role;
   };
 
   if (isLoading) {
@@ -312,23 +328,11 @@ export default function UserManagementPage() {
 
                 <div>
                   <Label htmlFor="role">Role</Label>
-                  <Select
-                    value={createFormData.role.toString()}
-                    onValueChange={(value) =>
-                      setCreateFormData({
-                        ...createFormData,
-                        role: parseInt(value),
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0">User</SelectItem>
-                      <SelectItem value="1">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input value="User" disabled className="bg-gray-50" />
+                  <p className="text-sm text-gray-500 mt-1">
+                    All users created here will have User role with the same
+                    category as your account
+                  </p>
                 </div>
               </div>
 
@@ -365,6 +369,7 @@ export default function UserManagementPage() {
                   <TableRow>
                     <TableHead>Username</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead>Category</TableHead>
                     <TableHead>Created At</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -376,6 +381,24 @@ export default function UserManagementPage() {
                         {user.username}
                       </TableCell>
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
+                      <TableCell>
+                        {user.category ? (
+                          <Badge
+                            variant="outline"
+                            className={
+                              user.category === "banking"
+                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                : user.category === "nbfc"
+                                ? "bg-purple-50 text-purple-700 border-purple-200"
+                                : "bg-green-50 text-green-700 border-green-200"
+                            }
+                          >
+                            {user.category.replace("_", " ").toUpperCase()}
+                          </Badge>
+                        ) : (
+                          <span className="text-gray-400">N/A</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         {user.createdAt
                           ? format(new Date(user.createdAt), "MMM dd, yyyy")
@@ -485,20 +508,11 @@ export default function UserManagementPage() {
 
               <div>
                 <Label htmlFor="edit-role">Role</Label>
-                <Select
-                  value={editFormData.role.toString()}
-                  onValueChange={(value) =>
-                    setEditFormData({ ...editFormData, role: parseInt(value) })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">User</SelectItem>
-                    <SelectItem value="1">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input
+                  value={editingUser?.role || "reporting_entity"}
+                  disabled
+                  className="bg-gray-50"
+                />
               </div>
             </div>
 
