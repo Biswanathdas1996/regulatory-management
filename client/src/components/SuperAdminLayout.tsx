@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Menu,
   XCircle,
@@ -12,6 +13,8 @@ import {
   Shield,
   Activity,
   Database,
+  LogOut,
+  User,
 } from "lucide-react";
 
 interface SuperAdminLayoutProps {
@@ -31,6 +34,12 @@ export default function SuperAdminLayout({
 }: SuperAdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [location] = useLocation();
+  const { logout, user } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = "/";
+  };
 
   const menuItems = [
     {
@@ -152,17 +161,30 @@ export default function SuperAdminLayout({
           </div>
         </nav>
 
-        {/* User info at bottom */}
+        {/* Sidebar Footer */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-red-100 rounded-full">
-              <Shield className="h-4 w-4 text-red-600" />
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="h-8 w-8 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center">
+              <User className="h-4 w-4 text-white" />
             </div>
-            <div className="text-sm">
-              <p className="font-medium text-gray-900">Super Administrator</p>
-              <p className="text-gray-500">Global Access</p>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-900">
+                {user?.username || "Super Admin"}
+              </p>
+              <p className="text-xs text-gray-500">
+                Global Access • {user?.role?.replace('_', ' ') || "Administrator"}
+              </p>
             </div>
           </div>
+          
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all duration-200 border border-gray-200 hover:border-red-200"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Logout
+          </button>
         </div>
       </div>
 
