@@ -14,6 +14,7 @@ interface SubmissionReminder {
   lastSubmissionDate: Date | null;
   nextDueDate: Date;
   status: 'upcoming' | 'due' | 'overdue';
+  occurrenceIndex?: number;
 }
 
 interface SubmissionCalendarProps {
@@ -44,22 +45,78 @@ export function SubmissionCalendar({ userId, category }: SubmissionCalendarProps
     },
   });
 
-  // Calculate submission reminders
-  const calculateNextDueDate = (frequency: string, lastSubmissionDate: Date | null): Date => {
+  // Calculate multiple recurring due dates for the current month view
+  const calculateRecurringDates = (frequency: string, lastSubmissionDate: Date | null): Date[] => {
     const baseDate = lastSubmissionDate || new Date();
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    const dates: Date[] = [];
     
-    switch (frequency?.toLowerCase()) {
-      case 'weekly':
-        return addWeeks(baseDate, 1);
-      case 'monthly':
-        return addMonths(baseDate, 1);
-      case 'quarterly':
-        return addQuarters(baseDate, 1);
-      case 'yearly':
-        return addMonths(baseDate, 12);
-      default:
-        return addMonths(baseDate, 1); // Default to monthly
+    // Start from the last submission date or beginning of current month
+    let currentDate = lastSubmissionDate ? new Date(baseDate) : new Date(monthStart);
+    
+    // If we have a last submission date, calculate the next due date
+    if (lastSubmissionDate) {
+      switch (frequency?.toLowerCase()) {
+        case 'daily':
+          currentDate = addDays(baseDate, 1);
+          break;
+        case 'weekly':
+          currentDate = addWeeks(baseDate, 1);
+          break;
+        case 'monthly':
+          currentDate = addMonths(baseDate, 1);
+          break;
+        case 'quarterly':
+          currentDate = addQuarters(baseDate, 1);
+          break;
+        case 'half_yearly':
+          currentDate = addMonths(baseDate, 6);
+          break;
+        case 'yearly':
+          currentDate = addMonths(baseDate, 12);
+          break;
+        default:
+          currentDate = addMonths(baseDate, 1);
+      }
     }
+    
+    // Generate recurring dates within the current month view
+    while (currentDate <= monthEnd) {
+      if (currentDate >= monthStart) {
+        dates.push(new Date(currentDate));
+      }
+      
+      // Add next occurrence based on frequency
+      switch (frequency?.toLowerCase()) {
+        case 'daily':
+          currentDate = addDays(currentDate, 1);
+          break;
+        case 'weekly':
+          currentDate = addWeeks(currentDate, 1);
+          break;
+        case 'monthly':
+          currentDate = addMonths(currentDate, 1);
+          break;
+        case 'quarterly':
+          currentDate = addQuarters(currentDate, 1);
+          break;
+        case 'half_yearly':
+          currentDate = addMonths(currentDate, 6);
+          break;
+        case 'yearly':
+          currentDate = addMonths(currentDate, 12);
+          break;
+        default:
+          currentDate = addMonths(currentDate, 1);
+      }
+      
+      // Prevent infinite loop for very frequent occurrences
+      if (frequency?.toLowerCase() === 'daily' && dates.length > 31) break;
+      if (frequency?.toLowerCase() === 'weekly' && dates.length > 5) break;
+    }
+    
+    return dates;
   };
 
   const getStatus = (dueDate: Date): 'upcoming' | 'due' | 'overdue' => {
@@ -71,19 +128,21 @@ export function SubmissionCalendar({ userId, category }: SubmissionCalendarProps
     return 'upcoming';
   };
 
-  const reminders: SubmissionReminder[] = templates?.map((template: any) => {
+  // Generate all recurring reminders for the current month
+  const reminders: SubmissionReminder[] = templates?.flatMap((template: any) => {
     const lastSubmission = submissions?.find((s: any) => s.templateId === template.id);
     const lastSubmissionDate = lastSubmission ? parseISO(lastSubmission.createdAt) : null;
-    const nextDueDate = calculateNextDueDate(template.frequency, lastSubmissionDate);
+    const recurringDates = calculateRecurringDates(template.frequency, lastSubmissionDate);
     
-    return {
+    return recurringDates.map((dueDate, index) => ({
       templateId: template.id,
       templateName: template.name,
       frequency: template.frequency || 'monthly',
       lastSubmissionDate,
-      nextDueDate,
-      status: getStatus(nextDueDate),
-    };
+      nextDueDate: dueDate,
+      status: getStatus(dueDate),
+      occurrenceIndex: index, // To distinguish multiple occurrences
+    }));
   }) || [];
 
   // Get days for calendar grid
@@ -189,9 +248,9 @@ export function SubmissionCalendar({ userId, category }: SubmissionCalendarProps
                   
                   {dayReminders.length > 0 && (
                     <div className="space-y-1.5">
-                      {dayReminders.slice(0, 2).map(reminder => (
+                      {dayReminders.slice(0, 2).map((reminder, index) => (
                         <div
-                          key={reminder.templateId}
+                          key={`${reminder.templateId}-${reminder.occurrenceIndex || 0}-${index}`}
                           className={`text-xs p-2 rounded-lg shadow-sm border-l-4 transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${getStatusColor(reminder.status)}`}
                           title={`${reminder.templateName} - ${reminder.frequency}`}
                         >
@@ -241,9 +300,9 @@ export function SubmissionCalendar({ userId, category }: SubmissionCalendarProps
               {reminders
                 .sort((a, b) => a.nextDueDate.getTime() - b.nextDueDate.getTime())
                 .slice(0, 5)
-                .map(reminder => (
+                .map((reminder, index) => (
                   <div
-                    key={reminder.templateId}
+                    key={`${reminder.templateId}-${reminder.occurrenceIndex || 0}-${index}`}
                     className="group flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200"
                   >
                     <div className="flex items-center gap-4">
