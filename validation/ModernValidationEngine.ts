@@ -729,26 +729,18 @@ export class ModernValidationEngine {
       const row = parseInt(field.match(/\d+/)?.[0] || '1');
       const colNum = this.columnToNumber(col);
       
-      // Check if the row exists in the sheet data
-      if (row <= sheet.rowCount && sheet.data[row - 1]) {
-        const value = sheet.data[row - 1]?.[colNum - 1];
-        
-        cells.push({
-          reference: field,
-          value,
-          row,
-          column: col
-        });
-      } else {
-        // Cell doesn't exist in the data, but we still need to validate it
-        // Create a cell with undefined value so validation can report it as missing
-        cells.push({
-          reference: field,
-          value: undefined,
-          row,
-          column: col
-        });
-      }
+      // Always create the cell reference, even if it doesn't exist in the data
+      // This ensures validation rules for cells beyond the data range are still processed
+      const value = (row <= sheet.rowCount && sheet.data[row - 1]) 
+        ? sheet.data[row - 1]?.[colNum - 1] 
+        : undefined;
+      
+      cells.push({
+        reference: field,
+        value,
+        row,
+        column: col
+      });
     } else {
       // Assume it's a column name in the header row
       const headerRow = sheet.data[0] || [];

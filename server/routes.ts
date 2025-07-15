@@ -1926,19 +1926,27 @@ Only return the JSON array, no additional text.
         userCategory: req.user?.category,
       });
 
-      let submissions = await storage.getSubmissions(
-        userId ? parseInt(userId as string) : undefined,
-        templateId ? parseInt(templateId as string) : undefined
-      );
+      let submissions;
+      
+      // For IFSCA users, show all submissions in their category (don't filter by userId)
+      if (req.user?.role === "ifsca_user") {
+        submissions = await storage.getSubmissions(
+          undefined, // Don't filter by userId for IFSCA users
+          templateId ? parseInt(templateId as string) : undefined,
+          req.user.category // Filter by category
+        );
+        console.log("IFSCA user - Retrieved submissions by category:", submissions.length);
+      } else {
+        // For other users (reporting entities), filter by userId and then by category
+        submissions = await storage.getSubmissions(
+          userId ? parseInt(userId as string) : undefined,
+          templateId ? parseInt(templateId as string) : undefined
+        );
 
-      console.log("Retrieved submissions:", submissions.length);
+        console.log("Retrieved submissions:", submissions.length);
 
-      // Filter submissions by category for IFSCA users and reporting entities
-      if (req.user && req.user.category) {
-        if (
-          req.user.role === "ifsca_user" ||
-          req.user.role === "reporting_entity"
-        ) {
+        // Filter submissions by category for reporting entities
+        if (req.user && req.user.category && req.user.role === "reporting_entity") {
           submissions = submissions.filter(
             (submission: any) => submission.category === req.user!.category
           );
