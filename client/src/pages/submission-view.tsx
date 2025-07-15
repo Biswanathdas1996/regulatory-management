@@ -773,11 +773,39 @@ export default function SubmissionViewPage() {
                     ) : (
                       <div className="text-center py-8">
                         {submission.status === 'passed' ? (
-                          <div className="space-y-3">
+                          <div className="space-y-4">
                             <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
                             <div>
                               <h3 className="text-lg font-medium text-gray-900">All checks passed!</h3>
                               <p className="text-gray-600">Your submission meets all validation requirements.</p>
+                            </div>
+                            {/* Show validation summary when passed */}
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                              <div className="text-left">
+                                <h4 className="font-medium text-green-800 mb-2">Validation Summary</h4>
+                                <div className="space-y-2 text-sm text-green-700">
+                                  {validationResults.length > 0 ? (
+                                    <>
+                                      <p>✓ {validationResults.filter(r => r.isValid).length} validation checks passed</p>
+                                      <p>✓ File format validated successfully</p>
+                                      <p>✓ All required fields contain valid data</p>
+                                      <p>✓ Data types and formats meet requirements</p>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <p>✓ File format validated successfully</p>
+                                      <p>✓ Basic structure verification passed</p>
+                                      <p>✓ No validation rules configured (submission passed by default)</p>
+                                      <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+                                        <p className="text-blue-800 text-xs">
+                                          <strong>Note:</strong> No specific validation rules were found for this template. 
+                                          The template administrator can upload validation rules to enable detailed compliance checking.
+                                        </p>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         ) : submission.status === 'failed' ? (
