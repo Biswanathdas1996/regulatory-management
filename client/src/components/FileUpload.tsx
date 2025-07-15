@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -67,10 +67,17 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
     defaultValues: {
       templateType: "",
       templateName: "",
-      category: currentUser?.role === "ifsca_user" ? currentUser.category : "",
+      category: "",
       templateFile: undefined,
     },
   });
+
+  // Update category when user data loads
+  useEffect(() => {
+    if (currentUser?.role === "ifsca_user" && currentUser.category) {
+      form.setValue("category", currentUser.category);
+    }
+  }, [currentUser, form]);
 
   const uploadMutation = useMutation({
     mutationFn: async (data: UploadFormData) => {

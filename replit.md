@@ -8,7 +8,17 @@ This is a comprehensive digital solution for GIFT City financial institutions to
 
 The application validates submissions against predefined IFSCA-compliant rules with 100% accuracy, ensuring regulatory compliance and flagging violations in real-time.
 
-## Recent Changes (January 14, 2025)
+## Recent Changes (January 15, 2025)
+
+### Category-Based Template Filtering Implementation (January 15, 2025) ✓
+- Implemented category-based template filtering where IFSCA users can only view templates relevant to their specific category
+- Modified GET /api/templates and /api/templates/with-rules endpoints to filter templates by user category for IFSCA users
+- Updated template upload functionality to capture and store uploader's category automatically
+- Added category field to FileUpload component with auto-fill for IFSCA users (disabled for manual editing)
+- Super admins see all templates, IFSCA users see only their category templates, reporting entities see all
+- Templates now properly categorized: banking, nbfc, stock_exchange for appropriate role-based access
+- Enhanced template upload form with 3-column layout including category selection
+- Fixed category field display issue with useEffect to properly populate IFSCA user category
 
 ### 3-Tier User Hierarchy System Implementation (January 14, 2025) ✓
 - Successfully implemented comprehensive role-based access control with category segregation
