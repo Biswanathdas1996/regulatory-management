@@ -601,7 +601,25 @@ export class ModernValidationEngine {
     
     console.log(`[DEBUG] Found ${fieldInfo.cells.length} cells to validate`);
     
-    fieldInfo.cells.forEach((cell) => {
+    // For cell rules, we should ALWAYS validate the specified cell, even if it doesn't exist
+    // If no cells were found, create the cell reference manually
+    let cellsToValidate = fieldInfo.cells;
+    if (fieldInfo.cells.length === 0 && rule.field.match(/^[A-Z]+\d+$/)) {
+      // This is a specific cell reference like A27, create it even if it doesn't exist in data
+      const col = rule.field.match(/[A-Z]+/)?.[0] || 'A';
+      const row = parseInt(rule.field.match(/\d+/)?.[0] || '1');
+      
+      cellsToValidate = [{
+        reference: rule.field,
+        value: undefined, // Cell doesn't exist, so value is undefined
+        row: row,
+        column: col
+      }];
+      
+      console.log(`[DEBUG] Created missing cell reference: ${rule.field}`);
+    }
+    
+    cellsToValidate.forEach((cell) => {
       const value = String(cell.value || '').trim();
       
       // For cell rules, check if the cell contains expected content
