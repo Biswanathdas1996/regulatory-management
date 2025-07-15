@@ -2348,7 +2348,13 @@ Only return the JSON array, no additional text.
 
           // Add column validations for each field
           for (const schema of sheetSchemas) {
-            const columnLetter = schema.columnName || (schema.fieldName ? schema.fieldName.split('')[0] : 'A') || 'A';
+            let columnLetter = 'A';
+            if (schema.columnName) {
+              columnLetter = schema.columnName;
+            } else if (schema.fieldName && typeof schema.fieldName === 'string' && schema.fieldName.length > 0) {
+              columnLetter = schema.fieldName.charAt(0);
+            }
+            
             jsonTemplate.sheetValidations[sheet.sheetName].columnValidations[columnLetter] = {
               dataType: "string", // Default, user can change
               required: true,
@@ -2379,7 +2385,13 @@ sheetValidations:
 `;
           
           for (const schema of sheetSchemas) {
-            const columnLetter = schema.columnName || (schema.fieldName ? schema.fieldName.split('')[0] : 'A') || 'A';
+            let columnLetter = 'A';
+            if (schema.columnName) {
+              columnLetter = schema.columnName;
+            } else if (schema.fieldName && typeof schema.fieldName === 'string' && schema.fieldName.length > 0) {
+              columnLetter = schema.fieldName.charAt(0);
+            }
+            
             yamlContent += `      ${columnLetter}:
         dataType: string
         required: true
@@ -2399,7 +2411,13 @@ sheetValidations:
         for (const sheet of sheets) {
           const sheetSchemas = schemas.filter(s => s.sheetId === sheet.id);
           for (const schema of sheetSchemas) {
-            const columnLetter = schema.columnName || (schema.fieldName ? schema.fieldName.split('')[0] : 'A') || 'A';
+            let columnLetter = 'A';
+            if (schema.columnName) {
+              columnLetter = schema.columnName;
+            } else if (schema.fieldName && typeof schema.fieldName === 'string' && schema.fieldName.length > 0) {
+              columnLetter = schema.fieldName.charAt(0);
+            }
+            
             csvContent += `column,${sheet.sheetName},${columnLetter},string,true,,,,,,"",${schema.fieldName || 'Field'},,\n`;
           }
         }
@@ -2434,7 +2452,13 @@ sheetValidations:
         for (const sheet of sheets) {
           const sheetSchemas = schemas.filter(s => s.sheetId === sheet.id);
           for (const schema of sheetSchemas) {
-            const columnLetter = schema.columnName || (schema.fieldName ? schema.fieldName.split('')[0] : 'A') || 'A';
+            let columnLetter = 'A';
+            if (schema.columnName) {
+              columnLetter = schema.columnName;
+            } else if (schema.fieldName && typeof schema.fieldName === 'string' && schema.fieldName.length > 0) {
+              columnLetter = schema.fieldName.charAt(0);
+            }
+            
             worksheet.addRow({
               ruleType: 'column',
               sheetName: sheet.sheetName,
@@ -2485,7 +2509,13 @@ sheetValidations:
           txtContent += `\n# ${sheet.sheetName} validation rules\n`;
           
           for (const schema of sheetSchemas) {
-            const columnLetter = schema.columnName || (schema.fieldName ? schema.fieldName.split('')[0] : 'A') || 'A';
+            let columnLetter = 'A';
+            if (schema.columnName) {
+              columnLetter = schema.columnName;
+            } else if (schema.fieldName && typeof schema.fieldName === 'string' && schema.fieldName.length > 0) {
+              columnLetter = schema.fieldName.charAt(0);
+            }
+            
             txtContent += `required:${sheet.sheetName}:${columnLetter}:*:${schema.fieldName || 'Field'} is required:error\n`;
           }
         }
