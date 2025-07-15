@@ -733,7 +733,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const templateFile = req.files.template[0];
         const validationFile = req.files.validationRules?.[0];
-        const { templateName, frequency, lastSubmissionDate } =
+        const { templateName, frequency, lastSubmissionDate, templateType, isXBRL } =
           req.body;
 
         console.log("Template upload request body:", {
@@ -791,6 +791,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           fileSize: templateFile.size,
           createdBy: req.user?.id || 1, // Use authenticated user ID or default to 1
           validationRulesPath: validationFile?.path,
+          templateType: templateType || "excel", // Default to excel if not specified
+          isXBRL: isXBRL === "true" || templateType === "xbrl", // Set XBRL flag
         };
 
         console.log("Creating template with data:", templateData);

@@ -29,6 +29,7 @@ const uploadSchema = z.object({
   templateName: z.string().min(1, "Template name is required"),
   category: z.string().min(1, "Category is required"),
   frequency: z.string().min(1, "Frequency is required"),
+  templateType: z.string().min(1, "Template type is required"),
   lastSubmissionDate: z.string().optional(),
   templateFile: z
     .instanceof(FileList)
@@ -90,12 +91,19 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
     { value: "yearly", label: "Yearly" },
   ];
 
+  const templateTypes = [
+    { value: "excel", label: "Excel Template (.xlsx)" },
+    { value: "csv", label: "CSV Template (.csv)" },
+    { value: "xbrl", label: "XBRL Template (.xml, .xbrl)" },
+  ];
+
   const form = useForm<UploadFormData>({
     resolver: zodResolver(uploadSchema),
     defaultValues: {
       templateName: "",
       category: "",
       frequency: "",
+      templateType: "",
       lastSubmissionDate: "",
       templateFile: undefined,
     },
@@ -136,6 +144,13 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
       formData.append("templateName", data.templateName);
       formData.append("category", data.category);
       formData.append("frequency", data.frequency);
+      formData.append("templateType", data.templateType);
+      
+      // Add XBRL-specific fields
+      if (data.templateType === "xbrl") {
+        formData.append("isXBRL", "true");
+      }
+      
       if (data.lastSubmissionDate) {
         formData.append("lastSubmissionDate", data.lastSubmissionDate);
       }
@@ -320,6 +335,31 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
 
               <FormField
                 control={form.control}
+                name="templateType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Template Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select template type..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {templateTypes.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="lastSubmissionDate"
                 render={({ field }) => (
                   <FormItem>
@@ -357,7 +397,12 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
                   Drop files here or click to browse
                 </p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Supports Excel (.xlsx) and CSV files up to 100MB
+                  {form.watch("templateType") === "xbrl" 
+                    ? "Supports XBRL files (.xml, .xbrl) up to 100MB"
+                    : form.watch("templateType") === "csv"
+                    ? "Supports CSV files (.csv) up to 100MB"
+                    : "Supports Excel (.xlsx) and CSV files up to 100MB"
+                  }
                 </p>
               </div>
               <FormField
@@ -382,7 +427,13 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
                         <input
                           id="template-file-input"
                           type="file"
-                          accept=".xlsx,.csv"
+                          accept={
+                            form.watch("templateType") === "xbrl" 
+                              ? ".xml,.xbrl"
+                              : form.watch("templateType") === "csv"
+                              ? ".csv"
+                              : ".xlsx,.csv"
+                          }
                           onChange={handleFileSelect}
                           className="hidden"
                         />
