@@ -14,6 +14,7 @@ import {
   FileSpreadsheet,
   LogOut,
   User,
+  BarChart3,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -73,6 +74,12 @@ export default function AdminLayout({
       href: "/regulator/re-management",
       icon: Users,
       current: location === "/regulator/re-management",
+    },
+    {
+      name: "Analytics",
+      href: "/regulator/analytics",
+      icon: BarChart3,
+      current: location === "/regulator/analytics",
     },
     {
       name: "Excel Analyzer",
