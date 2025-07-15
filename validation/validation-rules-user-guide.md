@@ -1,7 +1,37 @@
-# Enhanced Validation Rules User Guide
+# Enhanced Cell-Based Validation Rules User Guide
 
 ## Overview
-The validation system now supports precise row and column-based validation, allowing you to specify exactly which cells should be validated in your templates.
+The validation system now supports precise cell-based validation using Column + Row combinations, allowing you to specify exactly which cells should be validated in your templates using coordinate-based targeting.
+
+## New Cell-Based Features
+
+### Column + Row Combination Validation
+You can now specify exact cell coordinates using both Column and Row fields:
+
+- **Column**: Specify the column letter (A, B, C, etc.)
+- **Row**: Specify the row number (1, 2, 3, etc.)
+- **Result**: Creates exact cell reference (A1, B2, C3, etc.)
+
+### Enhanced Validation Types
+
+#### 1. Individual Cell Validation (`RuleType: cell`)
+Target specific cells using Column + Row combination:
+
+```csv
+RuleType,SheetName,Column,Row,Description,Severity
+cell,Data Sheet,A,1,Cell A1 must contain 'Institution Name',error
+cell,Data Sheet,B,2,Cell B2 must contain positive asset value,error
+cell,Data Sheet,C,5,Cell C5 signature validation,warning
+```
+
+#### 2. Range Block Validation (`RuleType: range`)
+Validate rectangular blocks using Column Range + Row Range:
+
+```csv
+RuleType,SheetName,ColumnRange,RowRange,CellRange,Description,Severity
+range,Data Sheet,A-C,2-5,A2:C5,Core data block validation,error
+range,Data Sheet,D-F,10-15,D10:F15,Summary section validation,warning
+```
 
 ## New Features
 
@@ -68,13 +98,25 @@ global,COUNTA(A2:A1000) >= 1,Must have at least one data row,A2:A1000
 
 ## Examples
 
-### Example 1: Header Row Validation
-Ensure specific headers are present:
+### Example 1: Individual Cell Validation
+Validate specific cells using Column + Row coordinates:
 
 ```csv
-RuleType,SheetName,Column,Description,Severity,RowRange,ColumnRange,CellRange,ApplyToAllRows
-cell,Financial Data,A,Header must be 'Institution Name',error,1,A,A1,false
-cell,Financial Data,B,Header must be 'Total Assets',error,1,B,B1,false
+RuleType,SheetName,Column,Row,Description,Severity,CellRange
+cell,Financial Data,A,1,Cell A1 must contain 'Institution Name',error,A1
+cell,Financial Data,B,1,Cell B1 must contain 'Total Assets',error,B1
+cell,Financial Data,A,2,Cell A2 first institution name required,error,A2
+cell,Financial Data,B,2,Cell B2 first institution assets > 0,error,B2
+```
+
+### Example 2: Critical Cell Validation
+Validate important signature and summary cells:
+
+```csv
+RuleType,SheetName,Column,Row,Required,DataType,Description,Severity
+cell,Report,F,10,true,string,Cell F10 must contain authorized signature,error
+cell,Report,D,5,true,number,Cell D5 must contain total summary value,error
+cell,Report,E,5,true,date,Cell E5 must contain reporting date,error
 ```
 
 ### Example 2: Data Range Validation

@@ -414,20 +414,49 @@ export class ModernValidationRulesParser {
                   });
                 }
               } else if (ruleType === 'cell') {
-                // Cell-specific validation rule
-                const field = row.CellRange || `${row.SheetName}.${row.Column}`;
+                // Cell-specific validation rule using Column + Row combination
+                let cellReference = row.CellRange;
+                if (!cellReference && row.Column && row.Row) {
+                  // Build cell reference from Column + Row (e.g., A + 1 = A1)
+                  cellReference = `${row.Column}${row.Row}`;
+                }
+                const field = cellReference || `${row.SheetName}.${row.Column}`;
                 
                 rules.push({
                   templateId,
                   field,
                   ruleType: row.Required === 'true' ? 'required' : 'custom',
                   condition: row.Expression || 'NOT_EMPTY',
-                  errorMessage: row.Description || `${field} validation failed`,
+                  errorMessage: row.Description || `Cell ${cellReference} validation failed`,
+                  severity: row.Severity || 'error',
+                  isActive: true,
+                  rowRange: row.RowRange || row.Row,
+                  columnRange: row.ColumnRange || row.Column,
+                  cellRange: cellReference,
+                  applyToAllRows: row.ApplyToAllRows === 'true'
+                });
+              } else if (ruleType === 'range') {
+                // Range validation using Column range + Row range combination
+                let cellRange = row.CellRange;
+                if (!cellRange && row.ColumnRange && row.RowRange) {
+                  // Build cell range from ColumnRange + RowRange (e.g., A-C + 2-5 = A2:C5)
+                  const [startCol, endCol] = row.ColumnRange.includes('-') ? row.ColumnRange.split('-') : [row.ColumnRange, row.ColumnRange];
+                  const [startRow, endRow] = row.RowRange.includes('-') ? row.RowRange.split('-') : [row.RowRange, row.RowRange];
+                  cellRange = `${startCol}${startRow}:${endCol}${endRow}`;
+                }
+                const field = cellRange || `${row.SheetName}.${row.ColumnRange}`;
+                
+                rules.push({
+                  templateId,
+                  field,
+                  ruleType: row.Required === 'true' ? 'required' : 'range',
+                  condition: row.Expression || 'NOT_EMPTY',
+                  errorMessage: row.Description || `Range ${cellRange} validation failed`,
                   severity: row.Severity || 'error',
                   isActive: true,
                   rowRange: row.RowRange,
                   columnRange: row.ColumnRange,
-                  cellRange: row.CellRange,
+                  cellRange: cellRange,
                   applyToAllRows: row.ApplyToAllRows === 'true'
                 });
               } else if (ruleType === 'cross_field') {

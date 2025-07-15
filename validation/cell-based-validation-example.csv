@@ -1,0 +1,18 @@
+RuleType,SheetName,Column,Row,Field,Required,DataType,MinLength,MaxLength,Minimum,Maximum,Pattern,EnumValues,Expression,Description,Severity,RowRange,ColumnRange,CellRange,ApplyToAllRows
+cell,Financial Data,A,1,A1_Header,true,string,,,,,,,,"Cell A1 must contain header 'Institution Name'",error,1,A,A1,false
+cell,Financial Data,B,1,B1_Header,true,string,,,,,,,,"Cell B1 must contain header 'Total Assets'",error,1,B,B1,false
+cell,Financial Data,C,1,C1_Header,true,string,,,,,,,,"Cell C1 must contain header 'Currency'",error,1,C,C1,false
+cell,Financial Data,A,2,A2_FirstInstitution,true,string,2,50,,,,,,"Cell A2 must contain first institution name (2-50 chars)",error,2,A,A2,false
+cell,Financial Data,B,2,B2_FirstAssets,true,number,,,1000000,,,,,Cell B2 must contain assets >= 1M,error,2,B,B2,false
+cell,Financial Data,C,2,C2_FirstCurrency,true,string,3,3,,,^[A-Z]{3}$,,,"Cell C2 must contain 3-letter currency code",error,2,C,C2,false
+cell,Financial Data,A,3,A3_SecondInstitution,false,string,2,50,,,,,,"Cell A3 second institution (optional)",warning,3,A,A3,false
+cell,Financial Data,B,3,B3_SecondAssets,false,number,,,0,,,,,Cell B3 second institution assets (if present),warning,3,B,B3,false
+cell,Financial Data,C,3,C3_SecondCurrency,false,string,3,3,,,^[A-Z]{3}$,,,"Cell C3 second institution currency",warning,3,C,C3,false
+cell,Financial Data,D,5,D5_TotalSummary,true,number,,,0,,,,,Cell D5 must contain positive total summary,error,5,D,D5,false
+cell,Financial Data,E,5,E5_DateStamp,true,date,,,,,,,,"Cell E5 must contain valid reporting date",error,5,E,E5,false
+cell,Financial Data,F,10,F10_Signature,true,string,5,100,,,,,,"Cell F10 must contain authorized signature (5-100 chars)",error,10,F,F10,false
+range,Financial Data,A-C,2-4,DataBlock_Main,true,string,,,,,,,,"Range A2:C4 main data block validation",error,2-4,A-C,A2:C4,true
+range,Financial Data,D-F,5-10,DataBlock_Summary,true,string,,,,,,,,"Range D5:F10 summary block validation",error,5-10,D-F,D5:F10,true
+cross_field,Financial Data,,,SumCheck,,,,,,,,,SUM(B2:B4) = D5,"Sum of individual assets must equal total in D5",error,,,B2:B4;D5,
+cross_field,Financial Data,,,DateConsistency,,,,,,,,,E5 >= TODAY()-30,"Reporting date in E5 must be within last 30 days",warning,,,E5,
+global,Financial Data,,,CompletionCheck,,,,,,,,,"COUNTA(A2:C4) >= 3","At least one complete institution record required",error,,,A2:C4,
