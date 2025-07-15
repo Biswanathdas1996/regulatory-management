@@ -1,0 +1,7 @@
+RuleType,SheetName,Column,Row,Field,Required,DataType,Description,Severity
+cell,Sheet1,A,1,Header_Institution,true,string,Cell A1 must contain Institution Name header,error
+cell,Sheet1,B,1,Header_Assets,true,string,Cell B1 must contain Total Assets header,error
+cell,Sheet1,A,2,First_Institution,true,string,Cell A2 must contain first institution name,error
+cell,Sheet1,B,2,First_Assets,true,number,Cell B2 must contain first institution assets,error
+column,Sheet1,A,,Institution_Name,true,string,Column A validation for all institution names,error
+column,Sheet1,B,,Total_Assets,true,number,Column B validation for all asset values,error

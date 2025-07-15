@@ -109,7 +109,7 @@ const validationUpload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit for validation files
   },
   fileFilter: (req: any, file: any, cb: any) => {
-    const allowedTypes = [".txt", ".xlsx", ".xls"];
+    const allowedTypes = [".txt", ".xlsx", ".xls", ".csv", ".json", ".yaml", ".yml"];
     const ext = path.extname(file.originalname).toLowerCase();
 
     if (allowedTypes.includes(ext)) {
@@ -117,7 +117,7 @@ const validationUpload = multer({
     } else {
       cb(
         new Error(
-          "Invalid file type. Only TXT and Excel files are allowed for validation rules."
+          "Invalid file type. Only TXT, Excel, CSV, JSON, and YAML files are allowed for validation rules."
         )
       );
     }
