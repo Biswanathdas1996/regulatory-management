@@ -65,14 +65,12 @@ export default function UserDashboardPage() {
     );
   }
 
-  // Calculate KPIs
-  const totalSubmissions = submissions?.length || 0;
-  const passedSubmissions =
-    submissions?.filter((s: any) => s.status === "passed").length || 0;
-  const failedSubmissions =
-    submissions?.filter((s: any) => s.status === "failed").length || 0;
-  const validatingSubmissions =
-    submissions?.filter((s: any) => s.status === "validating").length || 0;
+  // Calculate KPIs - ensure submissions is an array
+  const submissionsArray = Array.isArray(submissions) ? submissions : [];
+  const totalSubmissions = submissionsArray.length;
+  const passedSubmissions = submissionsArray.filter((s: any) => s.status === "passed").length;
+  const failedSubmissions = submissionsArray.filter((s: any) => s.status === "failed").length;
+  const validatingSubmissions = submissionsArray.filter((s: any) => s.status === "validating").length;
   const successRate =
     totalSubmissions > 0
       ? Math.round((passedSubmissions / totalSubmissions) * 100)
@@ -80,30 +78,26 @@ export default function UserDashboardPage() {
 
   // Recent activity (last 7 days)
   const last7Days = subDays(new Date(), 7);
-  const recentSubmissions =
-    submissions?.filter((s: any) => new Date(s.createdAt) > last7Days) || [];
+  const recentSubmissions = submissionsArray.filter((s: any) => new Date(s.createdAt) > last7Days);
 
   // Template usage stats
-  const templateUsage =
-    submissions?.reduce((acc: any, sub: any) => {
-      acc[sub.templateId] = (acc[sub.templateId] || 0) + 1;
-      return acc;
-    }, {}) || {};
+  const templateUsage = submissionsArray.reduce((acc: any, sub: any) => {
+    acc[sub.templateId] = (acc[sub.templateId] || 0) + 1;
+    return acc;
+  }, {});
 
   // Validation errors by template
-  const validationErrors =
-    submissions?.reduce((acc: any, sub: any) => {
-      if (sub.status === "failed") {
-        acc[sub.templateId] =
-          (acc[sub.templateId] || 0) + (sub.validationErrors || 0);
-      }
-      return acc;
-    }, {}) || {};
+  const validationErrors = submissionsArray.reduce((acc: any, sub: any) => {
+    if (sub.status === "failed") {
+      acc[sub.templateId] =
+        (acc[sub.templateId] || 0) + (sub.validationErrors || 0);
+    }
+    return acc;
+  }, {});
 
   // Monthly trend (last 30 days)
   const last30Days = subDays(new Date(), 30);
-  const monthlySubmissions =
-    submissions?.filter((s: any) => new Date(s.createdAt) > last30Days) || [];
+  const monthlySubmissions = submissionsArray.filter((s: any) => new Date(s.createdAt) > last30Days);
 
   const getStatusColor = (status: string) => {
     switch (status) {

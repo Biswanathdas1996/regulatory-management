@@ -28,7 +28,7 @@ import {
   type InsertComment,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, and, desc } from "drizzle-orm";
 
 export interface IStorage {
   // User methods

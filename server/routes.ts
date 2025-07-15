@@ -1832,10 +1832,14 @@ Only return the JSON array, no additional text.
   app.get("/api/submissions", async (req, res) => {
     try {
       const { userId, templateId } = req.query;
+      console.log("Fetching submissions with params:", { userId, templateId, userRole: req.user?.role, userCategory: req.user?.category });
+      
       let submissions = await storage.getSubmissions(
         userId ? parseInt(userId as string) : undefined,
         templateId ? parseInt(templateId as string) : undefined
       );
+      
+      console.log("Retrieved submissions:", submissions.length);
       
       // Filter submissions by category for IFSCA users and reporting entities
       if (req.user && req.user.category) {
@@ -1843,12 +1847,14 @@ Only return the JSON array, no additional text.
           submissions = submissions.filter(
             (submission: any) => submission.category === req.user!.category
           );
+          console.log("Filtered submissions by category:", submissions.length);
         }
       }
       
       res.json(submissions);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch submissions" });
+      console.error("Submissions API error:", error);
+      res.status(500).json({ error: "Failed to fetch submissions", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
