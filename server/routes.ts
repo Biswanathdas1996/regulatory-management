@@ -1137,6 +1137,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(types);
   });
 
+  // Get categories - accessible by all authenticated users
+  app.get("/api/categories", requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const categories = await storage.getCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Get categories error:", error);
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
   // System stats
   app.get("/api/stats", async (req: AuthenticatedRequest, res) => {
     try {

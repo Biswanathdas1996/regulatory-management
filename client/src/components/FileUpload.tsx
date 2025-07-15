@@ -60,9 +60,11 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
 
   // Fetch dynamic categories from the API
   const { data: categoriesData = [] } = useQuery({
-    queryKey: ["/api/super-admin/categories"],
+    queryKey: ["/api/categories"],
     queryFn: async () => {
-      const response = await fetch("/api/super-admin/categories");
+      const response = await fetch("/api/categories", {
+        credentials: "include",
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch categories");
       }
