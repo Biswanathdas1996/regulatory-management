@@ -80,26 +80,24 @@ export default function SuperAdminLogin() {
               <Shield className="h-8 w-8 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Super Admin Portal
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900">IFSCA Portal</h1>
           <p className="text-gray-600">Global system administration access</p>
         </div>
 
         <Card className="border-red-200 shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-red-800">
-              System Administrator Login
+              IFSCA Administrator Login
             </CardTitle>
             <CardDescription>
-              Enter your super admin credentials to access the global management
+              Enter your super IFSCA credentials to access the global management
               console
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Super Admin Username</Label>
+                <Label htmlFor="username">IFSCA Username</Label>
                 <Input
                   id="username"
                   placeholder="Enter super admin username"
@@ -147,7 +145,7 @@ export default function SuperAdminLogin() {
                 className="w-full bg-red-600 hover:bg-red-700 text-white"
                 disabled={isLoading}
               >
-                {isLoading ? "Signing in..." : "Sign In as Super Admin"}
+                {isLoading ? "Signing in..." : "Sign In as IFSCA Admin"}
               </Button>
             </form>
 
@@ -157,10 +155,10 @@ export default function SuperAdminLogin() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setLocation("/ifsca/login")}
+                  onClick={() => setLocation("/regulator/login")}
                   className="text-blue-600 hover:text-blue-700"
                 >
-                  IFSCA User Login
+                  Regulator Login
                 </Button>
                 <span className="text-gray-400">•</span>
                 <Button

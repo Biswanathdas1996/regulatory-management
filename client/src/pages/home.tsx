@@ -122,7 +122,7 @@ export default function Home() {
                     </div>
                     <div>
                       <h3 className="text-lg font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent">
-                        Super Admin Portal
+                        IFSCA Portal
                       </h3>
                       <p className="text-sm text-gray-600">
                         Global system administration and user management
@@ -131,7 +131,7 @@ export default function Home() {
                   </div>
                   <Link href="/super-admin/login">
                     <Button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-md shadow-red-500/25">
-                      Super Admin Access
+                      IFSCA Login
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </Link>
