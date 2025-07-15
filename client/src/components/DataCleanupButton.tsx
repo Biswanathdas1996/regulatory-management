@@ -60,19 +60,21 @@ export function DataCleanupButton() {
             <AlertTriangle className="h-5 w-5 text-red-600" />
             Are you absolutely sure?
           </AlertDialogTitle>
-          <AlertDialogDescription className="space-y-2">
-            <p>
-              This action <strong>cannot be undone</strong>. This will permanently delete:
-            </p>
-            <ul className="list-disc list-inside space-y-1 text-sm">
-              <li>All templates and their validation rules</li>
-              <li>All user submissions and validation results</li>
-              <li>All comments and processing status records</li>
-              <li>All template schemas and sheets</li>
-            </ul>
-            <p className="text-red-600 font-semibold mt-3">
-              User accounts and categories will be preserved.
-            </p>
+          <AlertDialogDescription asChild>
+            <div className="space-y-2">
+              <p>
+                This action <strong>cannot be undone</strong>. This will permanently delete:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-sm">
+                <li>All templates and their validation rules</li>
+                <li>All user submissions and validation results</li>
+                <li>All comments and processing status records</li>
+                <li>All template schemas and sheets</li>
+              </ul>
+              <p className="text-red-600 font-semibold mt-3">
+                User accounts and categories will be preserved.
+              </p>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
