@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import SuperAdminLayout from "@/components/SuperAdminLayout";
 import { Shield, Users, Building, TrendingUp, Settings, FileText } from "lucide-react";
+import { DataCleanupButton } from "@/components/DataCleanupButton";
 
 export default function SuperAdminDashboard() {
   const { user } = useAuth();
@@ -137,6 +138,9 @@ export default function SuperAdminDashboard() {
                   <Settings className="h-4 w-4 mr-2" />
                   Platform Configuration
                 </Button>
+                <div className="pt-3 mt-3 border-t border-gray-200">
+                  <DataCleanupButton />
+                </div>
               </div>
             </CardContent>
           </Card>

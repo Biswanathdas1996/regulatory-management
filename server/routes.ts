@@ -13,9 +13,18 @@ import {
   insertTemplateSchema,
   insertTemplateSheetSchema,
   templateTypes,
+  validationResults,
+  comments,
+  submissions,
+  validationRules,
+  templateSchemas,
+  templateSheets,
+  processingStatus,
+  templates,
 } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
+import { db } from "./db";
 
 // Extend Request type to include authenticated user property
 interface AuthenticatedRequest extends Request {
@@ -2866,6 +2875,76 @@ Only return the JSON array, no additional text.
       } catch (error) {
         console.error("Delete category error:", error);
         res.status(500).json({ error: "Failed to delete category" });
+      }
+    }
+  );
+
+  // Clean all data except users table (Super Admin only)
+  app.post(
+    "/api/super-admin/clean-data",
+    requireAuth,
+    requireSuperAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        console.log("========== CLEAN DATA ENDPOINT HIT ==========");
+        console.log("Request user:", req.user);
+        console.log("Starting data cleanup process...");
+
+        // Clean tables in order to respect foreign key constraints
+        // First, delete tables that depend on others
+        
+        // Delete validation results
+        await db.delete(validationResults).execute();
+        console.log("✓ Deleted all validation results");
+
+        // Delete comments
+        await db.delete(comments).execute();
+        console.log("✓ Deleted all comments");
+
+        // Delete submissions
+        await db.delete(submissions).execute();
+        console.log("✓ Deleted all submissions");
+
+        // Delete validation rules
+        await db.delete(validationRules).execute();
+        console.log("✓ Deleted all validation rules");
+
+        // Delete template schemas
+        await db.delete(templateSchemas).execute();
+        console.log("✓ Deleted all template schemas");
+
+        // Delete template sheets
+        await db.delete(templateSheets).execute();
+        console.log("✓ Deleted all template sheets");
+
+        // Delete processing status
+        await db.delete(processingStatus).execute();
+        console.log("✓ Deleted all processing status records");
+
+        // Delete templates
+        await db.delete(templates).execute();
+        console.log("✓ Deleted all templates");
+
+        // Note: We keep users and categories tables intact
+
+        console.log("Data cleanup completed successfully");
+
+        res.json({ 
+          message: "All data cleaned successfully (except users and categories)",
+          deletedTables: [
+            "validation_results",
+            "comments", 
+            "submissions",
+            "validation_rules",
+            "template_schemas",
+            "template_sheets",
+            "processing_status",
+            "templates"
+          ]
+        });
+      } catch (error) {
+        console.error("Clean data error:", error);
+        res.status(500).json({ error: "Failed to clean data" });
       }
     }
   );

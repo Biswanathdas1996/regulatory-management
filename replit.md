@@ -11,6 +11,16 @@ The application validates submissions against predefined IFSCA-compliant rules w
 
 ## Recent Changes (January 15, 2025)
 
+### Data Cleanup Feature for Super Admin (January 15, 2025) ✓
+
+- Added comprehensive data cleanup functionality for super admin users
+- Created `/api/super-admin/clean-data` endpoint that removes all data except users and categories
+- Implemented DataCleanupButton component with multi-step confirmation dialog
+- Button placed in Quick Actions section of super admin dashboard
+- Cleanup removes: templates, submissions, validation results, comments, processing status, template schemas/sheets
+- Preserves user accounts and category data for system integrity
+- Includes detailed warning messages and confirmation requirements
+
 ### Submission Calendar Feature Implementation (January 15, 2025) ✓
 
 - Added comprehensive submission calendar component for Reporting Entity Portal
