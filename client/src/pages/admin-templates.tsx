@@ -38,6 +38,15 @@ export default function AdminTemplatesPage() {
     },
   });
 
+  // Fetch categories data for proper display names
+  const { data: categoriesData = [] } = useQuery({
+    queryKey: ["/api/categories"],
+    queryFn: async () => {
+      const response = await fetch("/api/categories");
+      return response.json();
+    },
+  });
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "processed":
@@ -64,57 +73,63 @@ export default function AdminTemplatesPage() {
     }
   };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case "banking":
+  const getCategoryIcon = (categoryId: number) => {
+    const category = categoriesData.find((cat: any) => cat.id === categoryId);
+    const iconName = category?.icon || 'FileText';
+    
+    switch (iconName) {
+      case "Landmark":
         return <Landmark className="h-4 w-4 text-blue-600" />;
-      case "nbfc":
+      case "Briefcase":
+      case "Building":
         return <Building className="h-4 w-4 text-green-600" />;
-      case "stock_exchange":
+      case "TrendingUp":
         return <TrendingUp className="h-4 w-4 text-purple-600" />;
+      case "Users":
+        return <Building className="h-4 w-4 text-blue-600" />;
       default:
         return <FileText className="h-4 w-4 text-gray-600" />;
     }
   };
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "banking":
-        return "bg-blue-100 text-blue-800";
-      case "nbfc":
-        return "bg-green-100 text-green-800";
-      case "stock_exchange":
-        return "bg-purple-100 text-purple-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  const getCategoryColor = (categoryId: number) => {
+    const category = categoriesData.find((cat: any) => cat.id === categoryId);
+    const color = category?.color || '#6B7280';
+    
+    // Convert hex color to Tailwind classes
+    if (color.includes('3B82F6') || color.includes('blue')) {
+      return "bg-blue-100 text-blue-800";
+    } else if (color.includes('8B5CF6') || color.includes('purple')) {
+      return "bg-purple-100 text-purple-800";
+    } else if (color.includes('10B981') || color.includes('green')) {
+      return "bg-green-100 text-green-800";
+    } else {
+      return "bg-gray-100 text-gray-800";
     }
   };
 
-  const getCategoryName = (category: string) => {
-    switch (category) {
-      case "banking":
-        return "Banking";
-      case "nbfc":
-        return "NBFC";
-      case "stock_exchange":
-        return "Stock Exchange";
-      default:
-        return category;
-    }
+  const getCategoryName = (categoryId: number) => {
+    const category = categoriesData.find((cat: any) => cat.id === categoryId);
+    return category?.displayName || `Category ${categoryId}`;
   };
 
-  // Group templates by category for super admins
+  // Group templates by category ID for super admins
   const groupedTemplates = templates ? 
     templates.reduce((acc: any, template: any) => {
-      const category = template.category || 'other';
-      if (!acc[category]) {
-        acc[category] = [];
+      const categoryId = template.category || 'other';
+      if (!acc[categoryId]) {
+        acc[categoryId] = [];
       }
-      acc[category].push(template);
+      acc[categoryId].push(template);
       return acc;
     }, {}) : {};
 
-  const categories = Object.keys(groupedTemplates).sort();
+  const categories = Object.keys(groupedTemplates).sort((a, b) => {
+    // Sort by category display name
+    const nameA = getCategoryName(parseInt(a));
+    const nameB = getCategoryName(parseInt(b));
+    return nameA.localeCompare(nameB);
+  });
 
   // Determine which layout to use based on user role
   const LayoutComponent = user?.role === "super_admin" ? SuperAdminLayout : AdminLayout;
@@ -169,35 +184,37 @@ export default function AdminTemplatesPage() {
       ) : user?.role === "super_admin" ? (
         // Super Admin view - Segregated by category
         <div className="space-y-6">
-          {categories.map((category) => (
-            <Card key={category} className="border-0 shadow-sm">
-              <CardHeader className="pb-4 border-b border-gray-100">
-                <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center mr-3">
-                    {getCategoryIcon(category)}
-                  </div>
-                  {getCategoryName(category)} Templates ({groupedTemplates[category]?.length || 0})
-                  <Badge className={`ml-3 ${getCategoryColor(category)}`}>
-                    {getCategoryName(category)}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Template Name</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Validation Rules</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Submissions</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {groupedTemplates[category]?.map((template: any) => (
+          {categories.map((categoryKey) => {
+            const categoryId = parseInt(categoryKey);
+            return (
+              <Card key={categoryKey} className="border-0 shadow-sm">
+                <CardHeader className="pb-4 border-b border-gray-100">
+                  <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
+                    <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center mr-3">
+                      {getCategoryIcon(categoryId)}
+                    </div>
+                    {getCategoryName(categoryId)} Templates ({groupedTemplates[categoryKey]?.length || 0})
+                    <Badge className={`ml-3 ${getCategoryColor(categoryId)}`}>
+                      {getCategoryName(categoryId)}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Template Name</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Validation Rules</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead>Submissions</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {groupedTemplates[categoryKey]?.map((template: any) => (
                         <TableRow key={template.id}>
                           <TableCell className="font-medium">
                             <div className="flex items-center space-x-2">
@@ -270,7 +287,8 @@ export default function AdminTemplatesPage() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       ) : (
         // Regular admin view - Single table
