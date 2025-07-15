@@ -256,19 +256,27 @@ export default function SubmissionViewPage() {
   // Group results by rule for better visualization
   const groupedResults = Array.isArray(results)
     ? results.reduce((acc: any, result: any) => {
-        const key = `${result.ruleId}-${result.ruleType}-${result.field}`;
+        const key = `${result.ruleId || result.rule_id}-${result.ruleType || result.rule_type}-${result.field}`;
         if (!acc[key]) {
           acc[key] = {
-            ruleId: result.ruleId,
-            ruleType: result.ruleType,
+            ruleId: result.ruleId || result.rule_id,
+            ruleType: result.ruleType || result.rule_type,
             field: result.field,
             condition: result.condition,
-            errorMessage: result.errorMessage,
+            errorMessage: result.errorMessage || result.message,
             severity: result.severity,
             results: [],
           };
         }
-        acc[key].results.push(result);
+        // Add passed/failed status based on isValid field
+        const processedResult = {
+          ...result,
+          passed: result.isValid || result.is_valid,
+          cellReference: result.cellReference || result.cell_reference || `${result.field}${result.rowNumber ? `:${result.rowNumber}` : ''}`,
+          actualValue: result.actualValue || result.cellValue || result.cell_value,
+          errorMessage: result.errorMessage || result.message
+        };
+        acc[key].results.push(processedResult);
         return acc;
       }, {})
     : [];
@@ -278,14 +286,14 @@ export default function SubmissionViewPage() {
     : [];
   const totalChecks = Array.isArray(results) ? results.length : 0;
   const passedChecks = Array.isArray(results)
-    ? results.filter((r: any) => r.passed).length
+    ? results.filter((r: any) => r.isValid || r.is_valid).length
     : 0;
   const failedChecks = totalChecks - passedChecks;
   const errorCount = Array.isArray(results)
-    ? results.filter((r: any) => !r.passed && r.severity === "error").length
+    ? results.filter((r: any) => !(r.isValid || r.is_valid) && r.severity === "error").length
     : 0;
   const warningCount = Array.isArray(results)
-    ? results.filter((r: any) => !r.passed && r.severity === "warning").length
+    ? results.filter((r: any) => !(r.isValid || r.is_valid) && r.severity === "warning").length
     : 0;
 
   // Generate timeline items for file uploads
@@ -728,14 +736,14 @@ export default function SubmissionViewPage() {
                                           ) => (
                                             <TableRow key={resultIndex}>
                                               <TableCell className="font-mono text-sm">
-                                                {result.cellReference}
+                                                {result.cellReference || result.cell_reference || `${result.field}${result.rowNumber ? `:${result.rowNumber}` : ''}`}
                                               </TableCell>
                                               <TableCell className="font-mono text-sm">
-                                                {result.actualValue ||
+                                                {result.actualValue || result.cellValue || result.cell_value ||
                                                   "(empty)"}
                                               </TableCell>
                                               <TableCell className="text-sm text-red-600">
-                                                {result.errorMessage}
+                                                {result.errorMessage || result.message}
                                               </TableCell>
                                             </TableRow>
                                           )
