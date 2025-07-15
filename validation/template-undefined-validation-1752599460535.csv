@@ -1,0 +1,2 @@
+RuleType,SheetName,Column,Row,Field,Required,DataType,MinLength,MaxLength,Minimum,Maximum,Pattern,EnumValues,Expression,Description,Severity,RowRange,ColumnRange,CellRange,ApplyToAllRows
+cell,Sheet1,A,1,Field,TRUE,string,,,,,,,,Cell A1 must contain 'Field' header,error,1,A,A1,FALSE

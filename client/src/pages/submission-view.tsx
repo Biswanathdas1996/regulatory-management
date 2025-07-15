@@ -710,7 +710,29 @@ export default function SubmissionViewPage() {
                               </p>
                               <p className="text-sm">
                                 <strong>What this checks:</strong>{" "}
-                                {group.condition}
+                                {(() => {
+                                  // Show user-friendly description from the first result's error message
+                                  const firstResult = group.results[0];
+                                  const errorMessage = firstResult?.errorMessage || firstResult?.message;
+                                  
+                                  // If we have a custom error message, show that instead of the condition
+                                  if (errorMessage && !errorMessage.includes('validation failed')) {
+                                    return errorMessage;
+                                  }
+                                  
+                                  // Otherwise, convert condition to user-friendly text
+                                  switch (group.condition) {
+                                    case 'NOT_EMPTY':
+                                    case 'required':
+                                      return 'This field must not be empty';
+                                    case 'string':
+                                      return 'This field must contain text';
+                                    case 'number':
+                                      return 'This field must contain a number';
+                                    default:
+                                      return group.condition;
+                                  }
+                                })()}
                               </p>
                               <p className="text-sm">
                                 <strong>Results:</strong> {passedResults.length}{" "}
