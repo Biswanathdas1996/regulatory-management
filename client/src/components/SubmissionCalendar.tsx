@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar, ChevronLeft, ChevronRight, Clock, FileText } from "lucide-react";
 import { format, addDays, addWeeks, addMonths, addQuarters, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, parseISO } from "date-fns";
+import { Link } from "wouter";
 
 interface SubmissionReminder {
   templateId: number;
@@ -249,14 +250,19 @@ export function SubmissionCalendar({ userId, category }: SubmissionCalendarProps
                   {dayReminders.length > 0 && (
                     <div className="space-y-1.5">
                       {dayReminders.slice(0, 2).map((reminder, index) => (
-                        <div
+                        <Link
                           key={`${reminder.templateId}-${reminder.occurrenceIndex || 0}-${index}`}
-                          className={`text-xs p-2 rounded-lg shadow-sm border-l-4 transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${getStatusColor(reminder.status)}`}
-                          title={`${reminder.templateName} - ${reminder.frequency}`}
+                          to="/reporting-entity/submission"
+                          className="block"
                         >
-                          <div className="truncate font-semibold">{reminder.templateName}</div>
-                          <div className="text-[10px] opacity-80 mt-0.5">{reminder.frequency}</div>
-                        </div>
+                          <div
+                            className={`text-xs p-2 rounded-lg shadow-sm border-l-4 transition-all duration-200 hover:shadow-md hover:scale-[1.02] cursor-pointer ${getStatusColor(reminder.status)}`}
+                            title={`Click to submit ${reminder.templateName} - ${reminder.frequency}`}
+                          >
+                            <div className="truncate font-semibold">{reminder.templateName}</div>
+                            <div className="text-[10px] opacity-80 mt-0.5">{reminder.frequency}</div>
+                          </div>
+                        </Link>
                       ))}
                       {dayReminders.length > 2 && (
                         <div className="text-xs text-slate-600 font-medium bg-gradient-to-r from-slate-100/80 via-gray-100/60 to-zinc-100/50 rounded-lg p-1.5 text-center shadow-sm border border-slate-200/50">
@@ -301,43 +307,46 @@ export function SubmissionCalendar({ userId, category }: SubmissionCalendarProps
                 .sort((a, b) => a.nextDueDate.getTime() - b.nextDueDate.getTime())
                 .slice(0, 5)
                 .map((reminder, index) => (
-                  <div
+                  <Link
                     key={`${reminder.templateId}-${reminder.occurrenceIndex || 0}-${index}`}
-                    className="group flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200"
+                    to="/reporting-entity/submission"
+                    className="block"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-lg ${
-                        reminder.status === 'overdue' 
-                          ? 'bg-red-100 text-red-600' 
-                          : reminder.status === 'due'
-                            ? 'bg-amber-100 text-amber-600'
-                            : 'bg-blue-100 text-blue-600'
-                      }`}>
-                        <FileText className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
-                          {reminder.templateName}
+                    <div className="group flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-2 rounded-lg ${
+                          reminder.status === 'overdue' 
+                            ? 'bg-red-100 text-red-600' 
+                            : reminder.status === 'due'
+                              ? 'bg-amber-100 text-amber-600'
+                              : 'bg-blue-100 text-blue-600'
+                        }`}>
+                          <FileText className="h-4 w-4" />
                         </div>
-                        <div className="text-sm text-gray-600 flex items-center gap-1">
-                          <span className="capitalize">{reminder.frequency}</span> submission • 
-                          <span className="font-medium">Due {format(reminder.nextDueDate, 'MMM d, yyyy')}</span>
-                        </div>
-                        {reminder.lastSubmissionDate && (
-                          <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                            Last submitted: {format(reminder.lastSubmissionDate, 'MMM d, yyyy')}
+                        <div>
+                          <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                            {reminder.templateName}
                           </div>
-                        )}
+                          <div className="text-sm text-gray-600 flex items-center gap-1">
+                            <span className="capitalize">{reminder.frequency}</span> submission • 
+                            <span className="font-medium">Due {format(reminder.nextDueDate, 'MMM d, yyyy')}</span>
+                          </div>
+                          {reminder.lastSubmissionDate && (
+                            <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                              Last submitted: {format(reminder.lastSubmissionDate, 'MMM d, yyyy')}
+                            </div>
+                          )}
+                        </div>
                       </div>
+                      <Badge 
+                        variant={reminder.status === 'overdue' ? 'destructive' : 
+                                reminder.status === 'due' ? 'secondary' : 'outline'}
+                        className="px-3 py-1 font-medium capitalize shadow-sm"
+                      >
+                        {reminder.status}
+                      </Badge>
                     </div>
-                    <Badge 
-                      variant={reminder.status === 'overdue' ? 'destructive' : 
-                              reminder.status === 'due' ? 'secondary' : 'outline'}
-                      className="px-3 py-1 font-medium capitalize shadow-sm"
-                    >
-                      {reminder.status}
-                    </Badge>
-                  </div>
+                  </Link>
                 ))}
             </div>
           )}
