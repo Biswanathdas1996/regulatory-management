@@ -53,6 +53,8 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
   const { data: templateTypes } = useQuery({
     queryKey: ["/api/template-types"],
   });
+  
+  console.log("Template types data:", templateTypes);
 
   const { data: currentUser } = useQuery({
     queryKey: ["/api/auth/me"],
@@ -243,19 +245,35 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Template Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select 
+                      onValueChange={(value) => {
+                        console.log("Template type selected:", value);
+                        try {
+                          field.onChange(value);
+                        } catch (error) {
+                          console.error("Error updating template type:", error);
+                        }
+                      }} 
+                      value={field.value}
+                      disabled={!Array.isArray(templateTypes) || templateTypes.length === 0}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select template type..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {Array.isArray(templateTypes) &&
+                        {Array.isArray(templateTypes) && templateTypes.length > 0 ? (
                           templateTypes.map((type: any) => (
                             <SelectItem key={type.value} value={type.value}>
                               {type.label}
                             </SelectItem>
-                          ))}
+                          ))
+                        ) : (
+                          <div className="p-2 text-sm text-gray-500">
+                            Loading template types...
+                          </div>
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
