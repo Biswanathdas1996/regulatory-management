@@ -9,6 +9,7 @@ import { storage } from "./storage";
 import { FileProcessor } from "./services/fileProcessor";
 import { ModernValidationRulesParser } from "../validation/ModernValidationRulesParser";
 import { ValidationEngine } from "./services/validationEngine";
+import { ModernValidationEngine } from "../validation/ModernValidationEngine";
 import {
   insertTemplateSchema,
   insertTemplateSheetSchema,
@@ -3420,13 +3421,15 @@ sheetValidations:
 // Background validation function
 async function validateSubmissionAsync(submissionId: number) {
   try {
+    console.log(`Starting validation for submission ${submissionId}`);
+    
     const submission = await storage.getSubmission(submissionId);
     if (!submission) {
       console.error(`Submission ${submissionId} not found`);
       return;
     }
 
-    // Get template and validation rules
+    // Get template information
     const template = await storage.getTemplate(submission.templateId);
     if (!template) {
       console.error(
@@ -3435,29 +3438,80 @@ async function validateSubmissionAsync(submissionId: number) {
       return;
     }
 
-    const rules = await storage.getValidationRules(template.id);
+    console.log(`Validating submission ${submissionId} with template ${template.name}`);
+    console.log(`Template has validation file: ${template.validationFileUploaded}`);
+    console.log(`Validation file path: ${template.validationRulesPath}`);
 
-    // Validate the submission file
-    const validationResult = await ValidationEngine.validateSubmission({
+    // Use ModernValidationEngine for comprehensive validation
+    const validationSummary = await ModernValidationEngine.validateSubmission({
       filePath: submission.filePath,
-      rules,
+      templateId: submission.templateId,
       submissionId,
+      validationRulesPath: template.validationRulesPath,
+      fileName: submission.fileName
     });
 
-    // Store validation results
-    await storage.createValidationResults(validationResult.results);
+    console.log(`Validation completed for submission ${submissionId}`);
+    console.log(`Results: ${validationSummary.results.length} total checks`);
+    console.log(`Summary: ${validationSummary.summary.errorCount} errors, ${validationSummary.summary.warningCount} warnings`);
 
-    // Update submission status based on whether there are any error-level issues
-    const hasErrors = validationResult.results.some(
-      (r) => r.severity === "error"
-    );
+    // Store validation results with enhanced data
+    const resultsWithMetadata = validationSummary.results.map(result => ({
+      submissionId: result.submissionId,
+      ruleId: result.ruleId,
+      field: result.field,
+      ruleType: result.ruleType,
+      condition: result.condition,
+      cellReference: result.cellReference,
+      cellValue: result.cellValue,
+      message: result.errorMessage,
+      severity: result.severity,
+      isValid: result.isValid,
+      sheetName: result.sheetName,
+      rowNumber: result.rowNumber,
+      columnNumber: result.rowNumber, // Map to columnNumber for compatibility
+      columnName: result.columnName
+    }));
+
+    await storage.createValidationResults(resultsWithMetadata);
+
+    // Update submission status with detailed counts
+    const { errorCount, warningCount } = validationSummary.summary;
+    let newStatus: 'passed' | 'failed' | 'warnings' = 'passed';
+    
+    if (errorCount > 0) {
+      newStatus = 'failed';
+    } else if (warningCount > 0) {
+      newStatus = 'passed'; // Warnings don't fail the submission
+    }
+
     await storage.updateSubmissionStatus(
       submissionId,
-      hasErrors ? "failed" : "passed"
+      newStatus,
+      undefined, // updatedById
+      errorCount,
+      warningCount
     );
+
+    console.log(`Submission ${submissionId} validation completed with status: ${newStatus}`);
+    
   } catch (error) {
     console.error(`Error validating submission ${submissionId}:`, error);
-    await storage.updateSubmissionStatus(submissionId, "failed");
+    
+    // Create a system error validation result
+    await storage.createValidationResults([{
+      submissionId,
+      field: 'system',
+      ruleType: 'system',
+      condition: 'processing_error',
+      errorMessage: `System error during validation: ${error.message}`,
+      severity: 'error',
+      isValid: false,
+      cellReference: 'N/A',
+      cellValue: 'N/A'
+    }]);
+    
+    await storage.updateSubmissionStatus(submissionId, "failed", undefined, 1, 0);
   }
 }
 

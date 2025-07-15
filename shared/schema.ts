@@ -107,11 +107,17 @@ export const validationResults = pgTable("validation_results", {
     .notNull(),
   ruleId: integer("rule_id").references(() => validationRules.id),
   field: text("field").notNull(),
+  ruleType: text("rule_type"),
+  condition: text("condition"),
+  cellReference: text("cell_reference"),
+  cellValue: text("cell_value"),
   message: text("message").notNull(),
   severity: text("severity").notNull().default("error"), // error, warning
+  isValid: boolean("is_valid").notNull().default(false),
+  sheetName: text("sheet_name"),
   rowNumber: integer("row_number"),
   columnNumber: integer("column_number"),
-  cellValue: text("cell_value"),
+  columnName: text("column_name"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
