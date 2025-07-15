@@ -37,6 +37,10 @@ export const templates = pgTable("templates", {
   name: text("name").notNull(),
   templateType: text("template_type").notNull(),
   category: text("category").notNull(), // banking, nbfc, stock_exchange
+  frequency: text("frequency", {
+    enum: ["daily", "weekly", "monthly", "quarterly", "half_yearly", "yearly"],
+  }).notNull(),
+  lastSubmissionDate: timestamp("last_submission_date"),
   jsonSchema: text("json_schema"),
   fileName: text("file_name").notNull(),
   filePath: text("file_path").notNull(),

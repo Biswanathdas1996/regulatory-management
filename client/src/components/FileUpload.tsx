@@ -29,6 +29,8 @@ const uploadSchema = z.object({
   templateType: z.string().min(1, "Template type is required"),
   templateName: z.string().min(1, "Template name is required"),
   category: z.string().min(1, "Category is required"),
+  frequency: z.string().min(1, "Frequency is required"),
+  lastSubmissionDate: z.string().optional(),
   templateFile: z
     .instanceof(FileList)
     .refine((files) => files.length > 0, "Template file is required"),
@@ -62,12 +64,23 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
     { value: "stock_exchange", label: "Stock Exchange" },
   ];
 
+  const frequencies = [
+    { value: "daily", label: "Daily" },
+    { value: "weekly", label: "Weekly" },
+    { value: "monthly", label: "Monthly" },
+    { value: "quarterly", label: "Quarterly" },
+    { value: "half_yearly", label: "Half Yearly" },
+    { value: "yearly", label: "Yearly" },
+  ];
+
   const form = useForm<UploadFormData>({
     resolver: zodResolver(uploadSchema),
     defaultValues: {
       templateType: "",
       templateName: "",
       category: "",
+      frequency: "",
+      lastSubmissionDate: "",
       templateFile: undefined,
     },
   });
@@ -89,6 +102,10 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
       formData.append("templateType", data.templateType);
       formData.append("templateName", data.templateName);
       formData.append("category", data.category);
+      formData.append("frequency", data.frequency);
+      if (data.lastSubmissionDate) {
+        formData.append("lastSubmissionDate", data.lastSubmissionDate);
+      }
 
       // Simulate upload progress
       const progressInterval = setInterval(() => {
@@ -189,7 +206,7 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Template Configuration */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <FormField
                 control={form.control}
                 name="templateType"
@@ -260,6 +277,52 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
                       <Input placeholder="Enter template name..." {...field} />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="frequency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Submission Frequency</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select frequency..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {frequencies.map((freq) => (
+                          <SelectItem key={freq.value} value={freq.value}>
+                            {freq.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="lastSubmissionDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Submission Date (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="date" 
+                        placeholder="Select date..." 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                    <p className="text-sm text-gray-500">
+                      Used to track submission schedules
+                    </p>
                   </FormItem>
                 )}
               />

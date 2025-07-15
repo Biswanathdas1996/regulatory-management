@@ -672,7 +672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const templateFile = req.files.template[0];
         const validationFile = req.files.validationRules?.[0];
-        const { templateType, templateName } = req.body;
+        const { templateType, templateName, frequency, lastSubmissionDate } = req.body;
 
         // Validate template type
         if (!templateTypes.includes(templateType)) {
@@ -696,6 +696,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: templateName.trim(),
           templateType,
           category: category, // Store the category based on uploader
+          frequency: frequency || "monthly", // Default to monthly if not provided
+          lastSubmissionDate: lastSubmissionDate ? new Date(lastSubmissionDate) : null,
           fileName: templateFile.originalname,
           filePath: templateFile.path,
           fileSize: templateFile.size,
