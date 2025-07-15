@@ -593,8 +593,13 @@ export class ModernValidationEngine {
   ): ValidationResult[] {
     const results: ValidationResult[] = [];
     
+    console.log(`[DEBUG] Validating cell rule for field: ${rule.field}, condition: ${rule.condition}`);
+    console.log(`[DEBUG] Sheet has ${sheet.rowCount} rows and ${sheet.data?.length || 0} data rows`);
+    
     // Parse field reference (e.g., "A1", "B5", or cell range specified in rule)
     const fieldInfo = this.parseFieldReference(rule.field, sheet, rule);
+    
+    console.log(`[DEBUG] Found ${fieldInfo.cells.length} cells to validate`);
     
     fieldInfo.cells.forEach((cell) => {
       const value = String(cell.value || '').trim();
@@ -606,7 +611,7 @@ export class ModernValidationEngine {
                       cell.value === '' ||
                       (typeof cell.value === 'string' && cell.value.trim() === '');
       
-      if (rule.condition === 'required' || rule.condition === 'true') {
+      if (rule.condition === 'required' || rule.condition === 'NOT_EMPTY' || rule.condition === 'true') {
         // Cell must not be empty
         if (isEmpty) {
           results.push({
@@ -723,14 +728,27 @@ export class ModernValidationEngine {
       const col = field.match(/[A-Z]+/)?.[0] || 'A';
       const row = parseInt(field.match(/\d+/)?.[0] || '1');
       const colNum = this.columnToNumber(col);
-      const value = sheet.data[row - 1]?.[colNum - 1];
       
-      cells.push({
-        reference: field,
-        value,
-        row,
-        column: col
-      });
+      // Check if the row exists in the sheet data
+      if (row <= sheet.rowCount && sheet.data[row - 1]) {
+        const value = sheet.data[row - 1]?.[colNum - 1];
+        
+        cells.push({
+          reference: field,
+          value,
+          row,
+          column: col
+        });
+      } else {
+        // Cell doesn't exist in the data, but we still need to validate it
+        // Create a cell with undefined value so validation can report it as missing
+        cells.push({
+          reference: field,
+          value: undefined,
+          row,
+          column: col
+        });
+      }
     } else {
       // Assume it's a column name in the header row
       const headerRow = sheet.data[0] || [];
