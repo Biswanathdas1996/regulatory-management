@@ -673,6 +673,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const templateFile = req.files.template[0];
         const validationFile = req.files.validationRules?.[0];
         const { templateType, templateName, frequency, lastSubmissionDate } = req.body;
+        
+        console.log("Template upload request body:", {
+          templateType,
+          templateName,
+          frequency,
+          lastSubmissionDate,
+          category: req.body.category
+        });
 
         // Validate template type
         if (!templateTypes.includes(templateType)) {
@@ -692,7 +700,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Create template record
-        const template = await storage.createTemplate({
+        const templateData = {
           name: templateName.trim(),
           templateType,
           category: category, // Store the category based on uploader
@@ -703,7 +711,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           fileSize: templateFile.size,
           createdBy: req.user?.id || 1, // Use authenticated user ID or default to 1
           validationRulesPath: validationFile?.path,
-        });
+        };
+        
+        console.log("Creating template with data:", templateData);
+        
+        const template = await storage.createTemplate(templateData);
 
         // Parse and store validation rules if provided
         if (validationFile) {
