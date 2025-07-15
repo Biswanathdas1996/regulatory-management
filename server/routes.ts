@@ -204,6 +204,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(req.user);
   });
 
+  app.post("/api/auth/logout", async (req: AuthenticatedRequest, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ error: "Failed to logout" });
+      }
+      res.clearCookie("connect.sid");
+      res.json({ message: "Logged out successfully" });
+    });
+  });
+
   // User management endpoints (Admin only)
   // Get all users (Admin only)
   app.get(

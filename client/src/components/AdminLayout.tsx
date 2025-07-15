@@ -11,6 +11,7 @@ import {
   Users,
   Shield,
   FileSpreadsheet,
+  LogOut,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -33,6 +34,21 @@ export default function AdminLayout({
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [location] = useLocation();
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (response.ok) {
+        // Redirect to home page after logout
+        window.location.href = "/";
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   const menuItems = [
     {
@@ -113,7 +129,7 @@ export default function AdminLayout({
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 overflow-y-auto">
+          <nav className="flex-1 px-4 py-6 overflow-y-auto flex flex-col">
             <div className="space-y-1">
               {menuItems.map((item) => {
                 const IconComponent = item.icon;
@@ -136,6 +152,17 @@ export default function AdminLayout({
                   </Link>
                 );
               })}
+            </div>
+            
+            {/* Logout Button */}
+            <div className="mt-auto pt-6 border-t border-gray-200">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 rounded-xl cursor-pointer transition-all duration-200"
+              >
+                <LogOut className="h-5 w-5 mr-3 text-gray-400" />
+                Logout
+              </button>
             </div>
           </nav>
         </div>
