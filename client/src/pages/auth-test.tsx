@@ -58,7 +58,7 @@ export default function AuthTestPage() {
           <div className="space-y-4">
             <div>
               <h3 className="font-medium text-gray-900 mb-2">
-                1. Test Super Admin Login
+                1. Test IFSCA Login
               </h3>
               <p className="text-gray-600 text-sm">
                 Go to <code>/super-admin/login</code> and login with super admin

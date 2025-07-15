@@ -1,14 +1,41 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import SuperAdminLayout from "@/components/SuperAdminLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, Edit, Trash2, Users, Building, TrendingUp } from "lucide-react";
@@ -47,7 +74,11 @@ export default function SuperAdminIFSCAUsers() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<IFSCAUser | null>(null);
-  const [newUser, setNewUser] = useState<CreateUserData>({ username: "", password: "", categoryId: null });
+  const [newUser, setNewUser] = useState<CreateUserData>({
+    username: "",
+    password: "",
+    categoryId: null,
+  });
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -93,12 +124,14 @@ export default function SuperAdminIFSCAUsers() {
             role: "ifsca_user",
           }),
         });
-        
+
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+          const errorData = await response
+            .json()
+            .catch(() => ({ error: "Unknown error" }));
           throw new Error(errorData.error || "Failed to create user");
         }
-        
+
         const result = await response.json();
         console.log("User created successfully:", result);
         return result;
@@ -108,7 +141,9 @@ export default function SuperAdminIFSCAUsers() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/super-admin/ifsca-users"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/super-admin/ifsca-users"],
+      });
       setIsCreateDialogOpen(false);
       setNewUser({ username: "", password: "", categoryId: null });
       toast({
@@ -119,14 +154,21 @@ export default function SuperAdminIFSCAUsers() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create user",
+        description:
+          error instanceof Error ? error.message : "Failed to create user",
         variant: "destructive",
       });
     },
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<CreateUserData> }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: Partial<CreateUserData>;
+    }) => {
       const response = await fetch(`/api/super-admin/ifsca-users/${id}`, {
         method: "PUT",
         headers: {
@@ -135,16 +177,20 @@ export default function SuperAdminIFSCAUsers() {
         credentials: "include",
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
         throw new Error(errorData.error || "Failed to update user");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/super-admin/ifsca-users"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/super-admin/ifsca-users"],
+      });
       setIsEditDialogOpen(false);
       setEditingUser(null);
       toast({
@@ -155,7 +201,8 @@ export default function SuperAdminIFSCAUsers() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update user",
+        description:
+          error instanceof Error ? error.message : "Failed to update user",
         variant: "destructive",
       });
     },
@@ -167,16 +214,20 @@ export default function SuperAdminIFSCAUsers() {
         method: "DELETE",
         credentials: "include",
       });
-      
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
         throw new Error(errorData.error || "Failed to delete user");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/super-admin/ifsca-users"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/super-admin/ifsca-users"],
+      });
       toast({
         title: "User Deleted",
         description: "IFSCA user has been deleted successfully",
@@ -185,7 +236,8 @@ export default function SuperAdminIFSCAUsers() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete user",
+        description:
+          error instanceof Error ? error.message : "Failed to delete user",
         variant: "destructive",
       });
     },
@@ -215,7 +267,7 @@ export default function SuperAdminIFSCAUsers() {
     if (editingUser) {
       const updateData: Partial<CreateUserData> = {
         username: editingUser.username,
-        category: editingUser.category,
+        categoryId: editingUser.category,
       };
       updateUserMutation.mutate({ id: editingUser.id, data: updateData });
     }
@@ -227,38 +279,63 @@ export default function SuperAdminIFSCAUsers() {
     }
   };
 
-  const stats = [
+  interface StatItem {
+    title: string;
+    value: string;
+    description: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+  }
+
+  interface StatItem {
+    title: string;
+    value: string;
+    description: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+  }
+
+  interface CategoryStatItem extends StatItem {
+    categoryId: number;
+  }
+
+  const stats: StatItem[] = [
     {
-      title: "Total IFSCA Users",
+      title: "Total IFSCA Regulator",
       value: users.length.toString(),
       description: "Active regulatory administrators",
       icon: Users,
       color: "text-blue-600",
     },
-    ...categories.map((category: Category) => ({
-      title: category.displayName,
-      value: users.filter(u => u.category === category.id).length.toString(),
-      description: `${category.displayName} IFSCA users`,
-      icon: Building,
-      color: category.color,
-    })),
+    ...categories.map(
+      (category: Category): CategoryStatItem => ({
+        title: category.displayName,
+        value: users
+          .filter((u: IFSCAUser) => u.category === category.id)
+          .length.toString(),
+        description: `${category.displayName} IFSCA Regulators`,
+        icon: Building,
+        color: category.color,
+        categoryId: category.id,
+      })
+    ),
   ];
 
   return (
-    <SuperAdminLayout 
-      title="IFSCA User Management" 
+    <SuperAdminLayout
+      title="IFSCA Regulator Management"
       subtitle="Manage regulatory administrators across all categories"
       headerActions={
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Create IFSCA User
+              Create Regulator
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New IFSCA User</DialogTitle>
+              <DialogTitle>Create New IFSCA Regulator</DialogTitle>
               <DialogDescription>
                 Add a new IFSCA regulatory administrator for a specific category
               </DialogDescription>
@@ -269,7 +346,9 @@ export default function SuperAdminIFSCAUsers() {
                 <Input
                   id="username"
                   value={newUser.username}
-                  onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, username: e.target.value })
+                  }
                   placeholder="Enter username"
                 />
               </div>
@@ -279,22 +358,29 @@ export default function SuperAdminIFSCAUsers() {
                   id="password"
                   type="password"
                   value={newUser.password}
-                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, password: e.target.value })
+                  }
                   placeholder="Enter password"
                 />
               </div>
               <div>
-                <Label htmlFor="category">Category</Label>
-                <Select 
-                  value={newUser.categoryId?.toString() || ""} 
-                  onValueChange={(value) => setNewUser({ ...newUser, categoryId: parseInt(value) })}
+                <Label htmlFor="category">Sector</Label>
+                <Select
+                  value={newUser.categoryId?.toString() || ""}
+                  onValueChange={(value) =>
+                    setNewUser({ ...newUser, categoryId: parseInt(value) })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category: Category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
+                      <SelectItem
+                        key={category.id}
+                        value={category.id.toString()}
+                      >
                         {category.displayName}
                       </SelectItem>
                     ))}
@@ -303,11 +389,19 @@ export default function SuperAdminIFSCAUsers() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsCreateDialogOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleCreateUser} disabled={createUserMutation.isPending}>
-                {createUserMutation.isPending ? "Creating..." : "Create User"}
+              <Button
+                onClick={handleCreateUser}
+                disabled={createUserMutation.isPending}
+              >
+                {createUserMutation.isPending
+                  ? "Creating..."
+                  : "Create Regulator"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -326,7 +420,9 @@ export default function SuperAdminIFSCAUsers() {
                 <stat.icon className={`h-4 w-4 ${stat.color}`} />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {stat.value}
+                </div>
                 <p className="text-xs text-gray-500 mt-1">{stat.description}</p>
               </CardContent>
             </Card>
@@ -336,7 +432,7 @@ export default function SuperAdminIFSCAUsers() {
         {/* IFSCA Users Table */}
         <Card className="border-0 shadow-sm">
           <CardHeader>
-            <CardTitle>IFSCA Users</CardTitle>
+            <CardTitle>Regulators</CardTitle>
             <CardDescription>
               Regulatory administrators with category-specific access
             </CardDescription>
@@ -346,14 +442,15 @@ export default function SuperAdminIFSCAUsers() {
               <div className="text-center py-8">Loading IFSCA users...</div>
             ) : users.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                No IFSCA users found. Create your first IFSCA user to get started.
+                No IFSCA users found. Create your first IFSCA user to get
+                started.
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Username</TableHead>
-                    <TableHead>Category</TableHead>
+                    <TableHead>Sector</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -362,15 +459,17 @@ export default function SuperAdminIFSCAUsers() {
                 <TableBody>
                   {users.map((user: IFSCAUser) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.username}</TableCell>
+                      <TableCell className="font-medium">
+                        {user.username}
+                      </TableCell>
                       <TableCell>
                         {user.categoryData ? (
-                          <Badge 
-                            variant="outline" 
+                          <Badge
+                            variant="outline"
                             style={{
                               backgroundColor: `${user.categoryData.color}10`,
                               color: user.categoryData.color,
-                              borderColor: user.categoryData.color
+                              borderColor: user.categoryData.color,
                             }}
                           >
                             {user.categoryData.displayName}
@@ -380,19 +479,23 @@ export default function SuperAdminIFSCAUsers() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">IFSCA User</Badge>
+                        <Badge variant="secondary">Regulator</Badge>
                       </TableCell>
                       <TableCell>
                         {new Date(user.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
-                          <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditUser(user)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleDeleteUser(user.id)}
                             disabled={deleteUserMutation.isPending}
                           >
@@ -413,9 +516,9 @@ export default function SuperAdminIFSCAUsers() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit IFSCA User</DialogTitle>
+            <DialogTitle>Edit IFSCA Regulator</DialogTitle>
             <DialogDescription>
-              Update the IFSCA user's information
+              Update the IFSCA Regulator's information
             </DialogDescription>
           </DialogHeader>
           {editingUser && (
@@ -425,31 +528,51 @@ export default function SuperAdminIFSCAUsers() {
                 <Input
                   id="edit-username"
                   value={editingUser.username}
-                  onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })}
+                  onChange={(e) =>
+                    setEditingUser({ ...editingUser, username: e.target.value })
+                  }
                   placeholder="Enter username"
                 />
               </div>
               <div>
-                <Label htmlFor="edit-category">Category</Label>
-                <Select value={editingUser.category} onValueChange={(value) => setEditingUser({ ...editingUser, category: value })}>
+                <Label htmlFor="edit-category">Sector</Label>
+                <Select
+                  value={editingUser.category.toString()}
+                  onValueChange={(value) =>
+                    setEditingUser({
+                      ...editingUser,
+                      category: parseInt(value),
+                    })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="banking">Banking</SelectItem>
                     <SelectItem value="nbfc">NBFC</SelectItem>
-                    <SelectItem value="stock_exchange">Stock Exchange</SelectItem>
+                    <SelectItem value="stock_exchange">
+                      Stock Exchange
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handleUpdateUser} disabled={updateUserMutation.isPending}>
-              {updateUserMutation.isPending ? "Updating..." : "Update User"}
+            <Button
+              onClick={handleUpdateUser}
+              disabled={updateUserMutation.isPending}
+            >
+              {updateUserMutation.isPending
+                ? "Updating..."
+                : "Update Regulator"}
             </Button>
           </DialogFooter>
         </DialogContent>

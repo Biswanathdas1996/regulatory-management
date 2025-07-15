@@ -2,7 +2,7 @@
 
 ## Issues Found
 
-1. **Super Admin Login Not Using Auth Context**: The `super-admin-login.tsx` file was making direct API calls using `useMutation` and `apiRequest` instead of using the centralized `AuthContext` and `useAuth` hook.
+1. **IFSCA Login Not Using Auth Context**: The `super-admin-login.tsx` file was making direct API calls using `useMutation` and `apiRequest` instead of using the centralized `AuthContext` and `useAuth` hook.
 
 2. **Session State Not Properly Updated**: Because the super admin login wasn't using the auth context, the global authentication state wasn't being updated properly after login.
 
@@ -10,7 +10,7 @@
 
 ## Fixes Implemented
 
-### 1. Updated Super Admin Login Component (`super-admin-login.tsx`)
+### 1. Updated IFSCA Login Component (`super-admin-login.tsx`)
 
 **Before:**
 
@@ -98,7 +98,7 @@ Added proper role validation that:
 
 ## Testing Instructions
 
-### 1. Test Valid Super Admin Login
+### 1. Test Valid IFSCA Login
 
 ```
 URL: /super-admin/login
@@ -133,7 +133,7 @@ Expected: Login → immediate logout with "Access denied" message
 1. Go to /auth-test after login
 2. Check AuthDebugPanel shows:
    - Authenticated: Yes
-   - Super Admin: Yes
+   - IFSCA: Yes
    - User info populated correctly
    - localStorage matches context data
 ```

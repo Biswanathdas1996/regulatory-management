@@ -1,10 +1,23 @@
 import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import SuperAdminLayout from "@/components/SuperAdminLayout";
-import { Shield, Users, Building, TrendingUp, Settings, FileText } from "lucide-react";
+import {
+  Shield,
+  Users,
+  Building,
+  TrendingUp,
+  Settings,
+  FileText,
+} from "lucide-react";
 import { DataCleanupButton } from "@/components/DataCleanupButton";
 
 export default function SuperAdminDashboard() {
@@ -12,7 +25,7 @@ export default function SuperAdminDashboard() {
 
   const stats = [
     {
-      title: "Total IFSCA Users",
+      title: "Total IFSCA Regulator",
       value: "12",
       description: "Active regulatory administrators",
       icon: Users,
@@ -48,14 +61,17 @@ export default function SuperAdminDashboard() {
   ];
 
   return (
-    <SuperAdminLayout 
-      title="Super Admin Dashboard" 
+    <SuperAdminLayout
+      title="IFSCA Dashboard"
       subtitle={`Welcome back, ${user?.username}`}
     >
       <div className="space-y-6">
         {/* System Access Badge */}
         <div className="flex items-center gap-3">
-          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+          <Badge
+            variant="outline"
+            className="bg-red-50 text-red-700 border-red-200"
+          >
             <Shield className="h-3 w-3 mr-1" />
             Global System Access
           </Badge>
@@ -72,7 +88,9 @@ export default function SuperAdminDashboard() {
                 <stat.icon className={`h-4 w-4 ${stat.color}`} />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {stat.value}
+                </div>
                 <p className="text-xs text-gray-500 mt-1">{stat.description}</p>
               </CardContent>
             </Card>
@@ -96,13 +114,18 @@ export default function SuperAdminDashboard() {
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                   >
                     <div>
-                      <h4 className="font-medium text-gray-900">{category.name}</h4>
+                      <h4 className="font-medium text-gray-900">
+                        {category.name}
+                      </h4>
                       <p className="text-sm text-gray-600">
-                        {category.entities} entities • {category.users} IFSCA users
+                        {category.entities} entities • {category.users} IFSCA
+                        users
                       </p>
                     </div>
                     <Badge
-                      variant={category.status === "active" ? "default" : "secondary"}
+                      variant={
+                        category.status === "active" ? "default" : "secondary"
+                      }
                       className="bg-green-100 text-green-800"
                     >
                       Active
@@ -124,7 +147,7 @@ export default function SuperAdminDashboard() {
               <div className="space-y-3">
                 <Button className="w-full justify-start" variant="outline">
                   <Users className="h-4 w-4 mr-2" />
-                  Manage IFSCA Users
+                  Manage IFSCA Regulator
                 </Button>
                 <Button className="w-full justify-start" variant="outline">
                   <Building className="h-4 w-4 mr-2" />
@@ -158,22 +181,32 @@ export default function SuperAdminDashboard() {
             <div className="space-y-4">
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
                 <div>
-                  <p className="font-medium text-gray-900">New IFSCA User Created</p>
-                  <p className="text-sm text-gray-600">Banking category administrator added</p>
+                  <p className="font-medium text-gray-900">
+                    New IFSCA User Created
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Banking category administrator added
+                  </p>
                 </div>
                 <span className="text-sm text-gray-500">2 hours ago</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
                 <div>
                   <p className="font-medium text-gray-900">Template Updated</p>
-                  <p className="text-sm text-gray-600">Quarterly reporting template v2.1 published</p>
+                  <p className="text-sm text-gray-600">
+                    Quarterly reporting template v2.1 published
+                  </p>
                 </div>
                 <span className="text-sm text-gray-500">5 hours ago</span>
               </div>
               <div className="flex items-center justify-between py-2">
                 <div>
-                  <p className="font-medium text-gray-900">System Maintenance</p>
-                  <p className="text-sm text-gray-600">Database optimization completed</p>
+                  <p className="font-medium text-gray-900">
+                    System Maintenance
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Database optimization completed
+                  </p>
                 </div>
                 <span className="text-sm text-gray-500">1 day ago</span>
               </div>

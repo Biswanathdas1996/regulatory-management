@@ -45,7 +45,7 @@ export default function SuperAdminLogin() {
       if (isSuperAdmin) {
         toast({
           title: "Login successful",
-          description: "Welcome to Super Admin Dashboard",
+          description: "Welcome to IFSCA Dashboard",
         });
         // Redirect to auth test page to verify session state
         setLocation("/auth-test");
@@ -53,7 +53,7 @@ export default function SuperAdminLogin() {
         // User logged in but not super admin - logout and show error
         toast({
           title: "Access denied",
-          description: "Super Admin access required",
+          description: "IFSCA access required",
           variant: "destructive",
         });
         logout();

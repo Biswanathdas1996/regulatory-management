@@ -163,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "requireSuperAdmin: User role is not super_admin:",
         req.user.role
       );
-      return res.status(403).json({ error: "Super Admin access required" });
+      return res.status(403).json({ error: "IFSCA access required" });
     }
     console.log("requireSuperAdmin: Access granted");
     next();
@@ -2592,7 +2592,7 @@ Only return the JSON array, no additional text.
     }
   );
 
-  // Super Admin IFSCA User Management Endpoints
+  // IFSCA IFSCA Regulator Management Endpoints
 
   // Test endpoint to verify API routing is working
   app.get("/api/test", (req: AuthenticatedRequest, res) => {
@@ -2776,7 +2776,7 @@ Only return the JSON array, no additional text.
     }
   );
 
-  // Get all IFSCA users (Super Admin only)
+  // Get all IFSCA users (IFSCA only)
   app.get(
     "/api/super-admin/ifsca-users",
     requireAuth,
@@ -2833,7 +2833,7 @@ Only return the JSON array, no additional text.
     }
   );
 
-  // Get all reporting entities (Super Admin only)
+  // Get all reporting entities (IFSCA only)
   app.get(
     "/api/super-admin/reporting-entities",
     requireAuth,
@@ -2890,7 +2890,7 @@ Only return the JSON array, no additional text.
     }
   );
 
-  // Create new IFSCA user (Super Admin only)
+  // Create new IFSCA user (IFSCA only)
   app.post(
     "/api/super-admin/ifsca-users",
     requireAuth,
@@ -2951,7 +2951,7 @@ Only return the JSON array, no additional text.
     }
   );
 
-  // Update IFSCA user (Super Admin only)
+  // Update IFSCA user (IFSCA only)
   app.put(
     "/api/super-admin/ifsca-users/:id",
     requireAuth,
@@ -3003,7 +3003,7 @@ Only return the JSON array, no additional text.
     }
   );
 
-  // Category Management Endpoints (Super Admin only)
+  // Category Management Endpoints (IFSCA only)
 
   // Get all categories
   app.get(
@@ -3109,7 +3109,7 @@ Only return the JSON array, no additional text.
     }
   );
 
-  // Clean all data except users table (Super Admin only)
+  // Clean all data except users table (IFSCA only)
   app.post(
     "/api/super-admin/clean-data",
     requireAuth,
@@ -3180,7 +3180,7 @@ Only return the JSON array, no additional text.
     }
   );
 
-  // Delete IFSCA user (Super Admin only)
+  // Delete IFSCA user (IFSCA only)
   app.delete(
     "/api/super-admin/ifsca-users/:id",
     requireAuth,

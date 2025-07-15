@@ -67,7 +67,7 @@ export default function SuperAdminLayout({
       current: location === "/super-admin/reporting-entities",
     },
     {
-      name: "Category Management",
+      name: "Sector Management",
       href: "/super-admin/categories",
       icon: Settings,
       current: location === "/super-admin/categories",
@@ -129,9 +129,7 @@ export default function SuperAdminLayout({
             <div className="p-1.5 bg-red-600 rounded-md">
               <Shield className="h-5 w-5 text-white" />
             </div>
-            <span className="text-lg font-semibold text-gray-900">
-              Super Admin
-            </span>
+            <span className="text-lg font-semibold text-gray-900">IFSCA</span>
           </div>
           <Button
             variant="ghost"
@@ -175,7 +173,7 @@ export default function SuperAdminLayout({
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-900">
-                {user?.username || "Super Admin"}
+                {user?.username || "IFSCA"}
               </p>
               <p className="text-xs text-gray-500">
                 Global Access •{" "}
@@ -208,7 +206,7 @@ export default function SuperAdminLayout({
           </Button>
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-red-600" />
-            <span className="font-medium text-gray-900">Super Admin</span>
+            <span className="font-medium text-gray-900">IFSCA</span>
           </div>
         </div>
 

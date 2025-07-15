@@ -231,9 +231,7 @@ export default function UserManagementPage() {
 
   const getRoleBadge = (role: string) => {
     if (role === "super_admin") {
-      return (
-        <Badge className="bg-purple-100 text-purple-800">Super Admin</Badge>
-      );
+      return <Badge className="bg-purple-100 text-purple-800">IFSCA</Badge>;
     }
     if (role === "ifsca_user") {
       return <Badge className="bg-red-100 text-red-800">IFSCA User</Badge>;
@@ -245,7 +243,7 @@ export default function UserManagementPage() {
   };
 
   const getRoleLabel = (role: string) => {
-    if (role === "super_admin") return "Super Admin";
+    if (role === "super_admin") return "IFSCA";
     if (role === "ifsca_user") return "IFSCA User";
     if (role === "reporting_entity") return "Reporting Entity User";
     return role;
@@ -402,7 +400,7 @@ export default function UserManagementPage() {
                             style={{
                               backgroundColor: `${user.categoryData.color}10`,
                               color: user.categoryData.color,
-                              borderColor: user.categoryData.color
+                              borderColor: user.categoryData.color,
                             }}
                           >
                             {user.categoryData.displayName}

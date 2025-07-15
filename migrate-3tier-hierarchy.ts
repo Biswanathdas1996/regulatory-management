@@ -8,34 +8,48 @@ async function migrate3TierHierarchy() {
   try {
     // Add new columns to users table
     console.log("Adding new columns to users table...");
-    
+
     // Add role column (replacing the old integer role)
     await db.execute(sql`ALTER TABLE users DROP COLUMN IF EXISTS role CASCADE`);
-    await db.execute(sql`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'reporting_entity'`);
-    
+    await db.execute(
+      sql`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'reporting_entity'`
+    );
+
     // Add category column
-    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS category TEXT`);
-    
+    await db.execute(
+      sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS category TEXT`
+    );
+
     // Add createdBy column
-    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by INTEGER`);
-    
+    await db.execute(
+      sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by INTEGER`
+    );
+
     // Add timestamps
-    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW() NOT NULL`);
-    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW() NOT NULL`);
+    await db.execute(
+      sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW() NOT NULL`
+    );
+    await db.execute(
+      sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW() NOT NULL`
+    );
 
     // Add new columns to templates table
     console.log("Adding new columns to templates table...");
-    
+
     // Add category column
-    await db.execute(sql`ALTER TABLE templates ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'banking'`);
-    
-    // Add createdBy column  
-    await db.execute(sql`ALTER TABLE templates ADD COLUMN IF NOT EXISTS created_by INTEGER NOT NULL DEFAULT 1`);
+    await db.execute(
+      sql`ALTER TABLE templates ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'banking'`
+    );
+
+    // Add createdBy column
+    await db.execute(
+      sql`ALTER TABLE templates ADD COLUMN IF NOT EXISTS created_by INTEGER NOT NULL DEFAULT 1`
+    );
 
     // Create default super admin user
     console.log("Creating default super admin user...");
     const hashedPassword = await bcrypt.hash("admin123", 10);
-    
+
     await db.execute(sql`
       INSERT INTO users (username, password, role, category, created_at, updated_at)
       VALUES ('superadmin', ${hashedPassword}, 'super_admin', NULL, NOW(), NOW())
@@ -47,11 +61,11 @@ async function migrate3TierHierarchy() {
 
     // Create default IFSCA users for each category
     console.log("Creating default IFSCA users...");
-    
+
     const ifscaUsers = [
       { username: "ifsca_banking", category: "banking" },
       { username: "ifsca_nbfc", category: "nbfc" },
-      { username: "ifsca_stock_exchange", category: "stock_exchange" }
+      { username: "ifsca_stock_exchange", category: "stock_exchange" },
     ];
 
     for (const user of ifscaUsers) {
@@ -89,11 +103,10 @@ async function migrate3TierHierarchy() {
 
     console.log("Migration completed successfully!");
     console.log("\nDefault credentials created:");
-    console.log("Super Admin: superadmin / admin123");
+    console.log("IFSCA: superadmin / admin123");
     console.log("IFSCA Banking: ifsca_banking / ifsca123");
     console.log("IFSCA NBFC: ifsca_nbfc / ifsca123");
     console.log("IFSCA Stock Exchange: ifsca_stock_exchange / ifsca123");
-
   } catch (error) {
     console.error("Migration failed:", error);
     throw error;

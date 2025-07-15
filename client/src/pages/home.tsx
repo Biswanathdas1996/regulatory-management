@@ -111,7 +111,7 @@ export default function Home() {
       {/* Main Content */}
       <div className="container mx-auto px-4 pb-12 mt-[30px] mb-[30px]">
         <div className="max-w-5xl mx-auto">
-          {/* Super Admin Access */}
+          {/* IFSCA Access */}
           <div className="mb-8">
             <Card className="group hover:shadow-xl hover:shadow-red-500/10 transition-all duration-300 border-red-200 bg-gradient-to-r from-red-50/50 to-red-100/50 backdrop-blur-sm overflow-hidden">
               <CardContent className="p-6">
@@ -152,7 +152,7 @@ export default function Home() {
                   Institution Portal
                 </CardTitle>
                 <p className="text-gray-500 text-sm">
-                  For GIFT City financial institutions
+                  For GIFT City institutions
                 </p>
               </CardHeader>
               <CardContent className="px-6 pb-6">
@@ -198,7 +198,7 @@ export default function Home() {
                   <Shield className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                  IFSCA User Console
+                  Regulator Console
                 </CardTitle>
                 <p className="text-gray-500 text-sm">
                   For regulatory administrators
@@ -232,7 +232,7 @@ export default function Home() {
                 <div className="space-y-2">
                   <Link href="/regulator/login">
                     <Button className="w-full h-10 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg shadow-md shadow-blue-500/25 transition-all duration-200 text-sm">
-                      IFSCA Access
+                      Regulator Access
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   </Link>

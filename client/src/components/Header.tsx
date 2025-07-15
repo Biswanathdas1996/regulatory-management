@@ -48,7 +48,7 @@ export const Header: React.FC = () => {
             <Link to="/regulator/login">
               <Button variant="outline" size="sm">
                 <Shield className="h-4 w-4 mr-2" />
-                IFSCA User
+                Regulator Login
               </Button>
             </Link>
             <Link to="/reporting-entity/login">
@@ -81,7 +81,7 @@ export const Header: React.FC = () => {
               </Button>
             </Link>
 
-            {user.role === "admin" ? (
+            {user.role === "ifsca_user" ? (
               <>
                 <Link to="/regulator/dashboard">
                   <Button variant="ghost" size="sm">
@@ -128,7 +128,9 @@ export const Header: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600 hidden sm:block">
-            {user.role === "admin" ? "IFSCA User" : "Reporting Entity User"}
+            {user.role === "ifsca_user"
+              ? "IFSCA User"
+              : "Reporting Entity User"}
           </span>
 
           <DropdownMenu>
@@ -148,7 +150,7 @@ export const Header: React.FC = () => {
                     {user.username}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user.role === "admin"
+                    {user.role === "ifsca_user"
                       ? "IFSCA User"
                       : "Reporting Entity Account"}
                   </p>
@@ -159,7 +161,7 @@ export const Header: React.FC = () => {
               <DropdownMenuItem
                 onClick={() =>
                   setLocation(
-                    user.role === "admin"
+                    user.role === "ifsca_user"
                       ? "/regulator/dashboard"
                       : "/reporting-entity/dashboard"
                   )

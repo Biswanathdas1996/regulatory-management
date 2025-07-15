@@ -4,7 +4,7 @@
 
 All login pages had inconsistent authentication patterns:
 
-1. **Super Admin Login**: Using direct API calls instead of auth context
+1. **IFSCA Login**: Using direct API calls instead of auth context
 2. **IFSCA Login**: Using direct API calls instead of auth context
 3. **Reporting Entity Login**: Using direct API calls instead of auth context
 4. **Admin Login**: ✅ Already using auth context correctly
@@ -14,7 +14,7 @@ All login pages had inconsistent authentication patterns:
 
 ### 1. Standardized Authentication Pattern
 
-**Before (Super Admin, IFSCA, Reporting Entity):**
+**Before (IFSCA, IFSCA, Reporting Entity):**
 
 ```tsx
 const loginMutation = useMutation({
@@ -80,7 +80,7 @@ const onSubmit = async (data: LoginForm) => {
 
 ### 2. Role-Specific Implementations
 
-#### Super Admin Login (`super-admin-login.tsx`)
+#### IFSCA Login (`super-admin-login.tsx`)
 
 - **Role Check**: `isSuperAdmin`
 - **Dashboard**: `/super-admin/dashboard` → `/auth-test` (for testing)
@@ -149,18 +149,18 @@ Update Auth Context → Ready for Use
 
 ### Test Credentials (from `add-users-script.sql`)
 
-| Username      | Password | Role        | Category | Expected Behavior     |
-| ------------- | -------- | ----------- | -------- | --------------------- |
-| superadmin    | admin123 | super_admin | null     | ✅ Super Admin access |
-| ifsca_banking | ifsca123 | ifsca_user  | banking  | ✅ IFSCA access       |
-| ifsca_nbfc    | ifsca123 | ifsca_user  | nbfc     | ✅ IFSCA access       |
+| Username      | Password | Role        | Category | Expected Behavior |
+| ------------- | -------- | ----------- | -------- | ----------------- |
+| superadmin    | admin123 | super_admin | null     | ✅ IFSCA access   |
+| ifsca_banking | ifsca123 | ifsca_user  | banking  | ✅ IFSCA access   |
+| ifsca_nbfc    | ifsca123 | ifsca_user  | nbfc     | ✅ IFSCA access   |
 
 ### Test Scenarios
 
 #### 1. Valid Role Access
 
 ```bash
-# Super Admin Login
+# IFSCA Login
 URL: /super-admin/login
 Credentials: superadmin / admin123
 Expected: Success → /auth-test
@@ -179,12 +179,12 @@ Expected: Success → /reporting-entity/dashboard
 #### 2. Invalid Role Access
 
 ```bash
-# Try IFSCA credentials on Super Admin login
+# Try IFSCA credentials on IFSCA login
 URL: /super-admin/login
 Credentials: ifsca_banking / ifsca123
 Expected: Login → Immediate logout + "Access denied"
 
-# Try Super Admin credentials on IFSCA login
+# Try IFSCA credentials on IFSCA login
 URL: /ifsca/login
 Credentials: superadmin / admin123
 Expected: Login → Immediate logout + "Access denied"
@@ -211,7 +211,7 @@ Expected: Login → Immediate logout + "Access denied"
 ### 2. Available Routes for Testing
 
 - `/auth-test` - Authentication debug panel (protected route)
-- `/super-admin/login` - Super Admin login (redirects to /auth-test after success)
+- `/super-admin/login` - IFSCA login (redirects to /auth-test after success)
 - `/ifsca/login` - IFSCA user login
 - `/reporting-entity/login` - Reporting entity login
 

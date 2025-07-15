@@ -75,8 +75,8 @@ export default function AdminTemplatesPage() {
 
   const getCategoryIcon = (categoryId: number) => {
     const category = categoriesData.find((cat: any) => cat.id === categoryId);
-    const iconName = category?.icon || 'FileText';
-    
+    const iconName = category?.icon || "FileText";
+
     switch (iconName) {
       case "Landmark":
         return <Landmark className="h-4 w-4 text-blue-600" />;
@@ -94,14 +94,14 @@ export default function AdminTemplatesPage() {
 
   const getCategoryColor = (categoryId: number) => {
     const category = categoriesData.find((cat: any) => cat.id === categoryId);
-    const color = category?.color || '#6B7280';
-    
+    const color = category?.color || "#6B7280";
+
     // Convert hex color to Tailwind classes
-    if (color.includes('3B82F6') || color.includes('blue')) {
+    if (color.includes("3B82F6") || color.includes("blue")) {
       return "bg-blue-100 text-blue-800";
-    } else if (color.includes('8B5CF6') || color.includes('purple')) {
+    } else if (color.includes("8B5CF6") || color.includes("purple")) {
       return "bg-purple-100 text-purple-800";
-    } else if (color.includes('10B981') || color.includes('green')) {
+    } else if (color.includes("10B981") || color.includes("green")) {
       return "bg-green-100 text-green-800";
     } else {
       return "bg-gray-100 text-gray-800";
@@ -114,15 +114,16 @@ export default function AdminTemplatesPage() {
   };
 
   // Group templates by category ID for super admins
-  const groupedTemplates = templates ? 
-    templates.reduce((acc: any, template: any) => {
-      const categoryId = template.category || 'other';
-      if (!acc[categoryId]) {
-        acc[categoryId] = [];
-      }
-      acc[categoryId].push(template);
-      return acc;
-    }, {}) : {};
+  const groupedTemplates = templates
+    ? templates.reduce((acc: any, template: any) => {
+        const categoryId = template.category || "other";
+        if (!acc[categoryId]) {
+          acc[categoryId] = [];
+        }
+        acc[categoryId].push(template);
+        return acc;
+      }, {})
+    : {};
 
   const categories = Object.keys(groupedTemplates).sort((a, b) => {
     // Sort by category display name
@@ -132,7 +133,8 @@ export default function AdminTemplatesPage() {
   });
 
   // Determine which layout to use based on user role
-  const LayoutComponent = user?.role === "super_admin" ? SuperAdminLayout : AdminLayout;
+  const LayoutComponent =
+    user?.role === "super_admin" ? SuperAdminLayout : AdminLayout;
 
   if (isLoading) {
     return (
@@ -157,14 +159,6 @@ export default function AdminTemplatesPage() {
     <LayoutComponent
       title="Template Library"
       subtitle="Manage all system templates and validation rules"
-      headerActions={
-        <Link to="/regulator/template-management">
-          <Button>
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Template
-          </Button>
-        </Link>
-      }
     >
       {!templates || templates.length === 0 ? (
         <Card className="border-0 shadow-sm">
@@ -182,7 +176,7 @@ export default function AdminTemplatesPage() {
           </CardContent>
         </Card>
       ) : user?.role === "super_admin" ? (
-        // Super Admin view - Segregated by category
+        // IFSCA view - Segregated by category
         <div className="space-y-6">
           {categories.map((categoryKey) => {
             const categoryId = parseInt(categoryKey);
@@ -193,7 +187,8 @@ export default function AdminTemplatesPage() {
                     <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center mr-3">
                       {getCategoryIcon(categoryId)}
                     </div>
-                    {getCategoryName(categoryId)} Templates ({groupedTemplates[categoryKey]?.length || 0})
+                    {getCategoryName(categoryId)} Templates (
+                    {groupedTemplates[categoryKey]?.length || 0})
                     <Badge className={`ml-3 ${getCategoryColor(categoryId)}`}>
                       {getCategoryName(categoryId)}
                     </Badge>
@@ -215,78 +210,83 @@ export default function AdminTemplatesPage() {
                       </TableHeader>
                       <TableBody>
                         {groupedTemplates[categoryKey]?.map((template: any) => (
-                        <TableRow key={template.id}>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center space-x-2">
-                              <FileText className="h-4 w-4 text-gray-400" />
-                              <span>{template.name}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {template.templateType || "Standard"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(template.status)}
-                              <Badge className={getStatusColor(template.status)}>
-                                {template.status}
+                          <TableRow key={template.id}>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center space-x-2">
+                                <FileText className="h-4 w-4 text-gray-400" />
+                                <span>{template.name}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {template.templateType || "Standard"}
                               </Badge>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {template.validationRulesCount > 0 ? (
+                            </TableCell>
+                            <TableCell>
                               <div className="flex items-center gap-2">
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                                <span className="text-sm font-medium">
-                                  {template.validationRulesCount} rules
-                                </span>
+                                {getStatusIcon(template.status)}
+                                <Badge
+                                  className={getStatusColor(template.status)}
+                                >
+                                  {template.status}
+                                </Badge>
                               </div>
-                            ) : (
+                            </TableCell>
+                            <TableCell>
+                              {template.validationRulesCount > 0 ? (
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                  <span className="text-sm font-medium">
+                                    {template.validationRulesCount} rules
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <XCircle className="h-4 w-4 text-gray-400" />
+                                  <span className="text-sm text-gray-500">
+                                    No rules
+                                  </span>
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm text-gray-500">
+                              {format(
+                                new Date(template.createdAt),
+                                "MMM dd, yyyy"
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">
+                                {template.submissionCount || 0} submissions
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
                               <div className="flex items-center gap-2">
-                                <XCircle className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-500">
-                                  No rules
-                                </span>
+                                <a
+                                  href={`/api/templates/${template.id}/download`}
+                                  download
+                                  className="inline-flex"
+                                >
+                                  <Button size="sm" variant="outline">
+                                    <Download className="h-4 w-4" />
+                                  </Button>
+                                </a>
+                                {/* <Link
+                                  to={`/regulator/template-management?template=${template.id}`}
+                                >
+                                  <Button size="sm" variant="outline">
+                                    <Settings className="h-4 w-4" />
+                                  </Button>
+                                </Link> */}
                               </div>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm text-gray-500">
-                            {format(new Date(template.createdAt), "MMM dd, yyyy")}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">
-                              {template.submissionCount || 0} submissions
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <a
-                                href={`/api/templates/${template.id}/download`}
-                                download
-                                className="inline-flex"
-                              >
-                                <Button size="sm" variant="outline">
-                                  <Download className="h-4 w-4" />
-                                </Button>
-                              </a>
-                              <Link
-                                to={`/regulator/template-management?template=${template.id}`}
-                              >
-                                <Button size="sm" variant="outline">
-                                  <Settings className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
             );
           })}
         </div>

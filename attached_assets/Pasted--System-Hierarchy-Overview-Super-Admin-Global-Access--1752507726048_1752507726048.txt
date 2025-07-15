@@ -2,7 +2,7 @@
 ## 🧱 System Hierarchy Overview
 
 ```
-                         Super Admin (Global Access)
+                         IFSCA (Global Access)
                                  |
                 ---------------------------------------
                 |                  |                 |
@@ -16,7 +16,7 @@
 
 ## 🔐 Roles and Responsibilities
 
-### 1. **Super Admin (Global Level)**
+### 1. **IFSCA (Global Level)**
 
 * **Login Page**: `/super-admin/login`
 * **Dashboard**: `/super-admin/dashboard`
@@ -68,7 +68,7 @@
 
 | Role             | Login URL                 | Dashboard URL                 | Access Scope           |
 | ---------------- | ------------------------- | ----------------------------- | ---------------------- |
-| Super Admin      | `/super-admin/login`      | `/super-admin/dashboard`      | All categories & users |
+| IFSCA      | `/super-admin/login`      | `/super-admin/dashboard`      | All categories & users |
 | IFSCA User       | `/ifsca/login`            | `/ifsca/dashboard`            | Assigned category only |
 | Reporting Entity | `/reporting-entity/login` | `/reporting-entity/dashboard` | Self, within category  |
 

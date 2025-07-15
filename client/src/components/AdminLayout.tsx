@@ -122,7 +122,7 @@ export default function AdminLayout({
                 <Shield className="text-white text-sm" />
               </div>
               <div>
-                <h2 className="font-bold text-gray-900">IFSCA User Portal</h2>
+                <h2 className="font-bold text-gray-900">Regulator Portal</h2>
                 <p className="text-xs text-gray-500">System Management</p>
               </div>
             </div>
@@ -165,11 +165,12 @@ export default function AdminLayout({
                     {user?.username || "IFSCA User"}
                   </p>
                   <p className="text-xs text-gray-500 capitalize">
-                    {user?.category || "Admin"} • {user?.role?.replace('_', ' ') || "User"}
+                    {user?.category || "Admin"} •{" "}
+                    {user?.role?.replace("_", " ") || "User"}
                   </p>
                 </div>
               </div>
-              
+
               {/* Logout Button */}
               <div className="px-4">
                 <button

@@ -100,7 +100,7 @@ export default function AdminDashboardPage() {
 
   return (
     <AdminLayout
-      title="IFSCA User Dashboard"
+      title="Regulator Dashboard"
       subtitle="System overview and performance metrics"
     >
       {/* System Metrics */}

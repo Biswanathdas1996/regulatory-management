@@ -64,7 +64,7 @@ export default function AdminLoginPage() {
               <Shield className="h-8 w-8 text-white" />
             </div>
             <CardTitle className="text-2xl font-bold text-gray-900">
-              IFSCA User Login
+              Regulator Login
             </CardTitle>
             <p className="text-gray-600">Access the administrative dashboard</p>
           </CardHeader>
@@ -139,21 +139,21 @@ export default function AdminLoginPage() {
 
             <div className="mt-6 pt-6 border-t border-gray-200">
               <p className="text-center text-sm text-gray-600">
-                Need user access?{" "}
+                Need Reporting Entity access?{" "}
                 <Link to="/reporting-entity/login">
                   <Button variant="link" className="h-auto p-0 text-blue-600">
-                    User Login
+                    Reporting Entity Login
                   </Button>
                 </Link>
               </p>
             </div>
 
             {/* Demo Credentials */}
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            {/* <div className="mt-4 p-3 bg-gray-50 rounded-lg">
               <p className="text-xs text-gray-500 text-center">
                 Demo: username: "admin", Password: "admin123"
               </p>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       </div>

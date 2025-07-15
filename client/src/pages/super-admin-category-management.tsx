@@ -264,7 +264,7 @@ export default function SuperAdminCategoryManagementPage() {
   if (isLoading) {
     return (
       <SuperAdminLayout
-        title="Category Management"
+        title="Sector Management"
         subtitle="Create and manage Sectors"
       >
         <div className="text-center py-12">
@@ -277,21 +277,21 @@ export default function SuperAdminCategoryManagementPage() {
 
   return (
     <SuperAdminLayout
-      title="Category Management"
+      title="Sector Management"
       subtitle="Create and manage Sectors"
       headerActions={
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
               <Plus className="h-4 w-4 mr-2" />
-              Create Category
+              Create Sector
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Create New Category</DialogTitle>
+              <DialogTitle>Create New Sector</DialogTitle>
               <DialogDescription>
-                Add a new category to organize users and templates.
+                Add a new Sector to organize users and templates.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -388,7 +388,7 @@ export default function SuperAdminCategoryManagementPage() {
               >
                 {createCategoryMutation.isPending
                   ? "Creating..."
-                  : "Create Category"}
+                  : "Create Sector"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -405,7 +405,7 @@ export default function SuperAdminCategoryManagementPage() {
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-500">
-                  Total Categories
+                  Total Sector
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {categories?.length || 0}
@@ -424,9 +424,9 @@ export default function SuperAdminCategoryManagementPage() {
             {!categories || categories.length === 0 ? (
               <div className="text-center py-8">
                 <Palette className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 mb-4">No categories created yet</p>
+                <p className="text-gray-500 mb-4">No Sector created yet</p>
                 <p className="text-sm text-gray-400">
-                  Create your first category to organize users and templates
+                  Create your first Sector to organize users and templates
                 </p>
               </div>
             ) : (
@@ -434,7 +434,7 @@ export default function SuperAdminCategoryManagementPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Category</TableHead>
+                      <TableHead>Sector</TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Description</TableHead>
                       <TableHead>Created</TableHead>
@@ -511,9 +511,9 @@ export default function SuperAdminCategoryManagementPage() {
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Edit Category</DialogTitle>
+              <DialogTitle>Edit Sector</DialogTitle>
               <DialogDescription>
-                Update category information and appearance.
+                Update Sector information and appearance.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -526,7 +526,7 @@ export default function SuperAdminCategoryManagementPage() {
                   className="bg-gray-50"
                 />
                 <p className="text-xs text-gray-500">
-                  Category name cannot be changed after creation
+                  Sector name cannot be changed after creation
                 </p>
               </div>
               <div className="grid gap-2">
@@ -609,7 +609,7 @@ export default function SuperAdminCategoryManagementPage() {
               >
                 {updateCategoryMutation.isPending
                   ? "Updating..."
-                  : "Update Category"}
+                  : "Update Sector"}
               </Button>
             </DialogFooter>
           </DialogContent>

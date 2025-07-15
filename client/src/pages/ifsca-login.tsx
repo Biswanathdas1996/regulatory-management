@@ -179,7 +179,7 @@ export default function IFSCALogin() {
                   onClick={() => setLocation("/super-admin/login")}
                   className="text-red-600 hover:text-red-700"
                 >
-                  Super Admin Login
+                  IFSCA Login
                 </Button>
                 <span className="text-gray-400">•</span>
                 <Button

@@ -100,7 +100,7 @@ export default function AuthDebugPanel() {
           </h3>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <span>Super Admin:</span>
+              <span>IFSCA:</span>
               <div className="flex items-center gap-2">
                 <StatusIcon condition={isSuperAdmin} />
                 <Badge variant={isSuperAdmin ? "default" : "outline"}>
