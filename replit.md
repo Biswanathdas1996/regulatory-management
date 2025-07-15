@@ -10,6 +10,18 @@ The application validates submissions against predefined IFSCA-compliant rules w
 
 ## Recent Changes (January 15, 2025)
 
+### Submission Calendar Feature Implementation (January 15, 2025) ✓
+- Added comprehensive submission calendar component for Reporting Entity Portal
+- Calendar automatically calculates next due dates based on template frequency (weekly, monthly, quarterly, yearly)
+- Shows submission reminders with color-coded status: upcoming (blue), due (yellow), overdue (red)
+- Integrates user's category to filter relevant templates for calendar display
+- Displays last submission dates and calculates next due dates intelligently
+- Added calendar as new tab in user dashboard alongside overview, submissions, templates, analytics
+- Calendar shows monthly view with submission deadlines marked on specific dates
+- Includes upcoming submissions summary with detailed reminder information
+- Fully responsive design with navigation between months
+- Real-time data integration with template frequencies and submission history
+
 ### Category-Based Template Filtering Implementation (January 15, 2025) ✓
 - Implemented category-based template filtering where IFSCA users can only view templates relevant to their specific category
 - Modified GET /api/templates and /api/templates/with-rules endpoints to filter templates by user category for IFSCA users
