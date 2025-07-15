@@ -784,9 +784,9 @@ export default function SubmissionViewPage() {
                               <div className="text-left">
                                 <h4 className="font-medium text-green-800 mb-2">Validation Summary</h4>
                                 <div className="space-y-2 text-sm text-green-700">
-                                  {validationResults.length > 0 ? (
+                                  {results && results.length > 0 ? (
                                     <>
-                                      <p>✓ {validationResults.filter(r => r.isValid).length} validation checks passed</p>
+                                      <p>✓ {results.filter(r => r.isValid || r.is_valid).length} validation checks passed</p>
                                       <p>✓ File format validated successfully</p>
                                       <p>✓ All required fields contain valid data</p>
                                       <p>✓ Data types and formats meet requirements</p>
