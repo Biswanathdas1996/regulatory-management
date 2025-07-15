@@ -7,7 +7,7 @@ import csv from "csv-parser";
 import ExcelJS from "exceljs";
 import { storage } from "./storage";
 import { FileProcessor } from "./services/fileProcessor";
-import { ValidationRulesParser } from "./services/validationRulesParser";
+import { ModernValidationRulesParser } from "../validation/ModernValidationRulesParser";
 import { ValidationEngine } from "./services/validationEngine";
 import {
   insertTemplateSchema,
@@ -798,10 +798,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Parse and store validation rules if provided
         if (validationFile) {
           try {
-            const rules = await ValidationRulesParser.parseRulesFile(
+            const parsed = await ModernValidationRulesParser.parseValidationFile(
               validationFile.path,
               template.id
             );
+            const rules = parsed.rules;
             if (rules.length > 0) {
               await storage.createValidationRules(rules);
             }
@@ -864,69 +865,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .toLowerCase();
           let rules: any[] = [];
 
-          if (fileExtension === ".txt") {
-            // Parse text file rules
-            rules = await ValidationRulesParser.parseRulesFile(
+          if (fileExtension === ".txt" || fileExtension === ".json" || fileExtension === ".yaml" || fileExtension === ".yml" || fileExtension === ".csv") {
+            // Parse validation rules using modern parser
+            const parsed = await ModernValidationRulesParser.parseValidationFile(
               filePath,
               templateId
             );
+            rules = parsed.rules;
           } else if (fileExtension === ".xlsx" || fileExtension === ".xls") {
-            // Parse Excel file rules (implement similar to existing Excel import)
-            const workbook = new ExcelJS.Workbook();
-            await workbook.xlsx.readFile(filePath);
-            const worksheet = workbook.getWorksheet(1);
+            // Parse Excel file rules using modern parser
+            const parsed = await ModernValidationRulesParser.parseValidationFile(
+              filePath,
+              templateId
+            );
+            rules = parsed.rules;
 
-            if (worksheet) {
-              const sheets = await storage.getTemplateSheets(templateId);
-              const sheetMap = new Map(
-                sheets.map((s) => [s.sheetName.toLowerCase(), s.id])
-              );
 
-              rules = [];
-              let headerRow: string[] = [];
-
-              worksheet.eachRow((row, rowNumber) => {
-                if (rowNumber === 1) {
-                  headerRow = row.values as string[];
-                  headerRow = headerRow.slice(1);
-                } else {
-                  const values = row.values as any[];
-                  const rowData = values.slice(1);
-
-                  if (rowData.length >= 6) {
-                    const [
-                      sheet,
-                      field,
-                      ruleType,
-                      condition,
-                      errorMessage,
-                      severity,
-                    ] = rowData;
-
-                    if (field && ruleType && condition && errorMessage) {
-                      let sheetId = null;
-                      if (sheet && sheet.toLowerCase() !== "all sheets") {
-                        sheetId = sheetMap.get(sheet.toLowerCase()) || null;
-                      }
-
-                      rules.push({
-                        templateId,
-                        sheetId,
-                        ruleType: ruleType.toLowerCase(),
-                        field: field.toString(),
-                        condition: condition.toString(),
-                        errorMessage: errorMessage.toString(),
-                        severity:
-                          (severity?.toString()?.toLowerCase() || "error") ===
-                          "warning"
-                            ? "warning"
-                            : "error",
-                      });
-                    }
-                  }
-                }
-              });
-            }
           }
 
           // Save rules to database if any were parsed
@@ -1618,7 +1572,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Parse the rules text
-        const parsedRules = ValidationRulesParser.parseRulesContent(rulesText);
+        // Create temporary file for parsing
+        const tempFilePath = path.join('validation', `temp_${Date.now()}.txt`);
+        fs.writeFileSync(tempFilePath, rulesText);
+        
+        const parsed = await ModernValidationRulesParser.parseValidationFile(tempFilePath, templateId);
+        const parsedRules = parsed.rules;
+        
+        // Clean up temp file
+        fs.unlinkSync(tempFilePath);
 
         if (parsedRules.length === 0) {
           return res
@@ -2322,7 +2284,32 @@ Only return the JSON array, no additional text.
 
   // Generate example validation rules file
   app.get("/api/validation-rules/example", (req: AuthenticatedRequest, res) => {
-    const example = ValidationRulesParser.generateExampleRules();
+    const example = `{
+  "metadata": {
+    "templateName": "Sample Template",
+    "version": "1.0",
+    "createdBy": "IFSCA Team",
+    "description": "Example validation rules"
+  },
+  "sheetValidations": {
+    "Sheet1": {
+      "columnValidations": {
+        "A": {
+          "dataType": "string",
+          "required": true,
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "B": {
+          "dataType": "number",
+          "required": true,
+          "minimum": 0,
+          "maximum": 999999
+        }
+      }
+    }
+  }
+}`;
     res.type("text/plain").send(example);
   });
 

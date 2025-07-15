@@ -1,0 +1,121 @@
+metadata:
+  templateName: "Quarterly Reporting Format for Capital Market Intermediaries"
+  version: "1.0"
+  createdBy: "IFSCA Regulatory Team"
+  createdDate: "2025-01-15"
+  description: "Comprehensive validation rules for quarterly capital market intermediary reporting"
+
+sheetValidations:
+  "Annexure 1":
+    columnValidations:
+      A:
+        dataType: string
+        required: true
+        minLength: 1
+        maxLength: 100
+        description: "Entity Name"
+      
+      B:
+        dataType: string
+        required: true
+        pattern: "^[A-Z]{2}[0-9]{4}[A-Z]{2}[0-9]{4}$"
+        description: "Entity Registration Number"
+      
+      C:
+        dataType: date
+        required: true
+        format: "YYYY-MM-DD"
+        description: "Reporting Date"
+      
+      D:
+        dataType: number
+        required: true
+        minimum: 0
+        maximum: 999999999
+        description: "Total Assets (in INR)"
+      
+      E:
+        dataType: number
+        required: true
+        minimum: 0
+        maximum: 999999999
+        description: "Total Liabilities (in INR)"
+    
+    crossFieldValidations:
+      - name: "Asset Liability Balance"
+        description: "Total Assets should equal Total Liabilities"
+        expression: "D = E"
+        severity: error
+      
+      - name: "Reporting Date Validation"
+        description: "Reporting date should be within the current quarter"
+        expression: "C >= QUARTER_START() AND C <= QUARTER_END()"
+        severity: error
+
+  "Annexure 2":
+    columnValidations:
+      A:
+        dataType: string
+        required: true
+        enumValues: ["Equity", "Debt", "Derivatives", "Currency", "Commodities"]
+        description: "Security Type"
+      
+      B:
+        dataType: number
+        required: true
+        minimum: 0
+        description: "Number of Transactions"
+      
+      C:
+        dataType: number
+        required: true
+        minimum: 0
+        description: "Transaction Value (in INR)"
+      
+      D:
+        dataType: number
+        required: false
+        minimum: 0
+        maximum: 100
+        description: "Commission Rate (%)"
+    
+    crossFieldValidations:
+      - name: "Transaction Value Check"
+        description: "Transaction value should be reasonable based on number of transactions"
+        expression: "C / B >= 100"
+        severity: warning
+
+  "Annexure 3":
+    columnValidations:
+      A:
+        dataType: string
+        required: true
+        description: "Client Category"
+      
+      B:
+        dataType: number
+        required: true
+        minimum: 0
+        description: "Number of Active Clients"
+      
+      C:
+        dataType: number
+        required: true
+        minimum: 0
+        description: "Client Deposits (in INR)"
+
+globalValidations:
+  - name: "Data Completeness"
+    description: "All required annexures must be present and complete"
+    expression: "REQUIRED_SHEETS_COMPLETE(['Annexure 1', 'Annexure 2', 'Annexure 3'])"
+    severity: error
+  
+  - name: "Consistency Check"
+    description: "Entity name should be consistent across all annexures"
+    expression: "UNIQUE_VALUE_ACROSS_SHEETS('A', ['Annexure 1', 'Annexure 2', 'Annexure 3'])"
+    severity: error
+  
+  - name: "Data Quality"
+    description: "No cell should contain only whitespace"
+    expression: "NO_WHITESPACE_ONLY_CELLS()"
+    severity: warning

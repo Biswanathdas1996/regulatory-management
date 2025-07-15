@@ -1,0 +1,19 @@
+RuleType,SheetName,Column,DataType,Required,MinLength,MaxLength,Minimum,Maximum,EnumValues,Pattern,Description,Expression,Severity
+column,Annexure 1,A,string,true,1,100,,,,"",Entity Name,,
+column,Annexure 1,B,string,true,,,,,,"^[A-Z]{2}[0-9]{4}[A-Z]{2}[0-9]{4}$",Entity Registration Number,,
+column,Annexure 1,C,date,true,,,,,,"",Reporting Date,,
+column,Annexure 1,D,number,true,,,0,999999999,"",Total Assets (in INR),,
+column,Annexure 1,E,number,true,,,0,999999999,"",Total Liabilities (in INR),,
+cross_field,Annexure 1,,,,,,,,,,"Asset Liability Balance",D = E,error
+cross_field,Annexure 1,,,,,,,,,,"Reporting Date Validation",C >= QUARTER_START() AND C <= QUARTER_END(),error
+column,Annexure 2,A,string,true,,,,,,"Equity,Debt,Derivatives,Currency,Commodities",Security Type,,
+column,Annexure 2,B,number,true,,,0,,"",Number of Transactions,,
+column,Annexure 2,C,number,true,,,0,,"",Transaction Value (in INR),,
+column,Annexure 2,D,number,false,,,0,100,"",Commission Rate (%),,
+cross_field,Annexure 2,,,,,,,,,,"Transaction Value Check",C / B >= 100,warning
+column,Annexure 3,A,string,true,,,,,,"",Client Category,,
+column,Annexure 3,B,number,true,,,0,,"",Number of Active Clients,,
+column,Annexure 3,C,number,true,,,0,,"",Client Deposits (in INR),,
+global,,,,,,,,,,,"Data Completeness",REQUIRED_SHEETS_COMPLETE(['Annexure 1' 'Annexure 2' 'Annexure 3']),error
+global,,,,,,,,,,,"Consistency Check",UNIQUE_VALUE_ACROSS_SHEETS('A' ['Annexure 1' 'Annexure 2' 'Annexure 3']),error
+global,,,,,,,,,,,"Data Quality",NO_WHITESPACE_ONLY_CELLS(),warning
