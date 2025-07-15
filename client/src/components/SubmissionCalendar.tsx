@@ -18,19 +18,18 @@ interface SubmissionReminder {
 
 interface SubmissionCalendarProps {
   userId: number;
-  category: string;
+  category: number;
 }
 
 export function SubmissionCalendar({ userId, category }: SubmissionCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // Get templates for user's category
+  // Get templates for user's category (API already filters by user's category)
   const { data: templates } = useQuery({
-    queryKey: ["/api/templates", category],
+    queryKey: ["/api/templates/with-rules"],
     queryFn: async () => {
       const response = await fetch("/api/templates/with-rules");
-      const allTemplates = await response.json();
-      return allTemplates.filter((t: any) => t.category === category);
+      return response.json();
     },
   });
 
