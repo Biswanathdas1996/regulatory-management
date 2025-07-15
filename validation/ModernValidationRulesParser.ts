@@ -15,6 +15,10 @@ interface ValidationRule {
   errorMessage: string;
   severity: 'error' | 'warning';
   isActive: boolean;
+  rowRange?: string; // e.g., "2-100", "5", "10-*"
+  columnRange?: string; // e.g., "A-Z", "B", "C-E"
+  cellRange?: string; // e.g., "A2:Z100", "B5", "C1:C50"
+  applyToAllRows?: boolean;
 }
 
 interface ParsedValidationRules {
@@ -289,7 +293,11 @@ export class ModernValidationRulesParser {
                     condition: 'NOT_EMPTY',
                     errorMessage: `${row.Column} is required in ${row.SheetName}`,
                     severity: 'error',
-                    isActive: true
+                    isActive: true,
+                    rowRange: row.RowRange, // e.g., "2-100", "5", "10-*"
+                    columnRange: row.ColumnRange, // e.g., "A", "A-Z"
+                    cellRange: row.CellRange, // e.g., "A2:A100", "B5"
+                    applyToAllRows: row.ApplyToAllRows === 'true'
                   });
                 }
                 
@@ -301,7 +309,11 @@ export class ModernValidationRulesParser {
                     condition: `TYPE_IS_${row.DataType.toUpperCase()}`,
                     errorMessage: `${row.Column} must be of type ${row.DataType}`,
                     severity: 'error',
-                    isActive: true
+                    isActive: true,
+                    rowRange: row.RowRange,
+                    columnRange: row.ColumnRange,
+                    cellRange: row.CellRange,
+                    applyToAllRows: row.ApplyToAllRows === 'true'
                   });
                 }
                 
@@ -313,7 +325,11 @@ export class ModernValidationRulesParser {
                     condition: `LENGTH >= ${row.MinLength}`,
                     errorMessage: `${row.Column} must be at least ${row.MinLength} characters`,
                     severity: 'error',
-                    isActive: true
+                    isActive: true,
+                    rowRange: row.RowRange,
+                    columnRange: row.ColumnRange,
+                    cellRange: row.CellRange,
+                    applyToAllRows: row.ApplyToAllRows === 'true'
                   });
                 }
                 
@@ -325,7 +341,11 @@ export class ModernValidationRulesParser {
                     condition: `LENGTH <= ${row.MaxLength}`,
                     errorMessage: `${row.Column} must not exceed ${row.MaxLength} characters`,
                     severity: 'error',
-                    isActive: true
+                    isActive: true,
+                    rowRange: row.RowRange,
+                    columnRange: row.ColumnRange,
+                    cellRange: row.CellRange,
+                    applyToAllRows: row.ApplyToAllRows === 'true'
                   });
                 }
                 
@@ -337,7 +357,11 @@ export class ModernValidationRulesParser {
                     condition: `VALUE >= ${row.Minimum}`,
                     errorMessage: `${row.Column} must be at least ${row.Minimum}`,
                     severity: 'error',
-                    isActive: true
+                    isActive: true,
+                    rowRange: row.RowRange,
+                    columnRange: row.ColumnRange,
+                    cellRange: row.CellRange,
+                    applyToAllRows: row.ApplyToAllRows === 'true'
                   });
                 }
                 
@@ -349,7 +373,11 @@ export class ModernValidationRulesParser {
                     condition: `VALUE <= ${row.Maximum}`,
                     errorMessage: `${row.Column} must not exceed ${row.Maximum}`,
                     severity: 'error',
-                    isActive: true
+                    isActive: true,
+                    rowRange: row.RowRange,
+                    columnRange: row.ColumnRange,
+                    cellRange: row.CellRange,
+                    applyToAllRows: row.ApplyToAllRows === 'true'
                   });
                 }
                 
@@ -361,7 +389,11 @@ export class ModernValidationRulesParser {
                     condition: `REGEX("${row.Pattern}")`,
                     errorMessage: `${row.Column} format is invalid`,
                     severity: 'error',
-                    isActive: true
+                    isActive: true,
+                    rowRange: row.RowRange,
+                    columnRange: row.ColumnRange,
+                    cellRange: row.CellRange,
+                    applyToAllRows: row.ApplyToAllRows === 'true'
                   });
                 }
                 
@@ -374,9 +406,30 @@ export class ModernValidationRulesParser {
                     condition: `VALUE IN [${enumValues.map(v => `"${v}"`).join(', ')}]`,
                     errorMessage: `${row.Column} must be one of: ${enumValues.join(', ')}`,
                     severity: 'error',
-                    isActive: true
+                    isActive: true,
+                    rowRange: row.RowRange,
+                    columnRange: row.ColumnRange,
+                    cellRange: row.CellRange,
+                    applyToAllRows: row.ApplyToAllRows === 'true'
                   });
                 }
+              } else if (ruleType === 'cell') {
+                // Cell-specific validation rule
+                const field = row.CellRange || `${row.SheetName}.${row.Column}`;
+                
+                rules.push({
+                  templateId,
+                  field,
+                  ruleType: row.Required === 'true' ? 'required' : 'custom',
+                  condition: row.Expression || 'NOT_EMPTY',
+                  errorMessage: row.Description || `${field} validation failed`,
+                  severity: row.Severity || 'error',
+                  isActive: true,
+                  rowRange: row.RowRange,
+                  columnRange: row.ColumnRange,
+                  cellRange: row.CellRange,
+                  applyToAllRows: row.ApplyToAllRows === 'true'
+                });
               } else if (ruleType === 'cross_field') {
                 // Cross-field validation rule
                 rules.push({
@@ -386,7 +439,8 @@ export class ModernValidationRulesParser {
                   condition: row.Expression,
                   errorMessage: row.Description,
                   severity: row.Severity || 'error',
-                  isActive: true
+                  isActive: true,
+                  cellRange: row.CellRange
                 });
               } else if (ruleType === 'global') {
                 // Global validation rule
@@ -397,7 +451,8 @@ export class ModernValidationRulesParser {
                   condition: row.Expression,
                   errorMessage: row.Description,
                   severity: row.Severity || 'error',
-                  isActive: true
+                  isActive: true,
+                  cellRange: row.CellRange
                 });
               }
             }

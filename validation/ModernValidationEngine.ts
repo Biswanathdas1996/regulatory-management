@@ -13,6 +13,10 @@ interface ValidationRule {
   errorMessage: string;
   severity: 'error' | 'warning';
   isActive: boolean;
+  rowRange?: string; // e.g., "2-100", "5", "10-*"
+  columnRange?: string; // e.g., "A-Z", "B", "C-E"
+  cellRange?: string; // e.g., "A2:Z100", "B5", "C1:C50"
+  applyToAllRows?: boolean;
 }
 
 interface ValidationResult {
@@ -349,8 +353,8 @@ export class ModernValidationEngine {
   ): ValidationResult[] {
     const results: ValidationResult[] = [];
     
-    // Parse field reference (e.g., "A1:A100" or "Company Name")
-    const fieldInfo = this.parseFieldReference(rule.field, sheet);
+    // Parse field reference (e.g., "A1:A100" or "Company Name") with enhanced row/column range support
+    const fieldInfo = this.parseFieldReference(rule.field, sheet, rule);
     
     fieldInfo.cells.forEach((cell, index) => {
       const isEmpty = cell.value === null || 
@@ -405,7 +409,7 @@ export class ModernValidationEngine {
     submissionId: number
   ): ValidationResult[] {
     const results: ValidationResult[] = [];
-    const fieldInfo = this.parseFieldReference(rule.field, sheet);
+    const fieldInfo = this.parseFieldReference(rule.field, sheet, rule);
     
     // Parse format condition (e.g., "email", "phone", "date:YYYY-MM-DD")
     const formatType = rule.condition.toLowerCase();
@@ -486,7 +490,7 @@ export class ModernValidationEngine {
     submissionId: number
   ): ValidationResult[] {
     const results: ValidationResult[] = [];
-    const fieldInfo = this.parseFieldReference(rule.field, sheet);
+    const fieldInfo = this.parseFieldReference(rule.field, sheet, rule);
     
     // Parse range condition (e.g., "min:0,max:100")
     const ranges = rule.condition.split(',');
@@ -552,7 +556,7 @@ export class ModernValidationEngine {
     submissionId: number
   ): ValidationResult[] {
     const results: ValidationResult[] = [];
-    const fieldInfo = this.parseFieldReference(rule.field, sheet);
+    const fieldInfo = this.parseFieldReference(rule.field, sheet, rule);
     
     // For now, treat custom rules as always passing
     // This can be extended to support custom validation logic
@@ -578,9 +582,9 @@ export class ModernValidationEngine {
   }
 
   /**
-   * Parse field reference to get cell locations
+   * Parse field reference to get cell locations with enhanced row/column range support
    */
-  private static parseFieldReference(field: string, sheet: any): {
+  private static parseFieldReference(field: string, sheet: any, rule?: ValidationRule): {
     cells: Array<{
       reference: string;
       value: any;
@@ -594,6 +598,16 @@ export class ModernValidationEngine {
       row: number;
       column: string;
     }> = [];
+    
+    // If rule has specific cell range, use that
+    if (rule?.cellRange) {
+      return this.parseCellRange(rule.cellRange, sheet);
+    }
+    
+    // If rule has row and column ranges, combine them
+    if (rule?.rowRange || rule?.columnRange) {
+      return this.parseRowColumnRange(rule, sheet);
+    }
     
     // Check if it's a cell range (e.g., "A1:A100")
     if (field.includes(':')) {
@@ -652,6 +666,107 @@ export class ModernValidationEngine {
             value,
             row: row + 1,
             column: colLetter
+          });
+        }
+      }
+    }
+    
+    return { cells };
+  }
+
+  /**
+   * Parse specific cell range (e.g., "A2:C10", "B5")
+   */
+  private static parseCellRange(cellRange: string, sheet: any): { cells: any[] } {
+    const cells: any[] = [];
+    
+    if (cellRange.includes(':')) {
+      // Range format (e.g., "A2:C10")
+      const [startCell, endCell] = cellRange.split(':');
+      const startMatch = startCell.match(/^([A-Z]+)(\d+)$/);
+      const endMatch = endCell.match(/^([A-Z]+)(\d+)$/);
+      
+      if (startMatch && endMatch) {
+        const startCol = this.columnToNumber(startMatch[1]);
+        const startRow = parseInt(startMatch[2]) - 1;
+        const endCol = this.columnToNumber(endMatch[1]);
+        const endRow = parseInt(endMatch[2]) - 1;
+        
+        for (let row = startRow; row <= endRow; row++) {
+          for (let col = startCol; col <= endCol; col++) {
+            if (sheet.data[row] && sheet.data[row][col - 1] !== undefined) {
+              const colLetter = this.numberToColumn(col);
+              cells.push({
+                value: sheet.data[row][col - 1],
+                row: row + 1,
+                column: colLetter,
+                reference: `${colLetter}${row + 1}`
+              });
+            }
+          }
+        }
+      }
+    } else {
+      // Single cell (e.g., "B5")
+      const match = cellRange.match(/^([A-Z]+)(\d+)$/);
+      if (match) {
+        const columnIndex = this.columnToNumber(match[1]) - 1;
+        const rowIndex = parseInt(match[2]) - 1;
+        
+        if (sheet.data[rowIndex] && sheet.data[rowIndex][columnIndex] !== undefined) {
+          cells.push({
+            value: sheet.data[rowIndex][columnIndex],
+            row: parseInt(match[2]),
+            column: match[1],
+            reference: cellRange
+          });
+        }
+      }
+    }
+    
+    return { cells };
+  }
+
+  /**
+   * Parse row and column ranges to determine cells to validate
+   */
+  private static parseRowColumnRange(rule: ValidationRule, sheet: any): { cells: any[] } {
+    const cells: any[] = [];
+    
+    // Parse row range (e.g., "2-100", "5", "10-*")
+    let startRow = 1, endRow = sheet.data.length - 1;
+    if (rule.rowRange) {
+      if (rule.rowRange.includes('-')) {
+        const [start, end] = rule.rowRange.split('-');
+        startRow = parseInt(start) - 1;
+        endRow = end === '*' ? sheet.data.length - 1 : parseInt(end) - 1;
+      } else {
+        startRow = endRow = parseInt(rule.rowRange) - 1;
+      }
+    }
+    
+    // Parse column range (e.g., "A-Z", "B", "C-E")
+    let startCol = 1, endCol = sheet.data[0]?.length || 1;
+    if (rule.columnRange) {
+      if (rule.columnRange.includes('-')) {
+        const [start, end] = rule.columnRange.split('-');
+        startCol = this.columnToNumber(start);
+        endCol = this.columnToNumber(end);
+      } else {
+        startCol = endCol = this.columnToNumber(rule.columnRange);
+      }
+    }
+    
+    // Generate cells within the specified ranges
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        if (sheet.data[row] && sheet.data[row][col - 1] !== undefined) {
+          const colLetter = this.numberToColumn(col);
+          cells.push({
+            value: sheet.data[row][col - 1],
+            row: row + 1,
+            column: colLetter,
+            reference: `${colLetter}${row + 1}`
           });
         }
       }

@@ -96,6 +96,10 @@ export const validationRules = pgTable("validation_rules", {
   condition: text("condition").notNull(), // Validation condition
   errorMessage: text("error_message").notNull(),
   severity: text("severity").notNull().default("error"), // error, warning
+  rowRange: text("row_range"), // e.g., "2-100", "5", "10-*" for row-specific validation
+  columnRange: text("column_range"), // e.g., "A-Z", "B", "C-E" for column-specific validation
+  cellRange: text("cell_range"), // e.g., "A2:Z100", "B5", "C1:C50" for exact cell range validation
+  applyToAllRows: boolean("apply_to_all_rows").default(false), // If true, applies to all rows in the range
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

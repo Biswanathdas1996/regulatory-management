@@ -1,0 +1,11 @@
+RuleType,SheetName,Column,Field,Required,DataType,MinLength,MaxLength,Minimum,Maximum,Pattern,EnumValues,Expression,Description,Severity,RowRange,ColumnRange,CellRange,ApplyToAllRows
+column,Annexure 1,A,Institution_Name,true,string,2,100,,,,,,"Institution Name is required and must be between 2-100 characters",error,2-*,A,A2:A1000,true
+column,Annexure 1,B,Total_Assets,true,number,,,0,,,,,Total Assets must be a positive number,error,2-*,B,B2:B1000,true
+column,Annexure 1,C,Currency_Code,true,string,3,3,,,^[A-Z]{3}$,,,"Currency Code must be a 3-letter uppercase code like USD, INR",error,2-*,C,C2:C1000,true
+column,Annexure 1,D,Reporting_Date,true,date,,,,,,,,"Reporting Date must be in valid date format",error,2-*,D,D2:D1000,true
+column,Annexure 1,E,Branch_Count,false,number,,,0,1000,,,,Number of branches must be between 0-1000,warning,2-*,E,E2:E1000,true
+column,Annexure 1,F,Status,true,string,,,,,,"Active,Inactive,Suspended",Status must be one of the allowed values,error,2-*,F,F2:F1000,true
+cell,Annexure 1,A,Header_Check,true,string,,,,,,,,"Header row must contain 'Institution Name'",error,1,A,A1,false
+cell,Annexure 1,B,Header_Check,true,string,,,,,,,,"Header row must contain 'Total Assets'",error,1,B,B1,false
+cross_field,Annexure 1,,Total_Check,,,,,,,,,SUM(B2:B1000) > 0,"Total assets across all institutions must be positive",error,,,B2:B1000,
+global,All Sheets,,Sheet_Count,,,,,,,,,"COUNT(sheets) >= 1","Template must contain at least one data sheet",error,,,ALL,

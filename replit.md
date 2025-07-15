@@ -11,6 +11,19 @@ The application validates submissions against predefined IFSCA-compliant rules w
 
 ## Recent Changes (January 15, 2025)
 
+### Enhanced Row-Based Validation System Implementation (January 15, 2025) ✓
+
+- Added comprehensive row and column range validation support to validation rules system
+- Enhanced database schema with new fields: rowRange, columnRange, cellRange, applyToAllRows
+- Updated ModernValidationEngine with advanced cell range parsing for precise validation targeting
+- Created enhanced CSV validation template format supporting exact cell coordinate specifications
+- Added parseRowColumnRange and parseCellRange methods for flexible validation scope control
+- Supports row ranges (e.g., "2-100", "5", "10-*"), column ranges (e.g., "A-Z", "B", "C-E"), and cell ranges (e.g., "A2:Z100", "B5")
+- Enhanced ModernValidationRulesParser to handle row-based validation rule parsing from CSV files
+- Updated validation rule creation and storage to preserve row/column range specifications
+- Created comprehensive user guide and example templates demonstrating row-based validation capabilities
+- System now provides exact cell-level validation control for regulatory compliance requirements
+
 ### Fixed Validation Results Display with Proper Sheet Names (January 15, 2025) ✓
 
 - Fixed critical validation results display issues where cell locations and error descriptions were blank
