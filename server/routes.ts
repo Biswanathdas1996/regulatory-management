@@ -2579,6 +2579,59 @@ Only return the JSON array, no additional text.
     }
   );
 
+  // Get all reporting entities (Super Admin only)
+  app.get(
+    "/api/super-admin/reporting-entities",
+    requireAuth,
+    requireSuperAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        console.log(
+          "========== SUPER ADMIN REPORTING ENTITIES ENDPOINT HIT =========="
+        );
+        console.log("Request user:", req.user);
+        console.log("Fetching all users for super admin...");
+
+        const users = await storage.getAllUsers();
+        console.log(
+          `Found ${users.length} total users:`,
+          users.map((u) => ({
+            id: u.id,
+            username: u.username,
+            role: u.role,
+            category: u.category,
+          }))
+        );
+
+        // Filter to only reporting entities
+        const reportingEntities = users
+          .filter((user) => user.role === "reporting_entity")
+          .map((user) => ({
+            id: user.id,
+            username: user.username,
+            role: user.role,
+            category: user.category,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+          }));
+
+        console.log(
+          `Filtered to ${reportingEntities.length} reporting entities:`,
+          reportingEntities
+        );
+        console.log("About to send response...");
+
+        // Add explicit headers to ensure JSON response
+        res.setHeader("Content-Type", "application/json");
+        res.status(200).json(reportingEntities);
+        console.log("Response sent successfully");
+      } catch (error) {
+        console.error("Get reporting entities error:", error);
+        res.status(500).json({ error: "Failed to fetch reporting entities" });
+      }
+    }
+  );
+
   // Create new IFSCA user (Super Admin only)
   app.post(
     "/api/super-admin/ifsca-users",

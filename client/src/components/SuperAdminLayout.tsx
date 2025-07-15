@@ -60,12 +60,12 @@ export default function SuperAdminLayout({
       icon: FileText,
       current: location === "/super-admin/templates",
     },
-    // {
-    //   name: "All Reporting Entities",
-    //   href: "/super-admin/reporting-entities",
-    //   icon: Building,
-    //   current: location === "/super-admin/reporting-entities",
-    // },
+    {
+      name: "All Reporting Entities",
+      href: "/super-admin/reporting-entities",
+      icon: Building,
+      current: location === "/super-admin/reporting-entities",
+    },
     // {
     //   name: "System Activity",
     //   href: "/super-admin/activity",
