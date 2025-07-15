@@ -49,7 +49,7 @@ export default function SuperAdminLayout({
       current: location === "/super-admin/dashboard",
     },
     {
-      name: "IFSCA User Management",
+      name: "Regulator Management",
       href: "/super-admin/ifsca-users",
       icon: Users,
       current: location === "/super-admin/ifsca-users",
@@ -172,11 +172,12 @@ export default function SuperAdminLayout({
                 {user?.username || "Super Admin"}
               </p>
               <p className="text-xs text-gray-500">
-                Global Access • {user?.role?.replace('_', ' ') || "Administrator"}
+                Global Access •{" "}
+                {user?.role?.replace("_", " ") || "Administrator"}
               </p>
             </div>
           </div>
-          
+
           {/* Logout Button */}
           <button
             onClick={handleLogout}
