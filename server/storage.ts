@@ -87,7 +87,7 @@ export interface IStorage {
   // Submission methods
   createSubmission(submission: InsertSubmission): Promise<Submission>;
   getSubmission(id: number): Promise<Submission | undefined>;
-  getSubmissions(userId?: number, templateId?: number, category?: string): Promise<Submission[]>;
+  getSubmissions(userId?: number, templateId?: number, category?: number): Promise<Submission[]>;
   updateSubmissionStatus(
     submissionId: number,
     status:
@@ -382,7 +382,7 @@ export class DatabaseStorage implements IStorage {
   async getSubmissions(
     userId?: number,
     templateId?: number,
-    category?: string
+    category?: number
   ): Promise<Submission[]> {
     const conditions = [];
     if (userId !== undefined) {

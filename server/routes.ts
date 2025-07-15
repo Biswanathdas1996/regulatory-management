@@ -1888,7 +1888,7 @@ Only return the JSON array, no additional text.
 
         const { templateId, reportingPeriod } = req.body;
         const userId = req.user?.id || 1; // Get from authenticated user
-        const userCategory = req.user?.category || "banking"; // Get user's category
+        const userCategory = req.user?.category || 1; // Get user's category ID
 
         if (!templateId) {
           return res.status(400).json({ error: "Template ID is required" });
