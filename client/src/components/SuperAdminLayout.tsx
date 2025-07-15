@@ -54,17 +54,17 @@ export default function SuperAdminLayout({
       icon: Users,
       current: location === "/super-admin/ifsca-users",
     },
+    {
+      name: "Template Library",
+      href: "/super-admin/templates",
+      icon: FileText,
+      current: location === "/super-admin/templates",
+    },
     // {
     //   name: "All Reporting Entities",
     //   href: "/super-admin/reporting-entities",
     //   icon: Building,
     //   current: location === "/super-admin/reporting-entities",
-    // },
-    // {
-    //   name: "System Templates",
-    //   href: "/super-admin/templates",
-    //   icon: FileText,
-    //   current: location === "/super-admin/templates",
     // },
     // {
     //   name: "System Activity",

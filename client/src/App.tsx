@@ -80,6 +80,13 @@ function Router() {
           </SuperAdminRoute>
         </Layout>
       </Route>
+      <Route path="/super-admin/templates">
+        <Layout>
+          <SuperAdminRoute>
+            <AdminTemplatesPage />
+          </SuperAdminRoute>
+        </Layout>
+      </Route>
       <Route path="/ifsca/dashboard">
         <UserDashboardPage />
       </Route>

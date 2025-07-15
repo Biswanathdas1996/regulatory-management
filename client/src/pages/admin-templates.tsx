@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/AdminLayout";
+import SuperAdminLayout from "@/components/SuperAdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -115,9 +116,12 @@ export default function AdminTemplatesPage() {
 
   const categories = Object.keys(groupedTemplates).sort();
 
+  // Determine which layout to use based on user role
+  const LayoutComponent = user?.role === "super_admin" ? SuperAdminLayout : AdminLayout;
+
   if (isLoading) {
     return (
-      <AdminLayout
+      <LayoutComponent
         title="Template Library"
         subtitle="Manage all system templates"
       >
@@ -130,12 +134,12 @@ export default function AdminTemplatesPage() {
             </div>
           </CardContent>
         </Card>
-      </AdminLayout>
+      </LayoutComponent>
     );
   }
 
   return (
-    <AdminLayout
+    <LayoutComponent
       title="Template Library"
       subtitle="Manage all system templates and validation rules"
       headerActions={
@@ -368,6 +372,6 @@ export default function AdminTemplatesPage() {
           </CardContent>
         </Card>
       )}
-    </AdminLayout>
+    </LayoutComponent>
   );
 }
