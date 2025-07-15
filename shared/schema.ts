@@ -10,6 +10,18 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Users table must come first to avoid circular dependency
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  role: text("role").notNull().default("reporting_entity"), // super_admin, ifsca_user, reporting_entity
+  category: integer("category"), // Reference to categories table (null for super_admin)
+  createdBy: integer("created_by"), // ID of user who created this user
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Categories table for dynamic category management
 export const categoryTable = pgTable("categories", {
   id: serial("id").primaryKey(),
@@ -35,22 +47,11 @@ export const comments = pgTable("comments", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  role: text("role").notNull().default("reporting_entity"), // super_admin, ifsca_user, reporting_entity
-  category: text("category"), // banking, nbfc, stock_exchange (null for super_admin)
-  createdBy: integer("created_by"), // ID of user who created this user
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
 export const templates = pgTable("templates", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   templateType: text("template_type").notNull(),
-  category: text("category").notNull(), // banking, nbfc, stock_exchange
+  category: integer("category").notNull().references(() => categoryTable.id), // Reference to categories table
   frequency: text("frequency", {
     enum: ["daily", "weekly", "monthly", "quarterly", "half_yearly", "yearly"],
   }).notNull(),

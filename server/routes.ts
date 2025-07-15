@@ -613,8 +613,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           req.user.role === "ifsca_user" ||
           req.user.role === "reporting_entity"
         ) {
+          // Convert user category to number for comparison
+          const userCategoryId = parseInt(req.user.category);
           filteredTemplates = templates.filter(
-            (template) => template.category === req.user!.category
+            (template) => template.category === userCategoryId
           );
         }
       }
@@ -642,8 +644,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             req.user.role === "ifsca_user" ||
             req.user.role === "reporting_entity"
           ) {
+            // Convert user category to number for comparison
+            const userCategoryId = parseInt(req.user.category);
             filteredTemplates = templates.filter(
-              (template) => template.category === req.user!.category
+              (template) => template.category === userCategoryId
             );
           }
         }
@@ -717,17 +721,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // Get uploader's category (for IFSCA users) or use body category
-        let category = req.body.category || templateType;
+        let categoryId: number;
+        
         if (req.user && req.user.role === "ifsca_user" && req.user.category) {
-          // For IFSCA users, use their category regardless of form input
-          category = req.user.category;
+          // For IFSCA users, use their category ID regardless of form input
+          categoryId = parseInt(req.user.category);
+        } else if (req.body.category) {
+          // Use the provided category ID
+          categoryId = parseInt(req.body.category);
+        } else {
+          // Default to banking category (ID 1)
+          categoryId = 1;
         }
 
         // Create template record
         const templateData = {
           name: templateName.trim(),
           templateType,
-          category: category, // Store the category based on uploader
+          category: categoryId, // Store the category ID
           frequency: frequency || "monthly", // Default to monthly if not provided
           lastSubmissionDate: lastSubmissionDate
             ? new Date(lastSubmissionDate)
@@ -2540,6 +2551,9 @@ Only return the JSON array, no additional text.
         console.log("Fetching all users for super admin...");
 
         const users = await storage.getAllUsers();
+        const categories = await storage.getCategories();
+        const categoryMap = new Map(categories.map(c => [c.id, c]));
+        
         console.log(
           `Found ${users.length} total users:`,
           users.map((u) => ({
@@ -2558,6 +2572,7 @@ Only return the JSON array, no additional text.
             username: user.username,
             role: user.role,
             category: user.category,
+            categoryData: user.category ? categoryMap.get(user.category) : null,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
           }));
@@ -2593,6 +2608,9 @@ Only return the JSON array, no additional text.
         console.log("Fetching all users for super admin...");
 
         const users = await storage.getAllUsers();
+        const categories = await storage.getCategories();
+        const categoryMap = new Map(categories.map(c => [c.id, c]));
+        
         console.log(
           `Found ${users.length} total users:`,
           users.map((u) => ({
@@ -2611,6 +2629,7 @@ Only return the JSON array, no additional text.
             username: user.username,
             role: user.role,
             category: user.category,
+            categoryData: user.category ? categoryMap.get(user.category) : null,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
           }));
@@ -2643,20 +2662,21 @@ Only return the JSON array, no additional text.
         console.log("Request user:", req.user);
         console.log("Request body:", req.body);
 
-        const { username, password, category } = req.body;
+        const { username, password, categoryId } = req.body;
 
         // Validate required fields
-        if (!username || !password || !category) {
+        if (!username || !password || !categoryId) {
           return res
             .status(400)
-            .json({ error: "Username, password, and category are required" });
+            .json({ error: "Username, password, and categoryId are required" });
         }
 
-        // Validate category
-        const validCategories = ["banking", "nbfc", "stock_exchange"];
-        if (!validCategories.includes(category)) {
+        // Validate category exists
+        const categories = await storage.getCategories();
+        const categoryExists = categories.find(c => c.id === categoryId);
+        if (!categoryExists) {
           return res.status(400).json({
-            error: "Invalid category. Must be banking, nbfc, or stock_exchange",
+            error: "Invalid category ID. Category does not exist",
           });
         }
 
@@ -2674,7 +2694,7 @@ Only return the JSON array, no additional text.
           username,
           password: hashedPassword,
           role: "ifsca_user",
-          category,
+          category: categoryId,
         });
 
         // Return user without password
@@ -2700,7 +2720,7 @@ Only return the JSON array, no additional text.
     async (req: AuthenticatedRequest, res) => {
       try {
         const userId = parseInt(req.params.id);
-        const { username, category, password } = req.body;
+        const { username, categoryId, password } = req.body;
 
         // Check if user exists and is IFSCA user
         const existingUser = await storage.getUser(userId);
@@ -2720,12 +2740,13 @@ Only return the JSON array, no additional text.
           updateData.username = username;
         }
 
-        if (category) {
-          const validCategories = ["banking", "nbfc", "stock_exchange"];
-          if (!validCategories.includes(category)) {
-            return res.status(400).json({ error: "Invalid category" });
+        if (categoryId) {
+          const categories = await storage.getCategories();
+          const categoryExists = categories.find(c => c.id === categoryId);
+          if (!categoryExists) {
+            return res.status(400).json({ error: "Invalid category ID" });
           }
-          updateData.category = category;
+          updateData.category = categoryId;
         }
 
         if (password) {

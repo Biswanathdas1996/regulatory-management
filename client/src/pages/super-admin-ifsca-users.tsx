@@ -17,7 +17,14 @@ interface IFSCAUser {
   id: number;
   username: string;
   role: string;
-  category: string;
+  category: number;
+  categoryData?: {
+    id: number;
+    name: string;
+    displayName: string;
+    color: string;
+    icon: string;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -25,14 +32,22 @@ interface IFSCAUser {
 interface CreateUserData {
   username: string;
   password: string;
-  category: string;
+  categoryId: number | null;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  displayName: string;
+  color: string;
+  icon: string;
 }
 
 export default function SuperAdminIFSCAUsers() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<IFSCAUser | null>(null);
-  const [newUser, setNewUser] = useState<CreateUserData>({ username: "", password: "", category: "" });
+  const [newUser, setNewUser] = useState<CreateUserData>({ username: "", password: "", categoryId: null });
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -49,6 +64,17 @@ export default function SuperAdminIFSCAUsers() {
       console.log("Received data:", data);
       console.log("Data length:", data.length);
       return data;
+    },
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/super-admin/categories"],
+    queryFn: async () => {
+      const response = await fetch("/api/super-admin/categories", {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to fetch categories");
+      return response.json();
     },
   });
 
@@ -209,27 +235,13 @@ export default function SuperAdminIFSCAUsers() {
       icon: Users,
       color: "text-blue-600",
     },
-    {
-      title: "Banking Category",
-      value: users.filter(u => u.category === "banking").length.toString(),
-      description: "Banking IFSCA users",
+    ...categories.map((category: Category) => ({
+      title: category.displayName,
+      value: users.filter(u => u.category === category.id).length.toString(),
+      description: `${category.displayName} IFSCA users`,
       icon: Building,
-      color: "text-green-600",
-    },
-    {
-      title: "NBFC Category",
-      value: users.filter(u => u.category === "nbfc").length.toString(),
-      description: "NBFC IFSCA users",
-      icon: Building,
-      color: "text-purple-600",
-    },
-    {
-      title: "Stock Exchange",
-      value: users.filter(u => u.category === "stock_exchange").length.toString(),
-      description: "Stock Exchange IFSCA users",
-      icon: TrendingUp,
-      color: "text-emerald-600",
-    },
+      color: category.color,
+    })),
   ];
 
   return (
@@ -273,14 +285,19 @@ export default function SuperAdminIFSCAUsers() {
               </div>
               <div>
                 <Label htmlFor="category">Category</Label>
-                <Select value={newUser.category} onValueChange={(value) => setNewUser({ ...newUser, category: value })}>
+                <Select 
+                  value={newUser.categoryId?.toString() || ""} 
+                  onValueChange={(value) => setNewUser({ ...newUser, categoryId: parseInt(value) })}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="banking">Banking</SelectItem>
-                    <SelectItem value="nbfc">NBFC</SelectItem>
-                    <SelectItem value="stock_exchange">Stock Exchange</SelectItem>
+                    {categories.map((category: Category) => (
+                      <SelectItem key={category.id} value={category.id.toString()}>
+                        {category.displayName}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -347,13 +364,20 @@ export default function SuperAdminIFSCAUsers() {
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">{user.username}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={
-                          user.category === "banking" ? "bg-blue-50 text-blue-700 border-blue-200" :
-                          user.category === "nbfc" ? "bg-purple-50 text-purple-700 border-purple-200" :
-                          "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        }>
-                          {user.category.replace("_", " ").toUpperCase()}
-                        </Badge>
+                        {user.categoryData ? (
+                          <Badge 
+                            variant="outline" 
+                            style={{
+                              backgroundColor: `${user.categoryData.color}10`,
+                              color: user.categoryData.color,
+                              borderColor: user.categoryData.color
+                            }}
+                          >
+                            {user.categoryData.displayName}
+                          </Badge>
+                        ) : (
+                          <span className="text-gray-500">No category</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary">IFSCA User</Badge>

@@ -58,11 +58,23 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
     queryKey: ["/api/auth/me"],
   });
 
-  const categories = [
-    { value: "banking", label: "Banking" },
-    { value: "nbfc", label: "NBFC" },
-    { value: "stock_exchange", label: "Stock Exchange" },
-  ];
+  // Fetch dynamic categories from the API
+  const { data: categoriesData = [] } = useQuery({
+    queryKey: ["/api/super-admin/categories"],
+    queryFn: async () => {
+      const response = await fetch("/api/super-admin/categories");
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories");
+      }
+      return response.json();
+    },
+  });
+
+  // Transform API categories to select options
+  const categories = categoriesData.map((cat: any) => ({
+    value: cat.id.toString(), // Use category ID as value
+    label: cat.displayName,
+  }));
 
   const frequencies = [
     { value: "daily", label: "Daily" },
@@ -88,7 +100,8 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
   // Update category when user data loads
   useEffect(() => {
     if (currentUser?.role === "ifsca_user" && currentUser.category) {
-      form.setValue("category", currentUser.category);
+      // Set category as string ID
+      form.setValue("category", currentUser.category.toString());
     }
   }, [currentUser, form]);
 

@@ -17,23 +17,35 @@ import {
   Edit,
   Trash2,
   Plus,
-  Landmark,
-  Briefcase,
-  TrendingUp,
 } from "lucide-react";
 
 interface ReportingEntity {
   id: number;
   username: string;
   role: string;
-  category: string;
+  category: number;
+  categoryData?: {
+    id: number;
+    name: string;
+    displayName: string;
+    color: string;
+    icon: string;
+  };
   createdAt: string;
   updatedAt?: string;
 }
 
+interface Category {
+  id: number;
+  name: string;
+  displayName: string;
+  color: string;
+  icon: string;
+}
+
 export default function SuperAdminReportingEntitiesPage() {
   // Fetch all reporting entities
-  const { data: reportingEntities, isLoading } = useQuery({
+  const { data: reportingEntities = [], isLoading } = useQuery({
     queryKey: ["/api/super-admin/reporting-entities"],
     queryFn: async () => {
       const response = await fetch("/api/super-admin/reporting-entities");
@@ -44,55 +56,26 @@ export default function SuperAdminReportingEntitiesPage() {
     },
   });
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case "banking":
-        return <Landmark className="h-4 w-4" />;
-      case "nbfc":
-        return <Briefcase className="h-4 w-4" />;
-      case "stock_exchange":
-        return <TrendingUp className="h-4 w-4" />;
-      default:
-        return <Building className="h-4 w-4" />;
-    }
-  };
-
-  const getCategoryName = (category: string) => {
-    switch (category) {
-      case "banking":
-        return "Banking";
-      case "nbfc":
-        return "NBFC";
-      case "stock_exchange":
-        return "Stock Exchange";
-      default:
-        return category;
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "banking":
-        return "bg-blue-50 text-blue-700 border-blue-200";
-      case "nbfc":
-        return "bg-purple-50 text-purple-700 border-purple-200";
-      case "stock_exchange":
-        return "bg-emerald-50 text-emerald-700 border-emerald-200";
-      default:
-        return "bg-gray-50 text-gray-700 border-gray-200";
-    }
-  };
+  // Fetch categories
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/super-admin/categories"],
+    queryFn: async () => {
+      const response = await fetch("/api/super-admin/categories");
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories");
+      }
+      return response.json();
+    },
+  });
 
   // Group entities by category
-  const groupedEntities = reportingEntities?.reduce((acc: any, entity: ReportingEntity) => {
+  const groupedEntities = reportingEntities.reduce((acc: any, entity: ReportingEntity) => {
     if (!acc[entity.category]) {
       acc[entity.category] = [];
     }
     acc[entity.category].push(entity);
     return acc;
-  }, {}) || {};
-
-  const categories = ["banking", "nbfc", "stock_exchange"];
+  }, {});
 
   if (isLoading) {
     return (
@@ -125,29 +108,32 @@ export default function SuperAdminReportingEntitiesPage() {
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-500">Total Entities</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {reportingEntities?.length || 0}
+                    {reportingEntities.length}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {categories.map((category) => (
-            <Card key={category} className="border-0 shadow-sm">
+          {categories.map((category: Category) => (
+            <Card key={category.id} className="border-0 shadow-sm">
               <CardContent className="p-4">
                 <div className="flex items-center">
-                  <div className={`p-2 rounded-lg ${
-                    category === "banking" ? "bg-blue-100" :
-                    category === "nbfc" ? "bg-purple-100" : "bg-emerald-100"
-                  }`}>
-                    {getCategoryIcon(category)}
+                  <div 
+                    className="p-2 rounded-lg"
+                    style={{ backgroundColor: `${category.color}20` }}
+                  >
+                    <Building 
+                      className="h-5 w-5" 
+                      style={{ color: category.color }}
+                    />
                   </div>
                   <div className="ml-3">
                     <p className="text-sm font-medium text-gray-500">
-                      {getCategoryName(category)}
+                      {category.displayName}
                     </p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {groupedEntities[category]?.length || 0}
+                      {groupedEntities[category.id]?.length || 0}
                     </p>
                   </div>
                 </div>
@@ -157,90 +143,70 @@ export default function SuperAdminReportingEntitiesPage() {
         </div>
 
         {/* Entities by Category */}
-        {categories.map((category) => (
-          <Card key={category} className="border-0 shadow-sm">
+        {categories.map((category: Category) => (
+          <Card key={category.id} className="border-0 shadow-sm">
             <CardHeader className="pb-4 border-b border-gray-100">
               <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center mr-3">
-                  {getCategoryIcon(category)}
+                <div 
+                  className="h-8 w-8 rounded-lg flex items-center justify-center mr-3"
+                  style={{ backgroundColor: `${category.color}10` }}
+                >
+                  <Building style={{ color: category.color }} className="h-5 w-5" />
                 </div>
-                {getCategoryName(category)} Entities ({groupedEntities[category]?.length || 0})
-                <Badge className={`ml-3 ${getCategoryColor(category)}`}>
-                  {getCategoryName(category)}
+                {category.displayName} Entities ({groupedEntities[category.id]?.length || 0})
+                <Badge 
+                  className="ml-3"
+                  variant="outline"
+                  style={{
+                    backgroundColor: `${category.color}10`,
+                    color: category.color,
+                    borderColor: category.color
+                  }}
+                >
+                  {category.name}
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-6">
-              {!groupedEntities[category] || groupedEntities[category].length === 0 ? (
+            <CardContent className="pt-4">
+              {!groupedEntities[category.id] || groupedEntities[category.id].length === 0 ? (
                 <div className="text-center py-8">
-                  <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-4">
-                    No {getCategoryName(category).toLowerCase()} entities registered yet
-                  </p>
+                  <Building className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500">No reporting entities registered in this category</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Entity Name</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Registered</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Username</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {groupedEntities[category.id].map((entity: ReportingEntity) => (
+                      <TableRow key={entity.id}>
+                        <TableCell className="font-medium">{entity.username}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">Active</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(entity.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {groupedEntities[category]?.map((entity: ReportingEntity) => (
-                        <TableRow key={entity.id}>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center space-x-2">
-                              <div className={`p-1.5 rounded-md ${
-                                category === "banking" ? "bg-blue-100" :
-                                category === "nbfc" ? "bg-purple-100" : "bg-emerald-100"
-                              }`}>
-                                {getCategoryIcon(category)}
-                              </div>
-                              <span>{entity.username}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">
-                              {entity.role.replace("_", " ").toUpperCase()}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge 
-                              variant="outline" 
-                              className={getCategoryColor(entity.category)}
-                            >
-                              {getCategoryName(entity.category)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(entity.createdAt).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <Badge className="bg-green-50 text-green-700 border-green-200">
-                              Active
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex gap-2 justify-end">
-                              <Button variant="ghost" size="sm">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                    ))}
+                  </TableBody>
+                </Table>
               )}
             </CardContent>
           </Card>
