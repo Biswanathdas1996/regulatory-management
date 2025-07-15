@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Menu,
   XCircle,
@@ -12,6 +13,7 @@ import {
   Shield,
   FileSpreadsheet,
   LogOut,
+  User,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -34,20 +36,11 @@ export default function AdminLayout({
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [location] = useLocation();
+  const { logout, user } = useAuth();
 
   const handleLogout = async () => {
-    try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-      if (response.ok) {
-        // Redirect to home page after logout
-        window.location.href = "/";
-      }
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+    await logout();
+    window.location.href = "/";
   };
 
   const menuItems = [
@@ -154,15 +147,32 @@ export default function AdminLayout({
               })}
             </div>
 
-            {/* Logout Button */}
+            {/* Sidebar Footer */}
             <div className="mt-auto pt-6 border-t border-gray-200">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 rounded-xl cursor-pointer transition-all duration-200"
-              >
-                <LogOut className="h-5 w-5 mr-3 text-gray-400" />
-                Logout
-              </button>
+              <div className="flex items-center space-x-3 mb-4 px-4">
+                <div className="h-8 w-8 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    {user?.username || "IFSCA User"}
+                  </p>
+                  <p className="text-xs text-gray-500 capitalize">
+                    {user?.category || "Admin"} • {user?.role?.replace('_', ' ') || "User"}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Logout Button */}
+              <div className="px-4">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all duration-200 border border-gray-200 hover:border-red-200"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </button>
+              </div>
             </div>
           </nav>
         </div>
