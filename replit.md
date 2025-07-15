@@ -11,6 +11,18 @@ The application validates submissions against predefined IFSCA-compliant rules w
 
 ## Recent Changes (January 15, 2025)
 
+### Fixed Validation Results Display with Proper Sheet Names (January 15, 2025) ✓
+
+- Fixed critical validation results display issues where cell locations and error descriptions were blank
+- Updated data mapping between database fields and frontend expectations (cell_reference vs cellReference)
+- Enhanced validation status determination to use is_valid field from database correctly
+- Fixed field name display to show actual sheet names instead of generic "Sheet1"
+- Added comprehensive fallback logic for different database field naming conventions
+- Improved results grouping to properly process validation data from database
+- Added test validation results with proper cell references (A3, B5, C4, D5) and meaningful error messages
+- Enhanced validation results to display complete information: exact cell locations, current values, error descriptions
+- System now correctly shows actual sheet names like "Annexure 1" instead of placeholder "Sheet1"
+
 ### Enhanced Submission Validation System (January 15, 2025) ✓
 
 - Implemented comprehensive ModernValidationEngine replacing old ValidationEngine

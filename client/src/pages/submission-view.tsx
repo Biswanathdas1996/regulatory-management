@@ -699,7 +699,14 @@ export default function SubmissionViewPage() {
 
                             <div className="space-y-2 mb-3">
                               <p className="text-sm">
-                                <strong>Field:</strong> {group.field}
+                                <strong>Field:</strong> {(() => {
+                                  const firstResult = group.results[0];
+                                  const actualSheetName = firstResult?.sheetName || firstResult?.sheet_name;
+                                  if (actualSheetName && actualSheetName !== 'Sheet1') {
+                                    return group.field.replace('Sheet1.', `${actualSheetName}.`);
+                                  }
+                                  return group.field;
+                                })()}
                               </p>
                               <p className="text-sm">
                                 <strong>What this checks:</strong>{" "}
