@@ -256,14 +256,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Other roles get an empty array or handle accordingly
           users = [];
         }
-        // Don't return passwords
-        const safeUsers = users?.map((user) => ({
-          id: user.id,
-          username: user.username,
-          role: user.role,
-          category: user.category,
-          createdAt: user.createdAt,
-        }));
+        // Don't return passwords and add category data
+        const safeUsers = await Promise.all(
+          users?.map(async (user) => {
+            let categoryData = null;
+            if (user.category) {
+              const categories = await storage.getCategories();
+              categoryData = categories.find(cat => cat.id === user.category);
+            }
+            return {
+              id: user.id,
+              username: user.username,
+              role: user.role,
+              category: user.category,
+              categoryData,
+              createdAt: user.createdAt,
+            };
+          }) || []
+        );
         res.json(safeUsers);
       } catch (error) {
         console.error("Get users error:", error);

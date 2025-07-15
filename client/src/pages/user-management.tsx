@@ -50,7 +50,14 @@ interface User {
   id: number;
   username: string;
   role: string;
-  category?: string;
+  category?: number;
+  categoryData?: {
+    id: number;
+    name: string;
+    displayName: string;
+    color: string;
+    icon: string;
+  };
   createdAt?: string;
 }
 
@@ -389,18 +396,16 @@ export default function UserManagementPage() {
                       </TableCell>
                       <TableCell>{getRoleBadge(user.role)}</TableCell>
                       <TableCell>
-                        {user.category ? (
+                        {user.categoryData ? (
                           <Badge
                             variant="outline"
-                            className={
-                              user.category === "banking"
-                                ? "bg-blue-50 text-blue-700 border-blue-200"
-                                : user.category === "nbfc"
-                                ? "bg-purple-50 text-purple-700 border-purple-200"
-                                : "bg-green-50 text-green-700 border-green-200"
-                            }
+                            style={{
+                              backgroundColor: `${user.categoryData.color}10`,
+                              color: user.categoryData.color,
+                              borderColor: user.categoryData.color
+                            }}
                           >
-                            {user.category.replace("_", " ").toUpperCase()}
+                            {user.categoryData.displayName}
                           </Badge>
                         ) : (
                           <span className="text-gray-400">N/A</span>
