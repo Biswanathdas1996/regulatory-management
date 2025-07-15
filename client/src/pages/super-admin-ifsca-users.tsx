@@ -110,7 +110,7 @@ export default function SuperAdminIFSCAUsers() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/super-admin/ifsca-users"] });
       setIsCreateDialogOpen(false);
-      setNewUser({ username: "", password: "", category: "" });
+      setNewUser({ username: "", password: "", categoryId: null });
       toast({
         title: "IFSCA User Created",
         description: "New IFSCA user has been created successfully",
@@ -193,7 +193,7 @@ export default function SuperAdminIFSCAUsers() {
 
   const handleCreateUser = () => {
     console.log("handleCreateUser called with:", newUser);
-    if (!newUser.username || !newUser.password || !newUser.category) {
+    if (!newUser.username || !newUser.password || !newUser.categoryId) {
       console.log("Validation failed - missing fields");
       toast({
         title: "Validation Error",
