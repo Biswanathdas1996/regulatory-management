@@ -50,7 +50,7 @@ export const comments = pgTable("comments", {
 export const templates = pgTable("templates", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  templateType: text("template_type").notNull(),
+  templateType: text("template_type"), // Made optional - can be removed entirely in future
   category: integer("category")
     .notNull()
     .references(() => categoryTable.id), // Reference to categories table

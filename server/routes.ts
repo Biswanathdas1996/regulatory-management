@@ -731,21 +731,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const templateFile = req.files.template[0];
         const validationFile = req.files.validationRules?.[0];
-        const { templateType, templateName, frequency, lastSubmissionDate } =
+        const { templateName, frequency, lastSubmissionDate } =
           req.body;
 
         console.log("Template upload request body:", {
-          templateType,
           templateName,
           frequency,
           lastSubmissionDate,
           category: req.body.category,
         });
-
-        // Validate template type
-        if (!templateTypes.includes(templateType)) {
-          return res.status(400).json({ error: "Invalid template type" });
-        }
 
         // Validate template name
         if (!templateName || templateName.trim().length === 0) {
@@ -785,7 +779,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create template record
         const templateData = {
           name: templateName.trim(),
-          templateType,
           category: categoryId, // Store the category ID
           frequency: frequency || "monthly", // Default to monthly if not provided
           lastSubmissionDate: lastSubmissionDate

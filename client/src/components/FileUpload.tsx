@@ -26,7 +26,6 @@ import { CloudUpload, FolderOpen, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const uploadSchema = z.object({
-  templateType: z.string().min(1, "Template type is required"),
   templateName: z.string().min(1, "Template name is required"),
   category: z.string().min(1, "Category is required"),
   frequency: z.string().min(1, "Frequency is required"),
@@ -50,12 +49,9 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
   >("idle");
   const { toast } = useToast();
 
-  const { data: templateTypes } = useQuery({
-    queryKey: ["/api/template-types"],
-  });
+
   
   // Debug logging (temporary)
-  // console.log("Template types data:", templateTypes);
   // console.log("Categories data:", categoriesData);
   // console.log("Current user:", currentUser);
 
@@ -97,7 +93,6 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
   const form = useForm<UploadFormData>({
     resolver: zodResolver(uploadSchema),
     defaultValues: {
-      templateType: "",
       templateName: "",
       category: "",
       frequency: "",
@@ -130,7 +125,6 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
       setUploadProgress(0);
 
       console.log("FileUpload: Uploading template with data:", {
-        templateType: data.templateType,
         templateName: data.templateName,
         category: data.category,
         frequency: data.frequency,
@@ -139,7 +133,6 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
 
       const formData = new FormData();
       formData.append("template", data.templateFile[0]);
-      formData.append("templateType", data.templateType);
       formData.append("templateName", data.templateName);
       formData.append("category", data.category);
       formData.append("frequency", data.frequency);
@@ -247,33 +240,7 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Template Configuration */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <FormField
-                control={form.control}
-                name="templateType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Template Type</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select template type..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {Array.isArray(templateTypes) && templateTypes.map((type: any) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
 
               <FormField
                 control={form.control}
