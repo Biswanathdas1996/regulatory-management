@@ -150,7 +150,7 @@ export default function TemplateDetail() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <div>
               <p className="text-sm font-medium text-gray-500">File Name</p>
               <p className="text-lg text-gray-900">{template.name}</p>
@@ -158,6 +158,25 @@ export default function TemplateDetail() {
             <div>
               <p className="text-sm font-medium text-gray-500">Template Type</p>
               <p className="text-lg text-gray-900">{template.templateType}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">Category</p>
+              <p className="text-lg text-gray-900 capitalize">{template.category}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">Submission Frequency</p>
+              <p className="text-lg text-gray-900 capitalize">
+                {template.frequency?.replace('_', ' ') || 'Not specified'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">Last Submission Date</p>
+              <p className="text-lg text-gray-900">
+                {template.lastSubmissionDate 
+                  ? new Date(template.lastSubmissionDate).toLocaleDateString()
+                  : 'Not specified'
+                }
+              </p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">File Size</p>
