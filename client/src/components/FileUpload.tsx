@@ -112,6 +112,14 @@ export function FileUpload({ onTemplateUploaded }: FileUploadProps) {
       setUploadPhase("uploading");
       setUploadProgress(0);
 
+      console.log("FileUpload: Uploading template with data:", {
+        templateType: data.templateType,
+        templateName: data.templateName,
+        category: data.category,
+        frequency: data.frequency,
+        lastSubmissionDate: data.lastSubmissionDate
+      });
+
       const formData = new FormData();
       formData.append("template", data.templateFile[0]);
       formData.append("templateType", data.templateType);

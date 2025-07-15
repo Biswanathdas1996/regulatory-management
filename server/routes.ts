@@ -742,15 +742,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Get uploader's category (for IFSCA users) or use body category
         let categoryId: number;
         
+        console.log("Template upload - user info:", {
+          userId: req.user?.id,
+          role: req.user?.role,
+          userCategory: req.user?.category,
+          bodyCategory: req.body.category
+        });
+        
         if (req.user && req.user.role === "ifsca_user" && req.user.category) {
           // For IFSCA users, use their category ID regardless of form input
           categoryId = parseInt(req.user.category);
+          console.log("Template upload - using IFSCA user category ID:", categoryId);
         } else if (req.body.category) {
           // Use the provided category ID
           categoryId = parseInt(req.body.category);
+          console.log("Template upload - using form category ID:", categoryId);
         } else {
           // Default to banking category (ID 1)
           categoryId = 1;
+          console.log("Template upload - using default category ID:", categoryId);
         }
 
         // Create template record
