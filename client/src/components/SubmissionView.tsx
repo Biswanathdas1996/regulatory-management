@@ -38,8 +38,8 @@ export default function SubmissionView() {
 
   const reSubmitMutation = useMutation({
     mutationFn: async () => {
-      // apiRequest expects (method, url, data?)
-      return apiRequest("POST", `/api/submissions/${submissionId}/resubmit`);
+      // apiRequest expects (url, options)
+      return apiRequest(`/api/submissions/${submissionId}/resubmit`, { method: "POST" });
     },
     onSuccess: () => {
       toast({

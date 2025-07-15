@@ -59,7 +59,7 @@ export function SubmissionHistory({
 
   const deleteSubmissionMutation = useMutation({
     mutationFn: async (submissionId: number) => {
-      return apiRequest("DELETE", `/api/submissions/${submissionId}`);
+      return apiRequest(`/api/submissions/${submissionId}`, { method: "DELETE" });
     },
     onSuccess: () => {
       toast({

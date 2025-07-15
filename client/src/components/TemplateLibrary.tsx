@@ -21,7 +21,7 @@ export function TemplateLibrary({ templates, onTemplateSelected, onTemplateDelet
 
   const deleteMutation = useMutation({
     mutationFn: async (templateId: number) => {
-      await apiRequest("DELETE", `/api/templates/${templateId}`);
+      await apiRequest(`/api/templates/${templateId}`, { method: "DELETE" });
     },
     onSuccess: () => {
       toast({
