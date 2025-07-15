@@ -23,6 +23,8 @@ The application validates submissions against predefined IFSCA-compliant rules w
 - Includes upcoming submissions summary with detailed reminder information
 - Fully responsive design with navigation between months
 - Real-time data integration with template frequencies and submission history
+- Enhanced calendar with beautiful gradient backgrounds and modern styling
+- Added logout functionality to UserLayout sidebar footer with user information display
 
 ### Category-Based Template Filtering Implementation (January 15, 2025) ✓
 
