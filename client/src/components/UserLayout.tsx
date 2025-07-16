@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
+import { getCategoryName } from "@/lib/categoryUtils";
 import {
   Menu,
   XCircle,
@@ -123,7 +124,7 @@ export function UserLayout({
                   {user?.username || "Reporting Entity"}
                 </p>
                 <p className="text-xs text-gray-500 capitalize">
-                  {user?.category || "Account"} • {user?.role?.replace('_', ' ') || "User"}
+                  {user?.category ? getCategoryName(user.category) : "Account"} • {user?.role?.replace('_', ' ') || "User"}
                 </p>
               </div>
             </div>
