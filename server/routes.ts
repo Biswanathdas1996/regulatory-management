@@ -3409,6 +3409,176 @@ sheetValidations:
     }
   );
 
+  // Super Admin Analytics - comprehensive system analytics
+  app.get(
+    "/api/super-admin/analytics",
+    requireAuth,
+    requireSuperAdmin,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        console.log("========== SUPER ADMIN ANALYTICS ENDPOINT HIT ==========");
+
+        // Get all system data
+        const [
+          allUsers,
+          allTemplates,
+          allSubmissions,
+          allCategories,
+          allValidationResults,
+          allComments
+        ] = await Promise.all([
+          storage.getAllUsers(),
+          storage.getTemplates(),
+          storage.getSubmissions(),
+          storage.getCategories(),
+          db.select().from(validationResults),
+          db.select().from(comments)
+        ]);
+
+        // User Analytics
+        const usersByRole = {
+          super_admin: allUsers.filter(u => u.role === 'super_admin').length,
+          ifsca_user: allUsers.filter(u => u.role === 'ifsca_user').length,
+          reporting_entity: allUsers.filter(u => u.role === 'reporting_entity').length
+        };
+
+        const usersByCategory = allCategories.map(cat => ({
+          categoryId: cat.id,
+          categoryName: cat.displayName,
+          ifscaUsers: allUsers.filter(u => u.role === 'ifsca_user' && u.category === cat.id).length,
+          reportingEntities: allUsers.filter(u => u.role === 'reporting_entity' && u.category === cat.id).length
+        }));
+
+        // Template Analytics
+        const templatesByCategory = allCategories.map(cat => ({
+          categoryId: cat.id,
+          categoryName: cat.displayName,
+          templateCount: allTemplates.filter(t => t.category === cat.id).length,
+          withValidationRules: allTemplates.filter(t => t.category === cat.id && t.validationFileUploaded).length
+        }));
+
+        // Submission Analytics
+        const submissionsByStatus = {
+          pending: allSubmissions.filter(s => s.status === 'pending').length,
+          passed: allSubmissions.filter(s => s.status === 'passed').length,
+          failed: allSubmissions.filter(s => s.status === 'failed').length,
+          rejected: allSubmissions.filter(s => s.status === 'rejected').length,
+          returned: allSubmissions.filter(s => s.status === 'returned').length
+        };
+
+        const submissionsByCategory = allCategories.map(cat => ({
+          categoryId: cat.id,
+          categoryName: cat.displayName,
+          totalSubmissions: allSubmissions.filter(s => s.category === cat.id).length,
+          passedSubmissions: allSubmissions.filter(s => s.category === cat.id && s.status === 'passed').length,
+          failedSubmissions: allSubmissions.filter(s => s.category === cat.id && s.status === 'failed').length
+        }));
+
+        // Recent Activity (last 30 submissions)
+        const recentSubmissions = allSubmissions
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 30);
+
+        const recentActivity = await Promise.all(
+          recentSubmissions.map(async (submission) => {
+            const user = allUsers.find(u => u.id === submission.userId);
+            const template = allTemplates.find(t => t.id === submission.templateId);
+            const category = allCategories.find(c => c.id === submission.category);
+            
+            return {
+              date: submission.createdAt.toISOString().split('T')[0],
+              username: user?.username || 'Unknown User',
+              action: 'Submitted',
+              template: template?.name || 'Unknown Template',
+              category: category?.displayName || 'Unknown Category',
+              status: submission.status,
+              reportingPeriod: submission.reportingPeriod
+            };
+          })
+        );
+
+        // System Health Metrics
+        const totalValidationResults = allValidationResults.length;
+        const failedValidations = allValidationResults.filter(vr => !vr.isValid).length;
+        const systemHealthScore = totalValidationResults > 0 
+          ? ((totalValidationResults - failedValidations) / totalValidationResults * 100).toFixed(1)
+          : 100;
+
+        // Monthly trends (last 12 months)
+        const monthlyTrends = [];
+        const now = new Date();
+        for (let i = 11; i >= 0; i--) {
+          const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+          
+          const monthSubmissions = allSubmissions.filter(s => {
+            const submissionDate = new Date(s.createdAt);
+            return submissionDate >= monthStart && submissionDate <= monthEnd;
+          });
+
+          monthlyTrends.push({
+            month: monthStart.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+            submissions: monthSubmissions.length,
+            passed: monthSubmissions.filter(s => s.status === 'passed').length,
+            failed: monthSubmissions.filter(s => s.status === 'failed').length
+          });
+        }
+
+        const analyticsData = {
+          systemOverview: {
+            totalUsers: allUsers.length,
+            totalTemplates: allTemplates.length,
+            totalSubmissions: allSubmissions.length,
+            totalCategories: allCategories.length,
+            systemHealthScore: parseFloat(systemHealthScore)
+          },
+          userAnalytics: {
+            usersByRole,
+            usersByCategory,
+            totalActiveUsers: allUsers.filter(u => u.role !== 'super_admin').length
+          },
+          templateAnalytics: {
+            templatesByCategory,
+            totalWithValidation: allTemplates.filter(t => t.validationFileUploaded).length,
+            totalWithoutValidation: allTemplates.filter(t => !t.validationFileUploaded).length
+          },
+          submissionAnalytics: {
+            submissionsByStatus,
+            submissionsByCategory,
+            successRate: allSubmissions.length > 0 
+              ? (submissionsByStatus.passed / allSubmissions.length * 100).toFixed(1)
+              : 0
+          },
+          complianceMetrics: {
+            totalValidationRules: await db.select().from(validationRules).then(rules => rules.length),
+            totalValidationResults: totalValidationResults,
+            failedValidations,
+            complianceRate: totalValidationResults > 0 
+              ? ((totalValidationResults - failedValidations) / totalValidationResults * 100).toFixed(1)
+              : 100
+          },
+          trends: {
+            monthlyTrends,
+            avgSubmissionsPerMonth: monthlyTrends.reduce((sum, month) => sum + month.submissions, 0) / 12
+          },
+          recentActivity,
+          categories: allCategories.map(cat => ({
+            id: cat.id,
+            name: cat.name,
+            displayName: cat.displayName,
+            color: cat.color,
+            isActive: cat.isActive
+          }))
+        };
+
+        res.json(analyticsData);
+      } catch (error) {
+        console.error("Super admin analytics error:", error);
+        res.status(500).json({ error: "Failed to fetch analytics data" });
+      }
+    }
+  );
+
   // Clean all data except users table (IFSCA only)
   app.post(
     "/api/super-admin/clean-data",
