@@ -41,6 +41,7 @@ import UserManagementPage from "@/pages/user-management";
 import ExcelAnalyzerPage from "@/pages/excel-analyzer";
 import AuthTestPage from "@/pages/auth-test";
 import AdminAnalyticsPage from "@/pages/admin-analytics";
+import { CalendarPage } from "@/pages/CalendarPage";
 
 function Router() {
   return (
@@ -189,6 +190,11 @@ function Router() {
       <Route path="/reporting-entity/submission-history">
         <ReportingEntityRoute>
           <SubmissionHistoryPage />
+        </ReportingEntityRoute>
+      </Route>
+      <Route path="/reporting-entity/calendar">
+        <ReportingEntityRoute>
+          <CalendarPage />
         </ReportingEntityRoute>
       </Route>
 

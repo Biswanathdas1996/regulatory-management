@@ -21,7 +21,7 @@ import {
 import { format, subDays, isWithinInterval } from "date-fns";
 import { Link } from "wouter";
 import UserLayout from "@/components/UserLayout";
-import { SubmissionCalendar } from "@/components/SubmissionCalendar";
+
 
 export default function UserDashboardPage() {
   // Get authenticated user info
@@ -247,18 +247,12 @@ export default function UserDashboardPage() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid grid-cols-5 w-full max-w-3xl bg-gray-100/50 p-1 rounded-lg">
+        <TabsList className="grid grid-cols-4 w-full max-w-2xl bg-gray-100/50 p-1 rounded-lg">
           <TabsTrigger
             value="overview"
             className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
           >
             Overview
-          </TabsTrigger>
-          <TabsTrigger
-            value="calendar"
-            className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
-          >
-            Calendar
           </TabsTrigger>
           <TabsTrigger
             value="submissions"
@@ -388,9 +382,7 @@ export default function UserDashboardPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="calendar" className="space-y-6">
-          <SubmissionCalendar userId={user?.id} category={user?.category} />
-        </TabsContent>
+
 
         <TabsContent value="submissions" className="space-y-6">
           <Card>

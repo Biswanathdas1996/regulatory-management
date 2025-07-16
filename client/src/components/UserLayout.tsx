@@ -11,6 +11,7 @@ import {
   FileText,
   User,
   LogOut,
+  Calendar,
 } from "lucide-react";
 
 interface UserLayoutProps {
@@ -21,7 +22,7 @@ interface UserLayoutProps {
   headerActions?: React.ReactNode;
 }
 
-export default function UserLayout({
+export function UserLayout({
   children,
   title,
   subtitle,
@@ -53,6 +54,12 @@ export default function UserLayout({
       icon: History,
       href: "/reporting-entity/submission-history",
       current: location === "/reporting-entity/submission-history",
+    },
+    {
+      name: "Calendar",
+      icon: Calendar,
+      href: "/reporting-entity/calendar",
+      current: location === "/reporting-entity/calendar",
     },
   ];
 
@@ -160,3 +167,5 @@ export default function UserLayout({
     </div>
   );
 }
+
+export default UserLayout;
