@@ -148,7 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.user) {
       return res.status(401).json({ error: "Authentication required" });
     }
-    if (req.user.role !== "super_admin" && req.user.role !== "ifsca_user") {
+    if (req.user.role !== "IFSCA" && req.user.role !== "IFSCA_USER") {
       return res.status(403).json({ error: "Admin access required" });
     }
     next();
@@ -160,9 +160,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("requireSuperAdmin: No user found");
       return res.status(401).json({ error: "Authentication required" });
     }
-    if (req.user.role !== "super_admin") {
+    if (req.user.role !== "IFSCA") {
       console.log(
-        "requireSuperAdmin: User role is not super_admin:",
+        "requireSuperAdmin: User role is not IFSCA:",
         req.user.role
       );
       return res.status(403).json({ error: "IFSCA access required" });
