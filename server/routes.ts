@@ -246,14 +246,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let users: User[] = [];
 
         // Filter users based on role
-        if (req.user?.role === "super_admin") {
+        if (req.user?.role === "IFSCA") {
           // Super admin sees all users
           const allUsers = await storage.getAllUsers();
           users = allUsers.map((user) => ({
             ...user,
             category: user.category?.toString() || null,
           }));
-        } else if (req.user?.role === "ifsca_user") {
+        } else if (req.user?.role === "IFSCA_USER") {
           // IFSCA user only sees users in their category
           const allUsers = await storage.getAllUsers();
           const userCategoryId = req.user?.category
@@ -644,8 +644,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.user && req.user.category) {
         // IFSCA users and reporting entities can only see templates for their category
         if (
-          req.user.role === "ifsca_user" ||
-          req.user.role === "reporting_entity"
+          req.user.role === "IFSCA_USER" ||
+          req.user.role === "REPORTING_ENTITY"
         ) {
           // Convert user category to number for comparison
           const userCategoryId = parseInt(req.user.category);
@@ -675,8 +675,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (req.user && req.user.category) {
           // IFSCA users and reporting entities can only see templates for their category
           if (
-            req.user.role === "ifsca_user" ||
-            req.user.role === "reporting_entity"
+            req.user.role === "IFSCA_USER" ||
+            req.user.role === "REPORTING_ENTITY"
           ) {
             // Convert user category to number for comparison
             const userCategoryId = parseInt(req.user.category);
@@ -758,7 +758,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           bodyCategory: req.body.category,
         });
 
-        if (req.user && req.user.role === "ifsca_user" && req.user.category) {
+        if (req.user && req.user.role === "IFSCA_USER" && req.user.category) {
           // For IFSCA users, use their category ID regardless of form input
           categoryId = parseInt(req.user.category);
           console.log(
@@ -1932,7 +1932,7 @@ Only return the JSON array, no additional text.
       let submissions;
       
       // For IFSCA users, show all submissions in their category (don't filter by userId)
-      if (req.user?.role === "ifsca_user") {
+      if (req.user?.role === "IFSCA_USER") {
         submissions = await storage.getSubmissions(
           undefined, // Don't filter by userId for IFSCA users
           templateId ? parseInt(templateId as string) : undefined,
@@ -1949,7 +1949,7 @@ Only return the JSON array, no additional text.
         console.log("Retrieved submissions:", submissions.length);
 
         // Filter submissions by category for reporting entities
-        if (req.user && req.user.category && req.user.role === "reporting_entity") {
+        if (req.user && req.user.category && req.user.role === "REPORTING_ENTITY") {
           submissions = submissions.filter(
             (submission: any) => submission.category === req.user!.category
           );
@@ -2916,13 +2916,13 @@ sheetValidations:
         // For IFSCA users, filter by their category
         // For super admins, show all or filter by requested category
         let categoryFilter: number | undefined = undefined;
-        if (userRole === "ifsca_user") {
+        if (userRole === "IFSCA_USER") {
           categoryFilter = userCategory
             ? typeof userCategory === "string"
               ? parseInt(userCategory)
               : userCategory
             : undefined;
-        } else if (category && userRole === "super_admin") {
+        } else if (category && userRole === "IFSCA") {
           categoryFilter = parseInt(category as string);
         }
 
@@ -3054,9 +3054,9 @@ sheetValidations:
         const userCategory = req.user?.category;
 
         let categoryFilter = null;
-        if (userRole === "ifsca_user") {
+        if (userRole === "IFSCA_USER") {
           categoryFilter = userCategory;
-        } else if (category && userRole === "super_admin") {
+        } else if (category && userRole === "IFSCA") {
           categoryFilter = parseInt(category as string);
         }
 
@@ -3064,9 +3064,9 @@ sheetValidations:
         const users = categoryFilter
           ? allUsers.filter(
               (u) =>
-                u.category === categoryFilter && u.role === "reporting_entity"
+                u.category === categoryFilter && u.role === "REPORTING_ENTITY"
             )
-          : allUsers.filter((u) => u.role === "reporting_entity");
+          : allUsers.filter((u) => u.role === "REPORTING_ENTITY");
 
         res.json(users);
       } catch (error) {
@@ -3105,7 +3105,7 @@ sheetValidations:
 
         // Filter to only IFSCA users and exclude super admin
         const ifscaUsers = users
-          .filter((user) => user.role === "ifsca_user")
+          .filter((user) => user.role === "IFSCA_USER")
           .map((user) => ({
             id: user.id,
             username: user.username,
@@ -3162,7 +3162,7 @@ sheetValidations:
 
         // Filter to only reporting entities
         const reportingEntities = users
-          .filter((user) => user.role === "reporting_entity")
+          .filter((user) => user.role === "REPORTING_ENTITY")
           .map((user) => ({
             id: user.id,
             username: user.username,
@@ -3232,7 +3232,7 @@ sheetValidations:
         const newUser = await storage.createUser({
           username,
           password: hashedPassword,
-          role: "ifsca_user",
+          role: "IFSCA_USER",
           category: categoryId,
         });
 
@@ -3263,7 +3263,7 @@ sheetValidations:
 
         // Check if user exists and is IFSCA user
         const existingUser = await storage.getUser(userId);
-        if (!existingUser || existingUser.role !== "ifsca_user") {
+        if (!existingUser || existingUser.role !== "IFSCA_USER") {
           return res.status(404).json({ error: "IFSCA user not found" });
         }
 
@@ -3437,16 +3437,16 @@ sheetValidations:
 
         // User Analytics
         const usersByRole = {
-          super_admin: allUsers.filter(u => u.role === 'super_admin').length,
-          ifsca_user: allUsers.filter(u => u.role === 'ifsca_user').length,
-          reporting_entity: allUsers.filter(u => u.role === 'reporting_entity').length
+          super_admin: allUsers.filter(u => u.role === 'IFSCA').length,
+          ifsca_user: allUsers.filter(u => u.role === 'IFSCA_USER').length,
+          reporting_entity: allUsers.filter(u => u.role === 'REPORTING_ENTITY').length
         };
 
         const usersByCategory = allCategories.map(cat => ({
           categoryId: cat.id,
           categoryName: cat.displayName,
-          ifscaUsers: allUsers.filter(u => u.role === 'ifsca_user' && u.category === cat.id).length,
-          reportingEntities: allUsers.filter(u => u.role === 'reporting_entity' && u.category === cat.id).length
+          ifscaUsers: allUsers.filter(u => u.role === 'IFSCA_USER' && u.category === cat.id).length,
+          reportingEntities: allUsers.filter(u => u.role === 'REPORTING_ENTITY' && u.category === cat.id).length
         }));
 
         // Template Analytics
@@ -3535,7 +3535,7 @@ sheetValidations:
           userAnalytics: {
             usersByRole,
             usersByCategory,
-            totalActiveUsers: allUsers.filter(u => u.role !== 'super_admin').length
+            totalActiveUsers: allUsers.filter(u => u.role !== 'IFSCA').length
           },
           templateAnalytics: {
             templatesByCategory,
@@ -3661,7 +3661,7 @@ sheetValidations:
 
         // Check if user exists and is IFSCA user
         const existingUser = await storage.getUser(userId);
-        if (!existingUser || existingUser.role !== "ifsca_user") {
+        if (!existingUser || existingUser.role !== "IFSCA_USER") {
           return res.status(404).json({ error: "IFSCA user not found" });
         }
 

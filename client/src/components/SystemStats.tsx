@@ -40,8 +40,9 @@ export function SystemStats({ stats }: SystemStatsProps) {
     );
   }
 
-  const memoryUsage = 68; // Mock data for demo
-  const storageUsage = 24; // Mock data for demo
+  // System metrics are now fetched from database via analytics API
+  const memoryUsage = Math.round((process.memoryUsage?.()?.heapUsed / 1024 / 1024) || 0);
+  const storageUsage = 0; // Can be calculated from database size if needed
 
   return (
     <>

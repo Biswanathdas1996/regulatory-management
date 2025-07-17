@@ -142,7 +142,8 @@ export default function AdminAnalyticsPage() {
         templateName: template.name,
         submissionCount: templateSubmissions.length,
         successRate: templateSubmissions.length > 0 ? (successfulSubmissions.length / templateSubmissions.length) * 100 : 0,
-        avgProcessingTime: 2.5, // Mock data - would need processing time tracking
+        avgProcessingTime: templateSubmissions.length > 0 ? 
+          templateSubmissions.reduce((sum: number, sub: any) => sum + (sub.processingTime || 0), 0) / templateSubmissions.length : 0
       };
     });
 

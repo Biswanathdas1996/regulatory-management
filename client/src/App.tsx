@@ -39,7 +39,7 @@ import ReportingEntityDashboard from "@/pages/reporting-entity-dashboard";
 import SubmissionViewPage from "@/pages/submission-view";
 import UserManagementPage from "@/pages/user-management";
 import ExcelAnalyzerPage from "@/pages/excel-analyzer";
-import AuthTestPage from "@/pages/auth-test";
+
 import AdminAnalyticsPage from "@/pages/admin-analytics";
 import { CalendarPage } from "@/pages/CalendarPage";
 
@@ -131,13 +131,7 @@ function Router() {
           <Home />
         </Layout>
       </Route>
-      <Route path="/auth-test">
-        <Layout>
-          <ProtectedRoute>
-            <AuthTestPage />
-          </ProtectedRoute>
-        </Layout>
-      </Route>
+
       <Route path="/template/:id">
         <Layout>
           <TemplateDetail />

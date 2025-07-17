@@ -1,5 +1,0 @@
-RuleType,SheetName,Column,Row,Field,Required,DataType,MinLength,MaxLength,Minimum,Maximum,Pattern,EnumValues,Expression,Description,Severity,RowRange,ColumnRange,CellRange,ApplyToAllRows
-cell,Sheet1,A,1,Header_Check,required,string,,,,,,,,"Cell A1 must contain a header",error,1,A,A1,false
-cell,Sheet1,B,1,Header_Check,required,string,,,,,,,,"Cell B1 must contain a header",error,1,B,B1,false
-required,Sheet1,A,2,FirstData,required,string,,,,,,,,"First data row in column A must not be empty",error,2,A,A2,false
-required,Sheet1,B,2,FirstData,required,string,,,,,,,,"First data row in column B must not be empty",error,2,B,B2,false
