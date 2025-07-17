@@ -1,15 +1,29 @@
 import dotenv from "dotenv";
 dotenv.config({ path: process.cwd() + "/.env" });
 
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-serverless";
+import ws from "ws";
 import * as schema from "@shared/schema";
 
-// Create or connect to SQLite database file - use simple relative path
-const dbPath = "database.sqlite";
-const sqlite = new Database(dbPath);
+// Configure neon for serverless environment
+if (typeof WebSocket === 'undefined') {
+  neonConfig.webSocketConstructor = ws;
+}
+neonConfig.useSecureWebSocket = true;
+neonConfig.pipelineConnect = false;
 
-// Enable WAL mode for better performance
-sqlite.pragma('journal_mode = WAL');
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?"
+  );
+}
 
-export const db = drizzle({ client: sqlite, schema });
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 60000,
+  max: 20,
+});
+
+export const db = drizzle({ client: pool, schema });
