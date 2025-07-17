@@ -9,6 +9,21 @@ This is a comprehensive digital solution for GIFT City financial institutions to
 
 The application validates submissions against predefined IFSCA-compliant rules with 100% accuracy, ensuring regulatory compliance and flagging violations in real-time.
 
+## Recent Changes (January 17, 2025)
+
+### Database Migration from PostgreSQL to SQLite (January 17, 2025) ✓
+
+- Successfully migrated from external NeonDB PostgreSQL to local SQLite database
+- Eliminated external database dependency for simplified deployment
+- Updated all schema definitions from PostgreSQL to SQLiteTable format
+- Converted boolean fields to integer with boolean mode for SQLite compatibility
+- Replaced timestamp fields with text fields using CURRENT_TIMESTAMP default
+- Converted JSON fields to text for SQLite storage
+- Created comprehensive SQLite database setup script with all tables and default data
+- Initialized database with default categories (Banking, NBFC, Stock Exchange) and test users
+- Database now runs completely locally in ./data/ifsca.db with no external dependencies
+- Maintained all existing functionality while simplifying deployment architecture
+
 ## Recent Changes (January 15, 2025)
 
 ### XBRL Template Support Implementation (January 15, 2025) ✓

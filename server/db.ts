@@ -1,29 +1,30 @@
 import dotenv from "dotenv";
 dotenv.config({ path: process.cwd() + "/.env" });
 
-import { Pool, neonConfig } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as schema from "@shared/schema";
+import fs from "fs";
+import path from "path";
 
-// Configure neon for serverless environment
-if (typeof WebSocket === 'undefined') {
-  neonConfig.webSocketConstructor = ws;
-}
-neonConfig.useSecureWebSocket = true;
-neonConfig.pipelineConnect = false;
-
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?"
-  );
+// Ensure the database directory exists
+const dbDir = path.join(process.cwd(), "data");
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
 }
 
-export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  connectionTimeoutMillis: 10000,
-  idleTimeoutMillis: 60000,
-  max: 20,
-});
+const dbPath = path.join(dbDir, "ifsca.db");
 
-export const db = drizzle({ client: pool, schema });
+// Initialize SQLite database
+const sqlite = new Database(dbPath);
+
+// Enable foreign keys
+sqlite.pragma("foreign_keys = ON");
+
+// Create the database connection
+export const db = drizzle(sqlite, { schema });
+
+// Export for direct SQL operations if needed
+export { sqlite };
+
+console.log(`SQLite database initialized at: ${dbPath}`);

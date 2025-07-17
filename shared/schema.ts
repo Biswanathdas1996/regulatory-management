@@ -1,72 +1,67 @@
 import {
-  pgTable,
+  sqliteTable,
   text,
-  serial,
   integer,
-  boolean,
-  timestamp,
-  json,
-} from "drizzle-orm/pg-core";
+  blob,
+} from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Categories table for dynamic category management
-export const categoryTable = pgTable("categories", {
-  id: serial("id").primaryKey(),
+export const categoryTable = sqliteTable("categories", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull().unique(), // banking, nbfc, stock_exchange, etc.
   displayName: text("display_name").notNull(), // Banking, NBFC, Stock Exchange, etc.
   description: text("description"),
   color: text("color").default("#3B82F6"), // Hex color for UI
   icon: text("icon").default("Building"), // Lucide icon name
-  isActive: boolean("is_active").default(true),
+  isActive: integer("is_active", { mode: 'boolean' }).default(true),
   createdBy: integer("created_by"), // Will be set as foreign key after users table is created
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
+  updatedAt: text("updated_at").default("CURRENT_TIMESTAMP").notNull(),
 });
 
 // Users table - moved after categoryTable to resolve circular dependency
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   role: text("role").notNull().default("reporting_entity"), // super_admin, ifsca_user, reporting_entity
   category: integer("category").references(() => categoryTable.id),
   createdBy: integer("created_by"), // ID of user who created this user
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
+  updatedAt: text("updated_at").default("CURRENT_TIMESTAMP").notNull(),
 });
 
 // Comments table for submission discussions
-export const comments = pgTable("comments", {
-  id: serial("id").primaryKey(),
+export const comments = sqliteTable("comments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   submissionId: integer("submission_id").notNull(),
   userId: integer("user_id").notNull(),
   parentCommentId: integer("parent_comment_id"), // for replies
   text: text("text").notNull(),
-  systemGenerated: boolean("system_generated").default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  systemGenerated: integer("system_generated", { mode: 'boolean' }).default(false),
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
 });
 
-export const templates = pgTable("templates", {
-  id: serial("id").primaryKey(),
+export const templates = sqliteTable("templates", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   templateType: text("template_type"), // Made optional - can be removed entirely in future
   category: integer("category")
     .notNull()
     .references(() => categoryTable.id), // Reference to categories table
-  frequency: text("frequency", {
-    enum: ["daily", "weekly", "monthly", "quarterly", "half_yearly", "yearly"],
-  }).notNull(),
-  lastSubmissionDate: timestamp("last_submission_date"),
+  frequency: text("frequency").notNull(), // daily, weekly, monthly, quarterly, half_yearly, yearly
+  lastSubmissionDate: text("last_submission_date"),
   jsonSchema: text("json_schema"),
   fileName: text("file_name").notNull(),
   filePath: text("file_path").notNull(),
   fileSize: integer("file_size").notNull(),
   validationRulesPath: text("validation_rules_path"), // Path to validation rules .txt file
-  validationFileUploaded: boolean("validation_file_uploaded").default(false), // Track if validation file is uploaded
+  validationFileUploaded: integer("validation_file_uploaded", { mode: 'boolean' }).default(false), // Track if validation file is uploaded
   status: text("status").notNull().default("active"), // active, inactive
   // XBRL-specific fields
-  isXBRL: boolean("is_xbrl").default(false), // Flag to indicate if this is an XBRL template
+  isXBRL: integer("is_xbrl", { mode: 'boolean' }).default(false), // Flag to indicate if this is an XBRL template
   xbrlTaxonomyPath: text("xbrl_taxonomy_path"), // Path to XBRL taxonomy schema
   xbrlSchemaRef: text("xbrl_schema_ref"), // Reference to XBRL schema
   xbrlNamespace: text("xbrl_namespace"), // XBRL namespace for this template
@@ -74,25 +69,25 @@ export const templates = pgTable("templates", {
   createdBy: integer("created_by")
     .references(() => users.id)
     .notNull(), // ID of IFSCA user who created this template
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
+  updatedAt: text("updated_at").default("CURRENT_TIMESTAMP").notNull(),
 });
 
-export const templateSheets = pgTable("template_sheets", {
-  id: serial("id").primaryKey(),
+export const templateSheets = sqliteTable("template_sheets", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   templateId: integer("template_id")
     .references(() => templates.id)
     .notNull(),
   sheetName: text("sheet_name").notNull(),
   sheetIndex: integer("sheet_index").notNull(),
   dataPointCount: integer("data_point_count").notNull(),
-  extractedData: json("extracted_data"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  extractedData: text("extracted_data"), // JSON as text in SQLite
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
 });
 
 // Validation rules for templates (sheet-specific)
-export const validationRules = pgTable("validation_rules", {
-  id: serial("id").primaryKey(),
+export const validationRules = sqliteTable("validation_rules", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   templateId: integer("template_id")
     .references(() => templates.id)
     .notNull(),
@@ -105,13 +100,13 @@ export const validationRules = pgTable("validation_rules", {
   rowRange: text("row_range"), // e.g., "2-100", "5", "10-*" for row-specific validation
   columnRange: text("column_range"), // e.g., "A-Z", "B", "C-E" for column-specific validation
   cellRange: text("cell_range"), // e.g., "A2:Z100", "B5", "C1:C50" for exact cell range validation
-  applyToAllRows: boolean("apply_to_all_rows").default(false), // If true, applies to all rows in the range
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  applyToAllRows: integer("apply_to_all_rows", { mode: 'boolean' }).default(false), // If true, applies to all rows in the range
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
 });
 
 // Validation results for submissions
-export const validationResults = pgTable("validation_results", {
-  id: serial("id").primaryKey(),
+export const validationResults = sqliteTable("validation_results", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   submissionId: integer("submission_id")
     .references(() => submissions.id)
     .notNull(),
@@ -123,29 +118,29 @@ export const validationResults = pgTable("validation_results", {
   cellValue: text("cell_value"),
   message: text("message").notNull(),
   severity: text("severity").notNull().default("error"), // error, warning
-  isValid: boolean("is_valid").notNull().default(false),
+  isValid: integer("is_valid", { mode: 'boolean' }).notNull().default(false),
   sheetName: text("sheet_name"),
   rowNumber: integer("row_number"),
   columnNumber: integer("column_number"),
   columnName: text("column_name"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
 });
 
 // Template schemas table
-export const templateSchemas = pgTable("template_schemas", {
-  id: serial("id").primaryKey(),
+export const templateSchemas = sqliteTable("template_schemas", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   templateId: integer("template_id")
     .references(() => templates.id)
     .notNull(),
   sheetId: integer("sheet_id").references(() => templateSheets.id),
-  schemaData: json("schema_data").notNull(),
+  schemaData: text("schema_data").notNull(), // JSON as text in SQLite
   aiConfidence: integer("ai_confidence").notNull(),
   extractionNotes: text("extraction_notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
 });
 
-export const processingStatus = pgTable("processing_status", {
-  id: serial("id").primaryKey(),
+export const processingStatus = sqliteTable("processing_status", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   templateId: integer("template_id")
     .references(() => templates.id)
     .notNull(),
@@ -153,12 +148,12 @@ export const processingStatus = pgTable("processing_status", {
   status: text("status").notNull(), // pending, in_progress, completed, failed
   message: text("message"),
   progress: integer("progress").default(0),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedAt: text("updated_at").default("CURRENT_TIMESTAMP").notNull(),
 });
 
 // User submissions
-export const submissions = pgTable("submissions", {
-  id: serial("id").primaryKey(),
+export const submissions = sqliteTable("submissions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   templateId: integer("template_id")
     .references(() => templates.id)
     .notNull(),
@@ -170,12 +165,12 @@ export const submissions = pgTable("submissions", {
     .notNull(), // Reference to category table
   status: text("status").notNull().default("pending"), // pending, approved, rejected, returned
   statusUpdatedBy: integer("status_updated_by").references(() => users.id),
-  statusUpdatedAt: timestamp("status_updated_at"),
+  statusUpdatedAt: text("status_updated_at"),
   fileName: text("file_name").notNull(),
   filePath: text("file_path").notNull(),
   fileSize: integer("file_size").notNull(),
   reportingPeriod: text("reporting_period").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: text("created_at").default("CURRENT_TIMESTAMP").notNull(),
 });
 
 // Type exports using modern Drizzle syntax
