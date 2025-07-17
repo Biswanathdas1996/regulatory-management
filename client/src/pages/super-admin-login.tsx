@@ -47,8 +47,8 @@ export default function SuperAdminLogin() {
           title: "Login successful",
           description: "Welcome to IFSCA Dashboard",
         });
-        // Redirect to auth test page to verify session state
-        setLocation("/auth-test");
+        // Redirect to super admin dashboard
+        setLocation("/super-admin/dashboard");
       } else {
         // User logged in but not super admin - logout and show error
         toast({

@@ -10,8 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 export interface User {
   id: number;
   username: string;
-  role: "super_admin" | "ifsca_user" | "reporting_entity";
-  category?: string;
+  role: "IFSCA" | "IFSCA_USER" | "REPORTING_ENTITY";
+  category?: number | null;
 }
 
 interface AuthContextType {
@@ -178,9 +178,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const isAuthenticated = !!user;
-  const isSuperAdmin = user?.role === "super_admin";
-  const isIFSCAUser = user?.role === "ifsca_user";
-  const isReportingEntity = user?.role === "reporting_entity";
+  const isSuperAdmin = user?.role === "IFSCA";
+  const isIFSCAUser = user?.role === "IFSCA_USER";
+  const isReportingEntity = user?.role === "REPORTING_ENTITY";
   const isAdmin = isSuperAdmin || isIFSCAUser; // Backward compatibility
 
   console.log("==user=====>", user);
